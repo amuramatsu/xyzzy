@@ -1,4 +1,6 @@
 #include "gen-stdafx.h"
+#include <stdarg.h>
+#include <io.h>
 
 static FILE *fi, *fo;
 #define MAXARGS 2
@@ -90,7 +92,10 @@ output_literal ()
     {
       putc (c, fo);
       if (c == '\n')
-        break;
+        {
+          linenum++;
+          break;
+        }
       if (c == '\\')
         {
           c = getc (fi);
@@ -473,10 +478,10 @@ read_optargs (argments &args)
   char *b = args.optvars;
   for (char *p0 = args.optargs + 1, *pe;; p0 = pe + 1)
     {
-	  char *p;
-	  pe = strchr (p0, ',');
+      pe = strchr (p0, ',');
       if (!pe)
         pe = p0 + strlen (p0);
+      char *p;
       for (p = pe; p > p0 && (isalnum (p[-1]) || p[-1] == '_'); p--)
         ;
       if (p == pe || p == p0)
