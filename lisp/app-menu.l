@@ -11,11 +11,11 @@
 	  generate-hash-accessor
 	  get-command-bar-popup-menu set-command-bar-popup-menu
 	  get-app-rectangle-popup-menu set-app-rectangle-popup-menu
-	  get-app-menu set-app-menu 
+	  get-app-menu set-app-menu
 	  get-app-popup-menu set-app-popup-menu
-  	  get-clipboard-char-encoding-popup-menu set-clipboard-char-encoding-popup-menu
-  	  get-dictionary-popup-menu set-dictionary-popup-menu
-  	  get-paste-rectangle-popup-menu set-paste-rectangle-popup-menu
+	  get-clipboard-char-encoding-popup-menu set-clipboard-char-encoding-popup-menu
+	  get-dictionary-popup-menu set-dictionary-popup-menu
+	  get-paste-rectangle-popup-menu set-paste-rectangle-popup-menu
 	  make-char-encoding-popup-menu
 	  add-file-history-to-menu *menu-display-length*
 	  *init-app-menus-hook*))
@@ -36,10 +36,10 @@
 (defvar *init-app-menus-hook* nil)
 
 (defun set-menu-to-frame-hash(frame hash menu)
-  (si:*puthash frame hash menu)) 
+  (si:*puthash frame hash menu))
 
 (defun get-menu-from-frame-hash(frame hash)
-  (gethash frame hash)) 
+  (gethash frame hash))
 
 (defmacro generate-hash-accessor(name)
   "ex. (generate-hash-accessor recent-file-popup-menu) will generate
@@ -417,7 +417,13 @@
 	   (:item :tag-command (if (featurep :windows-nt)
 				   "NTプロンプト(&D)"
 				 "DOSプロンプト(&D)")
-	    'run-console)
+	    #'(lambda ()
+		(interactive)
+		(if (and (featurep :windows-vista)
+			 (si:control-pressed)
+			 (si:shift-pressed))
+		    (run-admin-console)
+		  (run-console))))
 	   (:sep :above-kbd-macro)
 	   (:item :tag-command "キーボードマクロ記録開始(&S)"
 	    'start-kbd-macro)
@@ -508,8 +514,6 @@
 	   #'(lambda ()
 	       (interactive)
 	       (kill-buffer *buffer-bar-context-menu-buffer*))))))
-
-  
 
 (defun init-app-menus (&optional (frame (selected-frame)))
   (init-menu-handle frame)
@@ -610,4 +614,3 @@
 			    (interactive)
 			    (find-file filename)
 			    (add-history filename '*minibuffer-file-name-history*)))))))
-  
