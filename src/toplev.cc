@@ -673,8 +673,6 @@ toplevel_wnd_create(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 #endif
   app1->hwnd_clipboard = SetClipboardViewer (hwnd);
   SetTimer (hwnd, TID_ITIMER, itimer::interval * 1000, 0);
-  enable_wm_copydata ();
-
   return 0;
 }
 
@@ -1180,13 +1178,9 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         return 1;
       break;
 
-    case WM_COPYDATA:
-      return read_listen_server_wm_copydata (wparam, lparam);
-      break;
-
     default:
       if (msg == wm_private_xyzzysrv)
-        return read_listen_server_wm_private_xyzzysrv (wparam, lparam);
+        return read_listen_server (wparam, lparam);
 
       if (!sysdep.Win98p () && !sysdep.Win5p ())
         {
