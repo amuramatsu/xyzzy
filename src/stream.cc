@@ -3,6 +3,7 @@
 #include "sequence.h"
 #include "wstream.h"
 #include "sockinet.h"
+#include "sockssl.h"
 #include "debug.h"
 
 static void
@@ -789,7 +790,15 @@ Fconnect (lisp lhost, lisp lport, lisp keys)
       sockinet::saddr addr (lhost, lport);
       stream = make_socket_stream ();
       protect_gc gcpro (stream);
-      xsocket_stream_sock (stream) = new sockinet;
+      if (find_keyword_bool (Kssl, keys))
+        {
+          lisp lverify_mode = find_keyword (Kssl_verify_mode, keys);
+          xsocket_stream_sock (stream) = new sockssl (lhost, lverify_mode);
+        }
+      else
+        {
+          xsocket_stream_sock (stream) = new sockinet;
+        }
       xsocket_stream_sock (stream)->set_eof_error_p (0);
       xsocket_stream_sock (stream)->create ();
       xsocket_stream_sock (stream)->connect (addr);
@@ -798,7 +807,7 @@ Fconnect (lisp lhost, lisp lport, lisp keys)
   catch (sock_error &e)
     {
       Fend_wait_cursor ();
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   Fend_wait_cursor ();
   return stream;
@@ -827,7 +836,7 @@ Fmake_listen_socket (lisp lhost, lisp lport, lisp keys)
   catch (sock_error &e)
     {
       Fend_wait_cursor ();
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   Fend_wait_cursor ();
   return stream;
@@ -841,6 +850,33 @@ valid_socket_stream_p (lisp stream)
     FEtype_error (stream, Qsocket_stream);
   if (!xstream_open_p (stream))
     FEtype_error (stream, Qopen_stream);
+}
+
+lisp
+Fssl_do_handshake (lisp stream, lisp lserver_name, lisp keys)
+{
+  valid_socket_stream_p (stream);
+
+  sockinet *so = xsocket_stream_sock (stream);
+  if (so->sslp ())
+    return Qnil;
+
+  try
+    {
+      Fbegin_wait_cursor ();
+      lisp lverify_mode = find_keyword (Kssl_verify_mode, keys);
+      sockssl *ssl = new sockssl (so, lserver_name, lverify_mode);
+      xsocket_stream_sock (stream) = ssl;
+      ssl->handshake ();
+    }
+  catch (sock_error &e)
+    {
+      Fend_wait_cursor ();
+      FEsocket_error (e.error_code (), e.ope ());
+    }
+  Fend_wait_cursor ();
+
+  return Qt;
 }
 
 lisp
@@ -868,7 +904,7 @@ Faccept_connection (lisp stream, lisp keys)
     }
   catch (sock_error &e)
     {
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   return new_stream;
 }
@@ -886,7 +922,7 @@ close_socket_stream (lisp stream, int abort)
   catch (sock_error &e)
     {
       delete so;
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   delete so;
 }
@@ -903,7 +939,7 @@ Fsocket_stream_local_address (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -920,7 +956,7 @@ Fsocket_stream_local_name (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -936,7 +972,7 @@ Fsocket_stream_local_port (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -952,7 +988,7 @@ Fsocket_stream_peer_address (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -969,7 +1005,7 @@ Fsocket_stream_peer_name (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -985,7 +1021,7 @@ Fsocket_stream_peer_port (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -1031,7 +1067,7 @@ Fsocket_stream_set_oob_inline (lisp stream, lisp on)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
   return Qt;
 }
@@ -1050,9 +1086,16 @@ Fsocket_stream_send_oob_data (lisp stream, lisp string)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
   return Qnil;
+}
+
+lisp
+Fsocket_stream_ssl_p (lisp stream)
+{
+  valid_socket_stream_p (stream);
+  return boole (xsocket_stream_sock (stream)->sslp ());
 }
 
 lisp
@@ -1529,7 +1572,7 @@ readc_stream (lisp stream)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
 
         case st_general_input:
@@ -1657,7 +1700,7 @@ listen_stream (lisp stream)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
 
         case st_general_input:
@@ -1862,7 +1905,7 @@ writec_stream (lisp stream, Char cc)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
           return;
 
@@ -1973,7 +2016,7 @@ write_stream (lisp stream, const Char *b, size_t size)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
           return;
 
@@ -2122,7 +2165,7 @@ flush_stream (lisp stream)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
           return;
 
