@@ -116,7 +116,7 @@
 					 (winconf-to-readable-winconf
 					  (pseudo-frame-winconf frame))
 					 (eq frame (get-current-pseudo-frame (selected-frame)))))))
-		       (get-pseudo-frame-list (selected-frame))))
+		       (list-pseudo-frames (selected-frame))))
 	(binfo (list-buffer-info)))
     (princ ";;; xyzzy session file.
 ;;; This file is generated automatically. do not edit.\n" s)

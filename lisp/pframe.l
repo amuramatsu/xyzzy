@@ -15,7 +15,9 @@
 	  selected-pseudo-frame-name
 	  get-pseudo-frame-list
 	  selected-pseudo-frame *select-pseudo-frame-hook*
-	  switch-pseudo-frame pseudo-frame-selector))
+	  switch-pseudo-frame pseudo-frame-selector
+	  *next-pseudo-frame-in-tab-order*
+	  ))
 
 (defstruct
   (pseudo-frame (:constructor pseudo-frame-constructor
@@ -26,6 +28,7 @@
 (defvar *current-pseudo-frame* (make-hash-table))
 (defvar *pseudo-frame-list* (make-hash-table))
 (defvar *select-pseudo-frame-hook* nil)
+(defvar *next-pseudo-frame-in-tab-order* nil)
 
 (generate-hash-accessor current-pseudo-frame)
 (generate-hash-accessor pseudo-frame-list)
@@ -35,6 +38,11 @@
 
 (defun selected-pseudo-frame ()
   (get-current-pseudo-frame (selected-frame)))
+
+(defun list-pseudo-frames (&optional (appframe (selected-frame)) (tab-order *next-pseudo-frame-in-tab-order*))
+  (if tab-order
+      (tab-bar-list-items 'pseudo-frame-bar appframe)
+    (get-pseudo-frame-list appframe)))
 
 (defun save-current-pseudo-frame (&optional (appframe (selected-frame)))
   (when (get-current-pseudo-frame appframe)
@@ -146,7 +154,7 @@
   (interactive)
   (let* ((appframe (selected-frame))
 	(frame (or (cadr (member (pseudo-frame-name (get-current-pseudo-frame appframe))
-				 (get-pseudo-frame-list appframe)
+				 (list-pseudo-frames appframe)
 				 :key #'pseudo-frame-name :test #'string=))
 		   (car (get-pseudo-frame-list appframe)))))
     (unless (eq frame (get-current-pseudo-frame appframe))
@@ -159,7 +167,7 @@
   (interactive)
   (let* ((appframe (selected-frame))
 	(frame (let ((n (position (pseudo-frame-name (get-current-pseudo-frame appframe))
-				  (get-pseudo-frame-list appframe)
+				  (list-pseudo-frames appframe)
 				  :key #'pseudo-frame-name :test #'string=)))
 		 (if (and n (plusp n))
 		     (nth (- n 1) (get-pseudo-frame-list appframe))
