@@ -513,7 +513,14 @@
 	  (:item 'close "•Â‚¶‚é(&C)"
 	   #'(lambda ()
 	       (interactive)
-	       (kill-buffer *buffer-bar-context-menu-buffer*))))))
+	       (kill-buffer *buffer-bar-context-menu-buffer*)))))
+
+  (setq *pseudo-frame-bar-context-menu*
+	(define-popup-menu
+	  (:item 'close "•Â‚¶‚é(&C)"
+	   #'(lambda ()
+	       (interactive)
+	       (delete-pseudo-frame *pseudo-frame-bar-context-menu-frame*))))))
 
 (defun init-app-menus (&optional (frame (selected-frame)))
   (init-menu-handle frame)

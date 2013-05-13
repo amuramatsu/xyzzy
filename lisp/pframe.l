@@ -17,6 +17,9 @@
 	  selected-pseudo-frame *select-pseudo-frame-hook*
 	  switch-pseudo-frame pseudo-frame-selector
 	  *next-pseudo-frame-in-tab-order*
+	  *pseudo-frame-bar-context-menu*
+	  *pseudo-frame-bar-context-menu-frame*
+	  *pseudo-frame-bar-context-menu-handler*
 	  ))
 
 (defstruct
@@ -87,7 +90,8 @@
   (let ((frame (pseudo-frame-constructor name nil save-p selected-fn deleted-fn)))
     (set-pseudo-frame-list appframe (nconc (get-pseudo-frame-list appframe) (list frame)))
     (when (tool-bar-exist-p 'pseudo-frame-bar appframe)
-      (tab-bar-add-item 'pseudo-frame-bar frame name nil nil appframe))
+      (tab-bar-add-item 'pseudo-frame-bar frame name nil
+			'call-pseudo-frame-bar-context-menu-handler appframe))
     frame))
 
 (defun create-pseudo-frame (appframe name &optional save-p selected-fn deleted-fn)
@@ -230,7 +234,9 @@
 						   (select-pseudo-frame frame (selected-frame))
 						   (refresh-screen 'foo)) appframe)
     (mapc #'(lambda (frame)
-	      (tab-bar-add-item 'pseudo-frame-bar frame (pseudo-frame-name frame) nil nil appframe))
+	      (tab-bar-add-item 'pseudo-frame-bar frame (pseudo-frame-name frame) nil
+			        'call-pseudo-frame-bar-context-menu-handler
+				appframe))
 	  (get-pseudo-frame-list appframe))
     (tab-bar-select-item 'pseudo-frame-bar (get-current-pseudo-frame appframe) appframe)))
 
@@ -257,6 +263,21 @@
 				  (member buffer x :test #'eq))
 			      (caddr (pseudo-frame-winconf frame)))))
 	     (get-pseudo-frame-list (selected-frame))))
+
+(defvar *pseudo-frame-bar-context-menu* nil)
+(defvar *pseudo-frame-bar-context-menu-frame* nil)
+
+(defun default-pseudo-frame-bar-context-menu-handler (frame)
+  (when frame
+    (setq *pseudo-frame-bar-context-menu-frame* frame)
+    *pseudo-frame-bar-context-menu*))
+
+(defvar *pseudo-frame-bar-context-menu-handler*
+  #'default-pseudo-frame-bar-context-menu-handler)
+
+(defun call-pseudo-frame-bar-context-menu-handler (frame)
+  (when *pseudo-frame-bar-context-menu-handler*
+    (funcall *pseudo-frame-bar-context-menu-handler* frame)))
 
 (define-command-bar 'pseudo-frame-bar "ÉtÉåÅ[ÉÄ(&F)")
 
