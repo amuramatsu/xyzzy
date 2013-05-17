@@ -671,7 +671,7 @@ toplevel_wnd_create(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 #ifdef DnDTEST
   RegisterDragDrop (hwnd, &tdropt);
 #endif
-  app1->hwnd_clipboard = SetClipboardViewer (hwnd);
+  app1->clipboard.add_listener (hwnd);
   SetTimer (hwnd, TID_ITIMER, itimer::interval * 1000, 0);
   return 0;
 }
@@ -720,13 +720,13 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	#endif
 		  app1->user_timer.cleanup ();
 		  environ::save_geometry ();
-		  ChangeClipboardChain (hwnd, app1->hwnd_clipboard);
+		  app1->clipboard.remove_listener (hwnd);
 		  PostQuitMessage (0);
 	  }
 	  else
 	  {
 		  app1->user_timer.cleanup ();
-		  ChangeClipboardChain (hwnd, app1->hwnd_clipboard);
+		  app1->clipboard.remove_listener (hwnd);
 	  }
 	  app1->toplev = 0;
 	  delete_app_frame(app1);
@@ -774,19 +774,15 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
       }
 
     case WM_CHANGECBCHAIN:
-      if (HWND (wparam) == app1->hwnd_clipboard)
-        app1->hwnd_clipboard = HWND (lparam);
-      else if (app1->hwnd_clipboard)
-        SendMessage (app1->hwnd_clipboard, msg, wparam, lparam);
+      app1->clipboard.change_clipboard_chain (hwnd, msg, wparam, lparam);
       break;
 
     case WM_DRAWCLIPBOARD:
-      if (app1->hwnd_clipboard)
-        SendMessage (app1->hwnd_clipboard, msg, wparam, lparam);
-      xsymbol_value (Vclipboard_newer_than_kill_ring_p) = Qt;
-      xsymbol_value (Vkill_ring_newer_than_clipboard_p) = Qnil;
-      if (selected_window ())
-        selected_buffer ()->safe_run_hook (Vchange_clipboard_hook, 0);
+      app1->clipboard.draw_clipboard (hwnd, msg, wparam, lparam);
+      break;
+
+    case WM_CLIPBOARDUPDATE:
+      app1->clipboard.clipboard_update (hwnd, msg, wparam, lparam);
       break;
 
     case WM_SYSCOLORCHANGE:
@@ -1093,6 +1089,7 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                   end_wait_cursor (1, app1);
                 }
             }
+          app.clipboard.repair_clipboard_chain_if_need (hwnd);
           break;
         }
       return 0;
