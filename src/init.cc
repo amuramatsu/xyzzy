@@ -601,6 +601,7 @@ init_symbol_value_once ()
   xsymbol_value (Vcolor_page_enable_subdir_p) = Qnil;
 
   xsymbol_value (Vwow64_enable_file_system_redirector) = Qt;
+  xsymbol_value (Vchange_clipboard_hook) = Qnil;
 }
 
 static void
