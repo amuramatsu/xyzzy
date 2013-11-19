@@ -868,25 +868,8 @@ environ::save_geometry ()
       w.length = sizeof w;
       if (GetWindowPlacement (active_app_frame().toplev, &w))
         {
-          RECT r;
-          if (save_window_snap_size && w.showCmd == SW_SHOWNORMAL && GetWindowRect (active_app_frame().toplev, &r))
-            {
-              w.rcNormalPosition.left = r.left;
-              w.rcNormalPosition.top = r.top;
-              w.rcNormalPosition.right = r.right;
-              w.rcNormalPosition.bottom = r.bottom;
-
-              MONITORINFO info;
-              if (monitor.get_monitorinfo_from_window (active_app_frame().toplev, &info))
-                {
-                  int taskbar_width = info.rcWork.left - info.rcMonitor.left;
-                  int taskbar_height = info.rcWork.top - info.rcMonitor.top;
-                  w.rcNormalPosition.left -= taskbar_width;
-                  w.rcNormalPosition.top -= taskbar_height;
-                  w.rcNormalPosition.right -= taskbar_width;
-                  w.rcNormalPosition.bottom -= taskbar_height;
-                }
-            }
+          if (save_window_snap_size)
+	    adjust_snap_window_size (active_app_frame().toplev, w);
           char name[256];
           make_geometry_key (name, sizeof name, 0);
           if (!save_window_size || !save_window_position)
