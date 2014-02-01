@@ -333,7 +333,7 @@ do_dnd (HDROP hdrop)
 void
 set_ime_caret (ApplicationFrame *app1)
 {
-  if (app1->active_frame.has_caret && app1->ime_composition)
+  if (app1->active_frame.has_caret)
     {
       HIMC hIMC = app1->kbdq.gime.ImmGetContext (app1->toplev);
       if (!hIMC)
