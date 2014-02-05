@@ -349,45 +349,10 @@ set_ime_caret (ApplicationFrame *app1)
       pt.x += font.offset ().x;
       pt.y += font.offset ().y;
 
-      RECT r;
-      int need_rect = (/*!app1->kbdq.gime.enable_p () // ‚æ‚¤‚í‚©‚ç‚ñ‚¯‚Ç‚Æ‚è‚ ‚¦‚¸(^^;
-                       ||*/ PRIMARYLANGID (app1->kbdq.kbd_langid ()) != LANG_KOREAN);
-      if (need_rect)
-        {
-          GetClientRect (app1->active_frame.has_caret, &r);
-
-		  Window *wp = app1->active_frame.windows;
-          for (; wp; wp = wp->w_next)
-            if (wp->w_hwnd == app1->active_frame.has_caret)
-              break;
-          r.left += app1->text_font.cell ().cx / 2;
-          if (wp && wp->w_bufp)
-            {
-              if (wp->w_last_flags & Window::WF_LINE_NUMBER)
-                r.left += (Window::LINENUM_COLUMNS + 1) * app1->text_font.cell ().cx;
-              if (wp->get_fold_columns() != Buffer::FOLD_NONE)
-                {
-                  LONG t = r.left + wp->get_fold_columns() * app1->text_font.cell ().cx;
-                  if (t > app1->active_frame.caret_pos.x)
-                    r.right = min (r.right, t);
-                }
-            }
-          MapWindowPoints (app1->active_frame.has_caret, app1->toplev,
-                           (POINT *)&r, 2);
-          pt.y = max (pt.y, r.top);
-        }
-
       COMPOSITIONFORM cf;
       cf.dwStyle = CFS_POINT;
       cf.ptCurrentPos = pt;
       app1->kbdq.gime.ImmSetCompositionWindow (hIMC, &cf);
-
-      if (need_rect)
-        {
-          cf.dwStyle = CFS_RECT;
-          cf.rcArea = r;
-          app1->kbdq.gime.ImmSetCompositionWindow (hIMC, &cf);
-        }
 
       app1->kbdq.gime.ImmSetCompositionFont (hIMC, (LOGFONT *)&font.logfont ());
       app1->kbdq.gime.ImmReleaseContext (app1->toplev, hIMC);
