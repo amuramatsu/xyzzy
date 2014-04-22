@@ -1806,6 +1806,10 @@ static symbols ed[] =
   DEFUN3 (get-buffer-colors, 0, 1, 0),
   DEFVAR2 (*change-buffer-colors-hook*),
   DEFVAR2 (*sort-buffer-list-by-created-order*),
+  DEFVAR2 (*buffer-list-sort-ignore-case*),
+  DEFVAR2 (*buffer-list-sort-type*),
+  DEFVAR2 (*save-buffer-list-sort-flags*),
+  DEFVAR2 (*last-buffer-list-sort-flags*),
   DEFVAR2 (*title-bar-text-order*),
   DEFUN3 (set-default-fold-width, 1, 0, 0),
   DEFUN3 (set-buffer-fold-width, 1, 1, 0),
@@ -2757,7 +2761,6 @@ static symbols ed[] =
   DEFVAR2 (*save-window-position*),
   DEFVAR2 (*restore-window-size*),
   DEFVAR2 (*restore-window-position*),
-  DEFVAR2 (*buffer-list-sort-ignore-case*),
   DEFVAR2 (*wow64-enable-file-system-redirector*),
   DEFVAR2 (*parent-process-wow64-p*),
 
