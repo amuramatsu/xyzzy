@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 
 my $GIT = "git";
-my $LAST_APPLY_PATCH = "";
+my $LAST_PATCH = "";
 
 sub usage {
     print "Usage: $0 FROM_TAG TO_TAG\n";
@@ -16,6 +16,13 @@ sub get_commits {
     return map { chomp; s/^commit //; $_; } @logs;
 }
 
+sub make_tag {
+    my ($filename, $data) = @_;
+    open my $fh, ">", $filename;
+    print $fh "$data\n";
+    close $fh;
+}
+
 sub cherry_pick {
     my ($id) = @_;
     system("$GIT log --color -n 1 ${id} | cat");
@@ -23,11 +30,14 @@ sub cherry_pick {
     $_ = <STDIN>;
     unless (/^[nN]/) {
 	if (system("$GIT cherry-pick -x ${id}") != 0) {
-	    print "\ncherry-pick ${id} is faild\n\n";
-	    return;
+	    print "\nLAST processed patch is ${LAST_PATCH}\n";
+	    print "cherry-pick ${id} is faild\n\n";
+	    make_tag("LAST_PATCH", $LAST_PATCH);
+	    make_tag("ERROR_PATCH", $id);
+	    exit 1;
 	}
     }
-    $LAST_APPLY_PATCH = $id;
+    $LAST_PATCH = $id;
 }
     
 usage() if ($#ARGV < 1);
