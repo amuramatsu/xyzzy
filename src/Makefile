@@ -193,7 +193,7 @@ CFG=r
 
 OUTDIR=d
 OBJS=$(OBJS: = d/)
-CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi -Y- $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
+CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
 LDFLAGS=-debug -stack:0x2000000 -incremental:yes -nxcompat -safeseh
 LIBS=$(LIBS) zlib/Debug/zlib.lib
 FINAL_TARGET=$(OUTDIR)/$(BUILD)
@@ -216,10 +216,10 @@ FINAL_TARGET=../$(BUILD)
 	$(CXX) $(CXXFLAGS) -c -TP $<
 
 {$(PRIVCTRLDIR)/}.cc{$(OUTDIR)/}.obj::
-	$(CXX) $(CXXFLAGS) -c -TP $<
+	$(CXX) $(CXXFLAGS) -Yustdafx.h -c -TP $<
 
 {$(DSFMTDIR)/}.cc{$(OUTDIR)/}.obj::
-	$(CXX) $(CXXFLAGS) -c -TP $<
+	$(CXX) $(CXXFLAGS) -Yustdafx.h -c -TP $<
 
 .rc.res:
 	rc -r $<
