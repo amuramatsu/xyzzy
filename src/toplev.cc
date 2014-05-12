@@ -1054,7 +1054,7 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                   end_wait_cursor (1, app1);
                 }
             }
-          app.clipboard.repair_clipboard_chain_if_need (hwnd);
+          app1->clipboard.repair_clipboard_chain_if_need (hwnd);
           break;
         }
       return 0;
