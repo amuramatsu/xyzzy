@@ -209,17 +209,17 @@ FINAL_TARGET=../$(BUILD)
 
 !ENDIF
 
-.cc{$(OUTDIR)/}.obj:
-	$(CXX) $(CXXFLAGS) -c -Tp$<
+.cc{$(OUTDIR)/}.obj::
+	$(CXX) $(CXXFLAGS) -c -TP $<
 
-{gen/}.cc{$(OUTDIR)/}.obj:
-	$(CXX) $(CXXFLAGS) -c -Tp$<
+{gen/}.cc{$(OUTDIR)/}.obj::
+	$(CXX) $(CXXFLAGS) -c -TP $<
 
-{$(PRIVCTRLDIR)/}.cc{$(OUTDIR)/}.obj:
-	$(CXX) $(CXXFLAGS) -c -Tp$<
+{$(PRIVCTRLDIR)/}.cc{$(OUTDIR)/}.obj::
+	$(CXX) $(CXXFLAGS) -c -TP $<
 
-{$(DSFMTDIR)/}.cc{$(OUTDIR)/}.obj:
-	$(CXX) $(CXXFLAGS) -c -Tp$<
+{$(DSFMTDIR)/}.cc{$(OUTDIR)/}.obj::
+	$(CXX) $(CXXFLAGS) -c -TP $<
 
 .rc.res:
 	rc -r $<
