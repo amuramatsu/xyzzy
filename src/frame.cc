@@ -391,7 +391,7 @@ Fget_frame_window_handle (lisp frame)
   ApplicationFrame *app = ApplicationFrame::coerce_to_frame (frame);
   if (app)
     {
-      return make_integer (long_to_large_int ((u_long) (app->toplev)));
+      return make_integer (int64_t ((u_long) (app->toplev)));
     }
   else
     {
@@ -405,7 +405,7 @@ Fget_frame_index (lisp frame)
   ApplicationFrame *app = ApplicationFrame::coerce_to_frame (frame);
   if (app)
     {
-      return make_integer (long_to_large_int (app->frame_index));
+      return make_integer (int64_t (app->frame_index));
     }
   else
     {
