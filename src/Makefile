@@ -193,7 +193,7 @@ CFG=r
 
 OUTDIR=d
 OBJS=$(OBJS: = d/)
-CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
+CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi -Y- $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
 LDFLAGS=-debug -stack:0x2000000 -incremental:yes -nxcompat -safeseh
 LIBS=$(LIBS) zlib/Debug/zlib.lib
 FINAL_TARGET=$(OUTDIR)/$(BUILD)
@@ -202,7 +202,7 @@ FINAL_TARGET=$(OUTDIR)/$(BUILD)
 
 OUTDIR=r
 OBJS=$(OBJS: = r/)
-CXXFLAGS=-Ob1 -Oi -Ot -Oy -Gs -Gy -Gz $(CXXOPT) -W3 -MT -vmb $(INC) $(DEFS) -Fo$(OUTDIR)/
+CXXFLAGS=-Ob1 -Oi -Ot -Oy -Gs -Gy -Gz $(CXXOPT) -W3 -MT -vmb -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -Fo$(OUTDIR)/
 LDFLAGS=-stack:0x2000000 -map:$(OUTDIR)/xyzzy.map -incremental:no -fixed -opt:ref -nxcompat -safeseh
 LIBS=$(LIBS) zlib/Release/zlib.lib
 FINAL_TARGET=../$(BUILD)
@@ -210,7 +210,7 @@ FINAL_TARGET=../$(BUILD)
 !ENDIF
 
 .cc{$(OUTDIR)/}.obj::
-	$(CXX) $(CXXFLAGS) -c -TP $<
+	$(CXX) $(CXXFLAGS) -Yustdafx.h -c -TP $<
 
 {gen/}.cc{$(OUTDIR)/}.obj::
 	$(CXX) $(CXXFLAGS) -c -TP $<
@@ -231,12 +231,14 @@ FINAL_TARGET=../$(BUILD)
 .asm{$(OUTDIR)/}.obj:
 	$(ASM) $(ASMFLAGS) -c /Fo$@ $<
 
-all: $(OUTDIR) gen/gen-src1.exe includes generates ../xyzzyenv.exe \
+all: $(OUTDIR) $(OUTDIR)/xyzzy.pch gen/gen-src1.exe includes generates ../xyzzyenv.exe \
      $(FINAL_TARGET) ../xyzzycli.exe libxpi.lib
+
+$(OUTDIR)/xyzzy.pch: stdafx.cc stdafx.h stdint_compat.h
+	$(CXX) $(CXXFLAGS) -Ycstdafx.h -c -Tpstdafx.cc
 
 includes: gen/vars-decl.h gen/fns-decl.h gen/msgcode.h
 generates: gen/chtab.cc gen/dumpver.cc gen/msgdef.cc
-
 
 $(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(GENOBJS) $(OUTDIR)/xyzzy.res
 	$(LD) @<<
@@ -277,13 +279,14 @@ clean:
 	del gen\num-arith.h
 
 distclean: clean
+	del $(OUTDIR)\xyzzy.pch
 	del gen\vars-decl.h gen\fns-decl.h \
 	  gen\symtable.cc gen\chtab.cc gen\msgcode.h \
 	  gen\dumpver.cc gen\msgdef.cc gen\kanjitab.h gen\char-width.h \
 	  gen\iso2022state.h gen\ibmext.h gen\utf2sjis.h gen\jisx0212-hash.h \
 	  xdde.obj xyzzycli.obj xyzzycli.exe xyzzyenv.obj xyzzyenv.exe \
 	  xyzzycli.res xyzzyenv.res libxpi.lib xpi.obj \
-	  vc40.idb vc40.pdb *.aps XTAGS #* *~
+	  vc*.idb vc*.pdb *.aps XTAGS #* *~
 	del gen\fontrange.h gen\lucida-width.h gen\version-describe.h \
 	  gen\jisx0212-width.h gen\ucs2tab.h
 	del $(PRIVCTRLDIR:/=\)\#* $(PRIVCTRLDIR:/=\)\*~
