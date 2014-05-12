@@ -1,4 +1,8 @@
+#if _MSC_VER < 1600
+#include "../stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "privctlimpl.h"
 
 static void

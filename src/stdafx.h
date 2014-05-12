@@ -38,7 +38,11 @@
 #include <ShObjIdl.h>
 #include <stdarg.h>
 #include <stddef.h>
+#if defined(_MSC_VER) && _MSC_VER < 1600
+#include "stdint_compat.h"
+#else
 #include <stdint.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,3 +53,7 @@
 #include <winreg.h>
 #include <winsock.h>
 #include <wtypes.h>
+
+#if _MSC_VER < 1600
+#define nullptr NULL
+#endif

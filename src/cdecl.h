@@ -5,7 +5,11 @@
 # pragma warning (disable: 4201)
 
 # include <stdio.h>
+#if defined(_MSC_VER) && _MSC_VER < 1600
+# include "stdint_compat.h"
+#else
 # include <stdint.h>
+#endif
 # include <limits.h>
 # include <windows.h>
 # include <winreg.h>

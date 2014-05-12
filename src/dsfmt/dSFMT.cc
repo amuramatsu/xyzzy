@@ -11,7 +11,11 @@
  *
  * The new BSD License is applied to this software, see LICENSE.txt
  */
+#if _MSC_VER < 1600
+#include "../stdafx.h"
+#else
 #include "stdafx.h"
+#endif
 #include "../cdecl.h"
 
 #include "dSFMT-params.h"
