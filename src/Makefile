@@ -223,16 +223,18 @@ FINAL_TARGET=../$(BUILD)
 	rc -r $<
 
 .d{gen/}.h:
-	$(MAKE) gen/gen-src1.exe
+	$(MAKE) gen\gen-src1.exe
 	.\gen\gen-src1 dpp $< "$@"
 
 .asm{$(OUTDIR)/}.obj:
 	$(ASM) $(ASMFLAGS) -c /Fo$@ $<
 
-all: $(OUTDIR) gen/gen-src1.exe includes ../xyzzyenv.exe \
+all: $(OUTDIR) gen/gen-src1.exe includes generates ../xyzzyenv.exe \
      $(FINAL_TARGET) ../xyzzycli.exe libxpi.lib
 
 includes: gen/vars-decl.h gen/fns-decl.h gen/msgcode.h
+generates: gen/chtab.cc gen/dumpver.cc gen/msgdef.cc
+
 
 $(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(GENOBJS) $(OUTDIR)/xyzzy.res
 	$(LD) @<<
@@ -279,8 +281,10 @@ distclean: clean
 	  gen\iso2022state.h gen\ibmext.h gen\utf2sjis.h gen\jisx0212-hash.h \
 	  xdde.obj xyzzycli.obj xyzzycli.exe xyzzyenv.obj xyzzyenv.exe \
 	  xyzzycli.res xyzzyenv.res libxpi.lib xpi.obj \
-	  vc40.idb vc40.pdb *.aps XTAGS #* *~ \
-	  $(PRIVCTRLDIR)/#* $(PRIVCTRLDIR)/*~
+	  vc40.idb vc40.pdb *.aps XTAGS #* *~
+	del gen\fontrange.h gen\lucida-width.h gen\version-describe.h \
+	  gen\jisx0212-width.h gen\ucs2tab.h
+	del $(PRIVCTRLDIR:/=\)\#* $(PRIVCTRLDIR:/=\)\*~
 
 ../$(BUILD): $(OUTDIR)/$(BUILD)
 	$(EDITBIN) $(OUTDIR)\$(BUILD) $(SUBSYS_WINDOWS) $(EDITBIN_OPTS)
@@ -418,6 +422,10 @@ fontrange.h:
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-fontrange > "$@.tmp"
 	move "$@.tmp" "$@" > nul
+
+rebuild-gen:
+	del ucs2tab.h lucida-width.h jisx0212-width.h fontrange.h
+	$(MAKE) ucs2tab.h lucida-width.h jisx0212-width.h fontrange.h
 
 gen/gen-src1.obj: gen-main.cc gen
 	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-main.cc
