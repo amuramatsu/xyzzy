@@ -287,7 +287,7 @@ xyzzyenv.exe: xyzzyenv.cc xyzzyenv.res
 CLIENT_OBJS=xyzzycli.obj
 xyzzycli.exe: $(CLIENT_OBJS) xyzzycli.res
 	$(CXX) $(CLIENT_OBJS) kernel32.lib user32.lib xyzzycli.res \
-	  -link -fixed -subsystem:windows -entry:process_startup 
+	  -link -fixed -subsystem:windows
 #	$(CXX) $(CLIENT_OBJS) setargv.obj kernel32.lib user32.lib xyzzycli.res
 
 xyzzycli.obj: xyzzycli.cc xdde.h xyzzycli.h
