@@ -311,7 +311,7 @@ $(OUTDIR)\xyzzy.rc: xyzzy.rc version-rc.h
 	type version-rc.h >> $@
 
 gen/version-describe.h:
-	-@if not exist gen/nul mkdir gen
+	-@if not exist gen\nul mkdir gen
 	..\misc\update_version_describe.bat
 
 vars-decl.h: gen-src1.exe
@@ -325,7 +325,7 @@ fns-decl.h: gen-src1.exe
 	move $(TMPFILE) $@ > nul
 
 gen/symtable.cc: gen-src1.exe
-	-@if not exist gen/nul mkdir gen
+	-@if not exist gen\nul mkdir gen
 	-@if exist $@ del $@ > nul
 	.\gen-src1 gen-syms -symtable > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
