@@ -1,6 +1,6 @@
 
 # define VC++ version (4, 6, or 7)
-VCVER=11
+VCVER=9
 
 .SUFFIXES: .cc .rc .res .d .asm
 
@@ -27,6 +27,7 @@ ces.cc \
 char.cc \
 chname.cc \
 chtab.cc \
+clipboard.cc \
 com.cc \
 conf.cc \
 colors.cc \
@@ -34,6 +35,7 @@ ctl3d.cc \
 chunk.cc \
 data.cc \
 dde.cc \
+debug.cc \
 dialogs.cc \
 disp.cc \
 dll.cc \
@@ -50,8 +52,10 @@ fileio.cc \
 filer.cc \
 fnkey.cc \
 font.cc \
+frame.cc \
 gime.cc \
 glob.cc \
+guess.cc \
 guid.cc \
 gzip.cc \
 hash.cc \
@@ -62,7 +66,6 @@ ipc.cc \
 kanji.cc \
 kbd.cc \
 keymap.cc \
-largeint.cc \
 ldialog.cc \
 lex.cc \
 list.cc \
@@ -73,6 +76,7 @@ md5c.cc \
 menu.cc \
 minibuf.cc \
 mman.cc \
+monitor.cc \
 mouse.cc \
 move.cc \
 msgbox.cc \
@@ -99,6 +103,7 @@ sha2.cc \
 signal.cc \
 sock.cc \
 sockinet.cc \
+sockssl.cc \
 statarea.cc \
 stdctl.cc \
 stream.cc \
@@ -108,10 +113,12 @@ symbol.cc \
 symtable.cc \
 syntax.cc \
 sysdep.cc \
+system.cc \
 thread.cc \
 toplev.cc \
 ucs2.cc \
 undo.cc \
+unzip.cc \
 usertab.cc \
 usertool.cc \
 utils.cc \
@@ -129,11 +136,15 @@ xlist.cc
 ASMS=\
 vc-compat-entry.asm
 
-PRIVCTRLDIR=../privctrl
+PRIVCTRLDIR=./privctrl
 PRIVCTRLOBJS=\
 $(OUTDIR)/privctrl.obj \
 $(OUTDIR)/listviewex.obj \
 $(OUTDIR)/url.obj
+
+DSFMTDIR=./dsfmt
+DSFMTOBJS=\
+$(OUTDIR)/dSFMT.obj
 
 BUILD=xyzzy.exe
 
@@ -160,8 +171,8 @@ SUBSYS_CONSOLE=/SUBSYSTEM:CONSOLE,5.0
 LD=link -nologo
 LIBS=kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib \
 comctl32.lib imm32.lib setargv.obj comdlg32.lib mpr.lib ole32.lib \
-oleaut32.lib winspool.lib zlib/zlib.lib 
-INC=-I$(PRIVCTRLDIR)
+oleaut32.lib winspool.lib rpcrt4.lib wsock32.lib crypt32.lib secur32.lib
+INC=-I$(PRIVCTRLDIR) -I./gen
 
 SPC=""
 SPC=$(SPC:""= )
@@ -179,6 +190,7 @@ OUTDIR=d
 OBJS=$(OBJS: = d/)
 CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
 LDFLAGS=-debug -stack:0x2000000 -incremental:yes
+LIBS=$(LIBS) zlib/Debug/zlib.lib
 FINAL_TARGET=$(OUTDIR)/$(BUILD)
 
 !ELSE
@@ -187,6 +199,7 @@ OUTDIR=r
 OBJS=$(OBJS: = r/)
 CXXFLAGS=-Ob1 -Oi -Ot -Oy -Gs -Gy -Gz $(CXXOPT) -W3 -MT -vmb $(INC) $(DEFS) -Fo$(OUTDIR)/
 LDFLAGS=-stack:0x2000000 -map:$(OUTDIR)/xyzzy.map -incremental:no -fixed -opt:ref
+LIBS=$(LIBS) zlib/Release/zlib.lib
 FINAL_TARGET=../$(BUILD)
 
 !ENDIF
@@ -197,23 +210,26 @@ FINAL_TARGET=../$(BUILD)
 {$(PRIVCTRLDIR)/}.cc{$(OUTDIR)/}.obj:
 	$(CXX) $(CXXFLAGS) -c -Tp$<
 
+{$(DSFMTDIR)/}.cc{$(OUTDIR)/}.obj:
+	$(CXX) $(CXXFLAGS) -c -Tp$<
+
 .rc.res:
 	rc -r $<
 
 .d.h:
-	dpp $< $@
+	.\gen-src1 dpp $< $@
 
 .asm{$(OUTDIR)/}.obj:
 	$(ASM) $(ASMFLAGS) -c /Fo$@ $<
 
-all: $(OUTDIR) dpp.exe includes ../xyzzyenv.exe \
+all: $(OUTDIR) gen-src1.exe includes ../xyzzyenv.exe \
      $(FINAL_TARGET) ../xyzzycli.exe libxpi.lib
 
 includes: vars-decl.h fns-decl.h msgcode.h
 
-$(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(OUTDIR)/xyzzy.res
+$(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(OUTDIR)/xyzzy.res
 	$(LD) @<<
-  $(LDFLAGS) -out:$@ $(OBJS) $(PRIVCTRLOBJS) -subsystem:windows $(LIBS) $(OUTDIR)/xyzzy.res
+  $(LDFLAGS) -out:$@ $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) -subsystem:windows $(LIBS) $(OUTDIR)/xyzzy.res
 <<
 
 $(OUTDIR): force
@@ -222,18 +238,19 @@ $(OUTDIR): force
 force:
 
 clean:
-	rm -f $(OBJS:/=\) $(PRIVCTRLOBJS:/=\) $(OUTDIR)\$(BUILD)
+	rm -f $(OBJS:/=\) $(PRIVCTRLOBJS:/=\) $(DSFMTBOJS:/=\) $(OUTDIR)\$(BUILD)
 	rm -f $(OUTDIR)\xyzzy.res $(OUTDIR)\xyzzy.rc $(OUTDIR)\$(BUILD:.exe=.map) \
 	  $(OUTDIR)\$(BUILD:.exe=.ilk)
-	rm -f gen-syms.obj gen-syms.exe gen-ctab.obj gen-ctab.exe
-	rm -f gen-ktab.obj gen-ktab.exe gen-msg.obj gen-msg.exe
-	rm -f gen-ucs2tab.obj gen-ucs2tab.exe
-	rm -f gen-utf2sjis.obj gen-utf2sjis.exe
-	rm -f gen-char-width.obj gen-char-width.exe
-	rm -f gen-jisx0212-hash.exe gen-jisx0212-hash.obj
-	rm -f gen-iso2022state.obj gen-iso2022state.exe
-	rm -f gen-ibmext.obj gen-ibmext.exe
-	rm -f dpp.exe dpp.obj num-arith.h
+	rm -f gen-src1.obj gen-src1.exe gen-src2.obj gen-src2.exe
+	rm -f gen-syms.obj gen-ctab.obj
+	rm -f gen-ktab.obj gen-msg.obj
+	rm -f gen-ucs2tab.obj
+	rm -f gen-utf2sjis.obj
+	rm -f gen-char-width.obj
+	rm -f gen-jisx0212-hash.obj
+	rm -f gen-iso2022state.obj
+	rm -f gen-ibmext.obj
+	rm -f dpp.obj num-arith.h
 
 distclean: clean
 	rm -f vars-decl.h fns-decl.h symtable.gen.cc chtab.gen.cc msgcode.h \
@@ -261,7 +278,7 @@ realclean: distclean
 
 xyzzyenv.exe: xyzzyenv.cc xyzzyenv.res
 	$(CXX) -O2 -Tpxyzzyenv.cc xyzzyenv.res kernel32.lib user32.lib \
-	   -link -fixed -subsystem:console -entry:process_startup
+	   -link -fixed -subsystem:console
 
 ../xyzzycli.exe: xyzzycli.exe
 	$(EDITBIN) xyzzycli.exe $(SUBSYS_WINDOWS)
@@ -293,147 +310,172 @@ $(OUTDIR)\xyzzy.rc: xyzzy.rc version-rc.h
 	type xyzzy.rc > $@
 	type version-rc.h >> $@
 
-version-describe.gen.h:
+gen/version-describe.h:
+	-@if not exist gen/nul mkdir gen
 	..\misc\update_version_describe.bat
 
-vars-decl.h: gen-syms.exe
+vars-decl.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-syms -vars > $(TMPFILE)
+	.\gen-src1 gen-syms -vars > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-fns-decl.h: gen-syms.exe
+fns-decl.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-syms -proto > $(TMPFILE)
+	.\gen-src1 gen-syms -proto > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-symtable.cc: symtable.gen.cc
-symtable.gen.cc: gen-syms.exe
+gen/symtable.cc: gen-src1.exe
+	-@if not exist gen/nul mkdir gen
 	-@if exist $@ del $@ > nul
-	.\gen-syms -symtable > $(TMPFILE)
+	.\gen-src1 gen-syms -symtable > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-dumpver.cc: dumpver.gen.cc
-dumpver.gen.cc: gen-syms.exe version.h
+dumpver.cc: gen-src1.exe version.h
 	-@if exist $@ del $@ > nul
-	.\gen-syms -version > $(TMPFILE)
+	.\gen-src1 gen-syms -version > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-chtab.cc: chtab.gen.cc
-chtab.gen.cc: gen-ctab.exe
+chtab.cc: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-ctab > $(TMPFILE)
+	.\gen-src1 gen-ctab > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-msgcode.h: gen-msg.exe
+msgcode.h: gen-src2.exe
 	-@if exist $@ del $@ > nul
-	.\gen-msg -enum > $(TMPFILE)
+	.\gen-src2 gen-msg -enum > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-msgdef.cc: msgdef.gen.cc
-msgdef.gen.cc: gen-msg.exe
+msgdef.cc: gen-src2.exe
 	-@if exist $@ del $@ > nul
-	.\gen-msg -c > $(TMPFILE)
+	.\gen-src2 gen-msg -c > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-kanjitab.h: gen-ktab.exe
+kanjitab.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-ktab > $(TMPFILE)
+	.\gen-src1 gen-ktab > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-ucs2tab.h: gen-ucs2tab.cc
-	$(MAKE) -nologo gen-ucs2tab.exe
+ucs2tab.h:
+	$(MAKE) gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-ucs2tab > $(TMPFILE)
+	.\gen-src1 gen-ucs2tab > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-utf2sjis.h: gen-utf2sjis.exe
+utf2sjis.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-utf2sjis > $(TMPFILE)
+	.\gen-src1 gen-utf2sjis > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-char-width.h: gen-char-width.exe
+char-width.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-char-width > $(TMPFILE)
+	.\gen-src1 gen-char-width > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
 jisx0212-width.h:
-	$(MAKE) -nologo gen-jisx0212-width.exe
-	.\gen-jisx0212-width > $(TMPFILE)
+	$(MAKE) gen-src1.exe
 	-@if exist $@ del $@ > nul
+	.\gen-src1 gen-jisx0212-width > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-jisx0212-hash.h: gen-jisx0212-hash.exe
+jisx0212-hash.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-jisx0212-hash > $(TMPFILE)
+	.\gen-src1 gen-jisx0212-hash > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
 lucida-width.h:
-	$(MAKE) -nologo gen-lucida-width.exe
-	.\gen-lucida-width > $(TMPFILE)
+	$(MAKE) gen-src1.exe
 	-@if exist $@ del $@ > nul
+	.\gen-src1 gen-lucida-width > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-iso2022state.h: gen-iso2022state.exe
+iso2022state.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-iso2022state > $(TMPFILE)
+	.\gen-src1 gen-iso2022state > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-ibmext.h: gen-ibmext.exe
+ibmext.h: gen-src1.exe
 	-@if exist $@ del $@ > nul
-	.\gen-ibmext > $(TMPFILE)
+	.\gen-src1 gen-ibmext > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
 fontrange.h:
-	$(MAKE) -nologo gen-fontrange.exe
-	.\gen-fontrange > $(TMPFILE)
+	$(MAKE) gen-src1.exe
 	-@if exist $@ del $@ > nul
+	.\gen-src1 gen-fontrange > $(TMPFILE)
 	move $(TMPFILE) $@ > nul
 
-gen-syms.exe: gen-syms.cc symbol.h function.h
-	$(CXX) -Fe$@ -Tpgen-syms.cc
+GEN_SRC1_OBJS=\
+gen-syms.obj \
+gen-ctab.obj \
+gen-ktab.obj \
+gen-ucs2tab.obj \
+gen-utf2sjis.obj \
+gen-char-width.obj \
+gen-jisx0212-hash.obj \
+gen-jisx0212-width.obj \
+gen-lucida-width.obj \
+gen-fontrange.obj \
+gen-iso2022state.obj \
+gen-ibmext.obj \
+dpp.obj
 
-gen-ctab.exe: gen-ctab.cc chtype.h
-	$(CXX) -Fe$@ -Tpgen-ctab.cc
+GEN_SRC2_OBJS=\
+gen-msg.obj
 
-gen-msg.exe: gen-msg.cc chtab.cc chtype.h msgdef.h
-	$(CXX) -MT -Fe$@ -Tpgen-msg.cc
+gen-src1.obj: gen-main.cc
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-main.cc
+gen-src1.exe: gen-src1.obj $(GEN_SRC1_OBJS)
+	$(CXX) -Fe$@ gen-src1.obj $(GEN_SRC1_OBJS) user32.lib gdi32.lib
+gen-src2.obj: gen-main.cc
+	$(CXX) -MT -Fo$@ -c -DGEN_SRC2 -Tpgen-main.cc
+gen-src2.exe: gen-src2.obj $(GEN_SRC2_OBJS)
+	$(CXX) -MT -Fe$@ gen-src2.obj $(GEN_SRC2_OBJS)
 
-gen-ktab.exe: gen-ktab.cc
-	$(CXX) -Fe$@ -Tpgen-ktab.cc
+gen-syms.obj: gen-syms.cc symbol.h function.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-syms.cc
 
-gen-ucs2tab.exe: gen-ucs2tab.cc charset.h fontrange.h
-	$(CXX) -Fe$@ -Tpgen-ucs2tab.cc
+gen-ctab.obj: gen-ctab.cc chtype.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ctab.cc
 
-gen-utf2sjis.exe: gen-utf2sjis.cc
-	$(CXX) -Fe$@ -Tpgen-utf2sjis.cc
+gen-msg.obj: gen-msg.cc chtab.cc chtype.h msgdef.h
+	$(CXX) -MT -Fo$@ -c -DGEN_SRC2 -Tpgen-msg.cc
 
-gen-char-width.exe: gen-char-width.cc jisx0212-width.h
-	$(CXX) -Fe$@ -Tpgen-char-width.cc
+gen-ktab.obj: gen-ktab.cc
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ktab.cc
 
-gen-jisx0212-hash.exe: gen-jisx0212-hash.cc charset.h jisx0212-width.h
-	$(CXX) -Fe$@ -Tpgen-jisx0212-hash.cc
+gen-ucs2tab.obj: gen-ucs2tab.cc charset.h fontrange.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ucs2tab.cc
 
-gen-jisx0212-width.exe: gen-jisx0212-width.cc ucs2tab.h charset.h
-	$(CXX) -Fe$@ -Tpgen-jisx0212-width.cc user32.lib gdi32.lib
+gen-utf2sjis.obj: gen-utf2sjis.cc
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-utf2sjis.cc
 
-gen-lucida-width.exe: gen-lucida-width.cc charset.h
-	$(CXX) -Fe$@ -Tpgen-lucida-width.cc user32.lib gdi32.lib
+gen-char-width.obj: gen-char-width.cc jisx0212-width.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-char-width.cc
 
-gen-fontrange.exe: gen-fontrange.cc charset.h
-	$(CXX) -Fe$@ -Tpgen-fontrange.cc user32.lib gdi32.lib
+gen-jisx0212-hash.obj: gen-jisx0212-hash.cc charset.h jisx0212-width.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-jisx0212-hash.cc
 
-gen-iso2022state.exe: gen-iso2022state.cc
-	$(CXX) -Fe$@ -Tpgen-iso2022state.cc
+gen-jisx0212-width.obj: gen-jisx0212-width.cc ucs2tab.h charset.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-jisx0212-width.cc
 
-gen-ibmext.exe: gen-ibmext.cc ucs2tab.h
-	$(CXX) -Fe$@ -Tpgen-ibmext.cc
+gen-lucida-width.obj: gen-lucida-width.cc charset.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-lucida-width.cc
 
-dpp.exe: dpp.cc
-	$(CXX) -Fe$@ -Tpdpp.cc
+gen-fontrange.obj: gen-fontrange.cc charset.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-fontrange.cc
+
+gen-iso2022state.obj: gen-iso2022state.cc
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-iso2022state.cc
+
+gen-ibmext.obj: gen-ibmext.cc ucs2tab.h
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ibmext.cc
+
+dpp.obj: dpp.cc
+	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpdpp.cc
 
 ED_H=alloc.h array.h bignum.h Buffer.h cdecl.h char.h chtype.h chunk.h \
 closure.h cons.h data.h dll.h ed.h error.h function.h hash.h \
-kanji.h kbd.h largeint.h lisp.h list.h message.h mouse.h msgbox.h \
+kanji.h kbd.h lisp.h list.h message.h mouse.h msgbox.h \
 number.h oledata.h package.h process.h random.h stream.h string.h \
 structure.h symbol.h syntax.h sysdep.h timer.h trace.h reconv.h \
 vector.h Window.h utils.h xcolor.h readtab.h vfs.h waitobj.h charset.h \
@@ -443,7 +485,7 @@ MAINFRAME_H=mainframe.h dockbar.h pane.h
 $(OUTDIR)/Buffer.obj: syntaxinfo.h filer.h glob.h dialogs.h binfo.h $(MAINFRAME_H) buffer-bar.h DnD.h
 $(OUTDIR)/ChooseFont.obj: ChooseFont.h
 $(OUTDIR)/ColorDialog.obj: ldialog.h ChooseFont.h ColorDialog.h colors.h DnD.h conf.h glob.h
-$(OUTDIR)/DnD.obj: ../privctrl/privctrl.h com.h dialogs.h DnD.h filer.h glob.h buffer-bar.h dockbar.h
+$(OUTDIR)/DnD.obj: $(PRIVCTRLDIR)/privctrl.h com.h dialogs.h DnD.h filer.h glob.h buffer-bar.h dockbar.h
 $(OUTDIR)/StrBuf.obj: StrBuf.h
 $(OUTDIR)/Window.obj: conf.h ipc.h wheel.h
 $(OUTDIR)/arc-if.obj: arc-if.h comm-arc.h
@@ -457,7 +499,7 @@ $(OUTDIR)/conf.obj: conf.h print.h wheel.h
 $(OUTDIR)/ctl3d.obj: ctl3d.h
 $(OUTDIR)/data.obj: dataP.h lex.h symtable.h $(MAINFRAME_H)
 $(OUTDIR)/dde.obj: safe_ptr.h xdde.h
-$(OUTDIR)/dialogs.obj: ../privctrl/privctrl.h dialogs.h conf.h thread.h xstrlist.h
+$(OUTDIR)/dialogs.obj: $(PRIVCTRLDIR)/privctrl.h dialogs.h conf.h thread.h xstrlist.h
 $(OUTDIR)/disp.obj: syntaxinfo.h lucida-width.h jisx0212-hash.h binfo.h $(MAINFRAME_H) regex.h
 $(OUTDIR)/doc.obj: except.h mman.h
 $(OUTDIR)/dockbar.obj: dockbar.h
@@ -468,16 +510,16 @@ $(OUTDIR)/environ.obj: environ.h fnkey.h conf.h
 $(OUTDIR)/eval.obj: lex.h
 $(OUTDIR)/except.obj: except.h
 $(OUTDIR)/fileio.obj: except.h mman.h encoding.h
-$(OUTDIR)/filer.obj: ../privctrl/privctrl.h dialogs.h DnD.h environ.h filer.h glob.h conf.h colors.h
+$(OUTDIR)/filer.obj: $(PRIVCTRLDIR)/privctrl.h dialogs.h DnD.h environ.h filer.h glob.h conf.h colors.h
 $(OUTDIR)/font.obj: font.h conf.h
 $(OUTDIR)/fnkey.obj: fnkey.h
 $(OUTDIR)/glob.obj: glob.h
-$(OUTDIR)/init.obj: ../privctrl/privctrl.h ctl3d.h environ.h except.h fnkey.h xdde.h syntaxinfo.h ipc.h sock.h $(MAINFRAME_H)
+$(OUTDIR)/init.obj: $(PRIVCTRLDIR)/privctrl.h ctl3d.h environ.h except.h fnkey.h xdde.h syntaxinfo.h ipc.h sock.h $(MAINFRAME_H)
 $(OUTDIR)/insdel.obj: syntaxinfo.h sequence.h byte-stream.h StrBuf.h encoding.h
 $(OUTDIR)/ipc.obj: ipc.h
 $(OUTDIR)/kanji.obj: kanjitab.h safe_ptr.h byte-stream.h StrBuf.h encoding.h iso2022state.h
 $(OUTDIR)/kbd.obj: filer.h dialogs.h encoding.h
-$(OUTDIR)/ldialog.obj: ldialog.h ColorDialog.h colors.h DnD.h glob.h ../privctrl/privctrl.h
+$(OUTDIR)/ldialog.obj: ldialog.h ColorDialog.h colors.h DnD.h glob.h $(PRIVCTRLDIR)/privctrl.h
 $(OUTDIR)/lex.obj: lex.h
 $(OUTDIR)/list.obj: sequence.h
 $(OUTDIR)/listen.obj: listen.h
@@ -497,7 +539,7 @@ $(OUTDIR)/search.obj: regex.h
 $(OUTDIR)/sequence.obj: safe_ptr.h sequence.h
 $(OUTDIR)/stream.obj: sequence.h StrBuf.h wstream.h sock.h sockinet.h
 $(OUTDIR)/string.obj: sequence.h StrBuf.h
-$(OUTDIR)/symtable.obj: symtable.h
+$(OUTDIR)/symtable.obj: gen/symtable.cc symtable.h
 $(OUTDIR)/syntax.obj: syntaxinfo.h
 $(OUTDIR)/thread.obj: thread.h
 $(OUTDIR)/toplev.obj: ctl3d.h DnD.h environ.h fnkey.h $(MAINFRAME_H) wheel.h
@@ -505,7 +547,7 @@ $(OUTDIR)/usertab.obj: $(MAINFRAME_H) colors.h
 $(OUTDIR)/usertool.obj: $(MAINFRAME_H)
 $(OUTDIR)/ucs2.obj: ucs2tab.h char-width.h
 $(OUTDIR)/vector.obj: sequence.h
-$(OUTDIR)/version.obj: version.h version-describe.gen.h
+$(OUTDIR)/version.obj: version.h gen/version-describe.h
 $(OUTDIR)/wheel.obj: wheel.h
 $(OUTDIR)/wstream.obj: StrBuf.h wstream.h
 $(OUTDIR)/xdde.obj: xdde.h
@@ -533,9 +575,9 @@ prof-dir: force
 
 prof-target: $(PROFDIR)\$(BUILD)
 
-$(PROFDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(OUTDIR)/xyzzy.res
+$(PROFDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(OUTDIR)/xyzzy.res
 	$(LD) @<<
-  -out:$@ $(OBJS) $(PRIVCTRLOBJS) -profile -stack:0x2000000
+  -out:$@ $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) -profile -stack:0x2000000
 	-map:$(PROFDIR)/xyzzy.map -subsystem:windows $(LIBS) $(OUTDIR)/xyzzy.res
 <<
 
