@@ -13,9 +13,9 @@ clipboard::clipboard ()
     return;
 
   AddClipboardFormatListenerProc =
-    (AddClipboardFormatListener) GetProcAddress (user32, "AddClipboardFormatListener");
+    (AddXyzzyClipboardFormatListener) GetProcAddress (user32, "AddClipboardFormatListener");
   RemoveClipboardFormatListenerProc =
-    (RemoveClipboardFormatListener) GetProcAddress (user32, "RemoveClipboardFormatListener");
+    (RemoveXyzzyClipboardFormatListener) GetProcAddress (user32, "RemoveClipboardFormatListener");
   use_newapi_p = (AddClipboardFormatListenerProc != nullptr && RemoveClipboardFormatListenerProc != nullptr);
 }
 
