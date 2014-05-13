@@ -172,7 +172,7 @@ CPP=cl -nologo -E
 ASM=ml -nologo
 ASMFLAGS=-DVCVER=$(VCVER)
 EDITBIN=editbin -nologo
-EDITBIN_OPTS=/largeaddressaware
+EDITBIN_OPTS=
 SUBSYS_WINDOWS=/SUBSYSTEM:WINDOWS,5.0
 SUBSYS_CONSOLE=/SUBSYSTEM:CONSOLE,5.0
 LD=link -nologo
@@ -196,7 +196,7 @@ CFG=r
 OUTDIR=d
 OBJS=$(OBJS: = d/)
 CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
-LDFLAGS=-debug -stack:0x2000000 -incremental:yes -nxcompat -safeseh
+LDFLAGS=-debug -stack:0x2000000 -incremental:yes -nxcompat
 LIBS=$(LIBS) zlib/Debug/zlib.lib
 FINAL_TARGET=$(OUTDIR)/$(BUILD)
 
@@ -204,8 +204,8 @@ FINAL_TARGET=$(OUTDIR)/$(BUILD)
 
 OUTDIR=r
 OBJS=$(OBJS: = r/)
-CXXFLAGS=-Ob1 -Oi -Ot -Oy -Gs -Gy -Gz $(CXXOPT) -W3 -MT -vmb -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -Fo$(OUTDIR)/
-LDFLAGS=-stack:0x2000000 -map:$(OUTDIR)/xyzzy.map -incremental:no -fixed -opt:ref -nxcompat -safeseh
+CXXFLAGS=-Ob2 -O2 -Oi -Ot -Oy -Gs -Gy -Gz -GA $(CXXOPT) -W3 -MT -vmb -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -Fo$(OUTDIR)/
+LDFLAGS=-stack:0x2000000 -map:$(OUTDIR)/xyzzy.map -incremental:no -fixed -opt:ref -nxcompat
 LIBS=$(LIBS) zlib/Release/zlib.lib
 FINAL_TARGET=../$(BUILD)
 
