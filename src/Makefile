@@ -376,7 +376,7 @@ gen\kanjitab.h: gen/gen-src1.exe
 	move "$@.tmp" "$@" > nul
 
 gen\ucs2tab.h: ucs2tab.h
-	copy ucs2tab.h gen
+	copy ucs2tab.h gen > nul
 ucs2tab.h:
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-ucs2tab > "$@.tmp"
@@ -393,7 +393,7 @@ gen\char-width.h: gen/gen-src1.exe
 	move "$@.tmp" "$@" > nul
 
 gen\jisx0212-width.h: jisx0212-width.h
-	copy jisx0212-width.h gen
+	copy jisx0212-width.h gen > nul
 jisx0212-width.h:
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-jisx0212-width > "$@.tmp"
@@ -405,7 +405,7 @@ gen\jisx0212-hash.h: gen/gen-src1.exe
 	move "$@.tmp" "$@" > nul
 
 gen\lucida-width.h: lucida-width.h
-	copy lucida-width.h gen
+	copy lucida-width.h gen >nul
 lucida-width.h:
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-lucida-width > "$@.tmp"
@@ -422,7 +422,7 @@ gen\ibmext.h: gen/gen-src1.exe
 	move "$@.tmp" "$@" > nul
 
 gen\fontrange.h: fontrange.h
-	copy fontrange.h gen
+	copy fontrange.h gen > nul
 fontrange.h:
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-fontrange > "$@.tmp"
