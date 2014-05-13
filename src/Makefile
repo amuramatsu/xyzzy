@@ -1,5 +1,5 @@
 
-# define VC++ version (4, 6, or 7)
+# define VC++ version (4, 6-11)
 VCVER=9
 
 .SUFFIXES: .cc .rc .res .d .asm
@@ -154,17 +154,19 @@ BUILD=xyzzy.exe
 !ERROR `VCVER' undeclared.
 !ELSEIF "$(VCVER)" == "4"
 CXXOPT=-Gf -GX
-!ELSEIF "$(VCVER)" == "5" || "$(VCVER)" == "6"
+!ELSEIF "$(VCVER)" == "5"
+!ERROR `VCVER=5' is not supported.
+!ELSEIF "$(VCVER)" == "6"
 CXXOPT=-GF -EHa
 !ELSE
 CXXOPT=-GF -EHa -Zc:wchar_t-
 !ENDIF
 
 DEFS=-DSTRICT -DWIN32 -D_WIN32 -D_MT -D__XYZZY__ -DPRIVCTRL_NODLL -DHAVE_DIMM_H -DDEBUG_GC
-!IF "$(VCVER)" == "8" || "$(VCVER)" == "9" || "$(VCVER)" == "10" || "$(VCVER)" == "11"
-CXX=cl -nologo -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
-!ELSE
+!IF "$(VCVER)" == "4" || "$(VCVER)" == "6" || "$(VCVER)" == "7"
 CXX=cl -nologo
+!ELSE
+CXX=cl -nologo -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_WARNINGS
 !ENDIF
 CPP=cl -nologo -E
 ASM=ml -nologo
@@ -193,7 +195,7 @@ CFG=r
 
 OUTDIR=d
 OBJS=$(OBJS: = d/)
-CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
+CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
 LDFLAGS=-debug -stack:0x2000000 -incremental:yes -nxcompat -safeseh
 LIBS=$(LIBS) zlib/Debug/zlib.lib
 FINAL_TARGET=$(OUTDIR)/$(BUILD)
@@ -323,7 +325,7 @@ libxpi.lib: xpi.obj
 	lib -out:$@ xpi.obj
 
 xpi.obj: xpi.cc
-	$(CXX) -O2 -Zl -W3 -c -Tpxpi.cc
+	$(CXX) -O2 -Zl -W3 -EHsc -c -Tpxpi.cc
 
 $(OUTDIR)/xyzzy.res: $(OUTDIR)/xyzzy.rc
 	rc -r -fo$@ $(RCFLAGS) $(OUTDIR)/xyzzy.rc
