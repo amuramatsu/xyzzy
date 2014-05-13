@@ -10,7 +10,7 @@ sub usage {
 
 sub get_commits {
     my ($from, $to) = @_;
-    open my $fh, "$GIT log --no-merges --reverse ${from}..${to} |";
+    open my $fh, "$GIT --no-pager log --no-merges --reverse ${from}..${to} |";
     my @logs = grep /^commit /, <$fh>;
     close $fh;
     return map { chomp; s/^commit //; $_; } @logs;
@@ -25,7 +25,7 @@ sub make_tag {
 
 sub cherry_pick {
     my ($id) = @_;
-    system("$GIT log --color -n 1 ${id} | cat");
+    system("$GIT --no-pager log --color -n 1 ${id}");
     print "\n\n--- apply this patch (Y/n)\n";
     $_ = <STDIN>;
     unless (/^[nN]/) {
