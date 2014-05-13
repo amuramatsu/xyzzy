@@ -1,5 +1,7 @@
 #! /usr/bin/env perl
 
+use strict;
+
 my $GIT = "git";
 my $LAST_PATCH = "";
 
