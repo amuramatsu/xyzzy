@@ -2,6 +2,8 @@
 
 use strict;
 
+use Getopt::Long qw(:config posix_default no_ignore_case gnu_compat);
+
 my $GIT = "git";
 my $LAST_PATCH = "";
 
@@ -16,6 +18,13 @@ sub get_commits {
     my @logs = grep /^commit /, <$fh>;
     close $fh;
     return map { chomp; s/^commit //; $_; } @logs;
+}
+
+sub get_picked_cherries {
+    open my $fh, "$GIT --no-pager log |";
+    my @picks =	grep /\(cherry picked from commit [a-zA-Z0-9]{40}\)/, <$fh>;
+    close $fh;
+    return map { chomp; s/^.*commit ([a-zA-Z0-9]{40}).*$/$1/; $_; } @picks;
 }
 
 sub make_tag {
@@ -41,8 +50,31 @@ sub cherry_pick {
     }
     $LAST_PATCH = $id;
 }
-    
+
+sub remain_patches {
+    my ($from, $to) = @_;
+    my %picked;
+    for my $id (get_picked_cherries()) {
+	$picked{$id} = 1;
+    }
+    my @commits = get_commits($from, $to);
+    for my $id (@commits) {
+	if (! $picked{$id}) {
+	    system("$GIT --no-pager log --no-color -n 1 ${id}");
+	    print "\n";
+	}
+    }
+}
+
+my $opt_r;
+GetOptions("remain|r" => \$opt_r);
 usage() if ($#ARGV < 1);
-for my $id (get_commits($ARGV[0], $ARGV[1])) {
-    cherry_pick($id);
+
+if ($opt_r) {
+    remain_patches($ARGV[0], $ARGV[1]);
+}
+else {
+    for my $id (get_commits($ARGV[0], $ARGV[1])) {
+	cherry_pick($id);
+    }
 }
