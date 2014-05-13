@@ -506,7 +506,8 @@ prof-target: $(PROFDIR)\$(BUILD)
 
 $(PROFDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(OUTDIR)/xyzzy.res
 	$(LD) @<<
-  -out:$@ $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) -profile -stack:0x2000000
+        -out:$@ $(OBJS)
+        $(PRIVCTRLOBJS) $(DSFMTOBJS) $(GENOBJS) -profile $(LDFLAGS)
 	-map:$(PROFDIR)/xyzzy.map -subsystem:windows $(LIBS) $(OUTDIR)/xyzzy.res
 <<
 
