@@ -103,6 +103,7 @@ sub make_depends {
     my ($file, $curdir) = @_;
     my $target = $file;
     $target =~ s/\.cc$/\.obj/;
+    $target =~ s/^.*\///;
 
     my @incs;
     for my $dep (@{(get_include_files($file, $curdir))[0]}) {

@@ -107,7 +107,6 @@ stream.cc \
 string.cc \
 structure.cc \
 symbol.cc \
-symtable.cc \
 syntax.cc \
 sysdep.cc \
 system.cc \
@@ -143,10 +142,14 @@ DSFMTDIR=./dsfmt
 DSFMTOBJS=\
 $(OUTDIR)/dSFMT.obj
 
+GENDIR=./gen
 GENOBJS=\
 $(OUTDIR)/chtab.obj \
 $(OUTDIR)/dumpver.obj \
-$(OUTDIR)/msgdef.obj
+$(OUTDIR)/msgdef.obj \
+$(OUTDIR)/symtable.obj
+
+ZLIBDIR=./zlib
 
 BUILD=xyzzy.exe
 
@@ -179,7 +182,7 @@ LD=link -nologo
 LIBS=kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib \
 comctl32.lib imm32.lib setargv.obj comdlg32.lib mpr.lib ole32.lib \
 oleaut32.lib winspool.lib rpcrt4.lib wsock32.lib crypt32.lib secur32.lib
-INC=-I$(PRIVCTRLDIR) -I./gen
+INC=-I$(PRIVCTRLDIR) -I$(GENDIR)
 
 SPC=""
 SPC=$(SPC:""= )
@@ -197,7 +200,7 @@ OUTDIR=d
 OBJS=$(OBJS: = d/)
 CXXFLAGS=-Od -Gz -Gs -Gy -Gm $(CXXOPT) -W3 -MTd -Zi -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -DDEBUG -Fo$(OUTDIR)/
 LDFLAGS=-debug -stack:0x2000000 -incremental:yes -nxcompat
-LIBS=$(LIBS) zlib/Debug/zlib.lib
+LIBS=$(LIBS) $(ZLIBDIR)/Debug/zlib.lib
 FINAL_TARGET=$(OUTDIR)/$(BUILD)
 
 !ELSE
@@ -206,7 +209,7 @@ OUTDIR=r
 OBJS=$(OBJS: = r/)
 CXXFLAGS=-Ob2 -O2 -Oi -Ot -Oy -Gs -Gy -Gz -GA $(CXXOPT) -W3 -MT -vmb -Fp$(OUTDIR)/xyzzy.pch $(INC) $(DEFS) -Fo$(OUTDIR)/
 LDFLAGS=-stack:0x2000000 -map:$(OUTDIR)/xyzzy.map -incremental:no -fixed -opt:ref -nxcompat
-LIBS=$(LIBS) zlib/Release/zlib.lib
+LIBS=$(LIBS) $(ZLIBDIR)/Release/zlib.lib
 FINAL_TARGET=../$(BUILD)
 
 !ENDIF
@@ -214,7 +217,7 @@ FINAL_TARGET=../$(BUILD)
 .cc{$(OUTDIR)/}.obj::
 	$(CXX) $(CXXFLAGS) -Yustdafx.h -c -TP $<
 
-{gen/}.cc{$(OUTDIR)/}.obj::
+{$(GENDIR)/}.cc{$(OUTDIR)/}.obj::
 	$(CXX) $(CXXFLAGS) -c -TP $<
 
 {$(PRIVCTRLDIR)/}.cc{$(OUTDIR)/}.obj::
@@ -226,21 +229,14 @@ FINAL_TARGET=../$(BUILD)
 .rc.res:
 	rc -r $<
 
-.d{gen/}.h:
-	$(MAKE) gen\gen-src1.exe
-	.\gen\gen-src1 dpp $< "$@"
-
 .asm{$(OUTDIR)/}.obj:
 	$(ASM) $(ASMFLAGS) -c /Fo$@ $<
 
-all: $(OUTDIR) $(OUTDIR)/xyzzy.pch gen/gen-src1.exe includes generates ../xyzzyenv.exe \
+all: $(OUTDIR) $(GENDIRSRCS) ../xyzzyenv.exe \
      $(FINAL_TARGET) ../xyzzycli.exe libxpi.lib
 
-$(OUTDIR)/xyzzy.pch: stdafx.cc stdafx.h stdint_compat.h
+$(OUTDIR)/xyzzy.pch: stdafx.h targetver.h stdint_compat.h
 	$(CXX) $(CXXFLAGS) -Ycstdafx.h -c -Tpstdafx.cc
-
-includes: gen/vars-decl.h gen/fns-decl.h gen/msgcode.h
-generates: gen/chtab.cc gen/dumpver.cc gen/msgdef.cc
 
 $(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(GENOBJS) $(OUTDIR)/xyzzy.res
 	$(LD) @<<
@@ -249,49 +245,22 @@ $(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(GENOBJS) $(OUTDIR)/xy
 
 $(OUTDIR): force
 	-@if not exist $(OUTDIR)\nul mkdir $(OUTDIR)
-gen:
-	-@if not exist gen\nul mkdir gen
+$(GENDIR): force
+	-@if not exist $(GENDIR)\nul mkdir $(GENDIR)
 
 force:
 
-GEN_SRC1_OBJS=\
-gen\gen-syms.obj \
-gen\gen-ctab.obj \
-gen\gen-ktab.obj \
-gen\gen-ucs2tab.obj \
-gen\gen-utf2sjis.obj \
-gen\gen-char-width.obj \
-gen\gen-jisx0212-hash.obj \
-gen\gen-jisx0212-width.obj \
-gen\gen-lucida-width.obj \
-gen\gen-fontrange.obj \
-gen\gen-iso2022state.obj \
-gen\gen-ibmext.obj \
-gen\dpp.obj
-
-GEN_SRC2_OBJS=\
-gen\gen-msg.obj
-
-clean:
-	del $(OBJS:/=\) $(PRIVCTRLOBJS:/=\) $(DSFMTBOJS:/=\) $(GENOBJS:/=\)
-	del $(OUTDIR)\$(BUILD) $(OUTDIR)\xyzzy.res $(OUTDIR)\xyzzy.rc \
+clean: gen-clean
+	-del $(OBJS:/=\) $(PRIVCTRLOBJS:/=\) $(DSFMTOBJS:/=\) $(GENOBJS:/=\)
+	-del $(OUTDIR)\$(BUILD) $(OUTDIR)\xyzzy.res $(OUTDIR)\xyzzy.rc \
 	  $(OUTDIR)\$(BUILD:.exe=.map) $(OUTDIR)\$(BUILD:.exe=.ilk)
-	del gen\gen-src1.obj gen\gen-src1.exe gen\gen-src2.obj gen\gen-src2.exe
-	del $(GEN_SRC1_OBJS:/=\) $(GEN_SRC2_OBJS:/=\)
-	del gen\num-arith.h
 
-distclean: clean
-	del $(OUTDIR)\xyzzy.pch
-	del gen\vars-decl.h gen\fns-decl.h \
-	  gen\symtable.cc gen\chtab.cc gen\msgcode.h \
-	  gen\dumpver.cc gen\msgdef.cc gen\kanjitab.h gen\char-width.h \
-	  gen\iso2022state.h gen\ibmext.h gen\utf2sjis.h gen\jisx0212-hash.h \
-	  xdde.obj xyzzycli.obj xyzzycli.exe xyzzyenv.obj xyzzyenv.exe \
+distclean: clean gen-distclean
+	-del $(OUTDIR)\xyzzy.pch $(OUTDIR)\stdafx.obj
+	-del xdde.obj xyzzycli.obj xyzzycli.exe xyzzyenv.obj xyzzyenv.exe \
 	  xyzzycli.res xyzzyenv.res libxpi.lib xpi.obj \
 	  vc*.idb vc*.pdb *.aps XTAGS #* *~
-	del gen\fontrange.h gen\lucida-width.h gen\version-describe.h \
-	  gen\jisx0212-width.h gen\ucs2tab.h
-	del $(PRIVCTRLDIR:/=\)\#* $(PRIVCTRLDIR:/=\)\*~
+	-del $(PRIVCTRLDIR:/=\)\#* $(PRIVCTRLDIR:/=\)\*~
 
 ../$(BUILD): $(OUTDIR)/$(BUILD)
 	$(EDITBIN) $(OUTDIR)\$(BUILD) $(SUBSYS_WINDOWS) $(EDITBIN_OPTS)
@@ -334,162 +303,214 @@ $(OUTDIR)\xyzzy.rc: xyzzy.rc version-rc.h
 	type xyzzy.rc > "$@"
 	type version-rc.h >> "$@"
 
-gen\version-describe.h: ..\misc\update_version_describe.bat gen
+# source code generators
+GEN_SRC1_SRCS=\
+gen-syms.cc \
+gen-ctab.cc \
+gen-ktab.cc \
+gen-ucs2tab.cc \
+gen-utf2sjis.cc \
+gen-char-width.cc \
+gen-jisx0212-hash.cc \
+gen-jisx0212-width.cc \
+gen-lucida-width.cc \
+gen-fontrange.cc \
+gen-iso2022state.cc \
+gen-ibmext.cc \
+dpp.cc
+
+GEN_SRC2_SRCS=\
+gen-msg.cc
+
+GEN_SRC1_OBJS=$(SPC)$(GEN_SRC1_SRCS:.cc=.obj)
+GEN_SRC1_OBJS=$(GEN_SRC1_OBJS:  = )
+#GEN_SRC1_OBJS=$(GEN_SRC1_OBJS: = $^(GENDIR^)/)
+GEN_SRC1_OBJS=$(GEN_SRC1_OBJS: = gen/)
+GEN_SRC2_OBJS=$(SPC)$(GEN_SRC2_SRCS:.cc=.obj)
+GEN_SRC2_OBJS=$(GEN_SRC2_OBJS:  = )
+#GEN_SRC2_OBJS=$(GEN_SRC2_OBJS: = $^(GENDIR^)/)
+GEN_SRC2_OBJS=$(GEN_SRC2_OBJS: = gen/)
+
+GEN_SRC1_EXE=$(GENDIR:/=\)\gen-src1.exe
+GEN_SRC2_EXE=$(GENDIR:/=\)\gen-src2.exe
+
+gen-clean:
+	-del $(GENDIR:/=\)\gen-src1.obj $(GENDIR:/=\)\gen-src1.exe
+	-del $(GENDIR:/=\)\gen-src2.obj $(GENDIR:/=\)\gen-src2.exe
+	-del $(GEN_SRC1_OBJS:/=\) $(GEN_SRC2_OBJS:/=\)
+	-del $(GENDIR:/=\)\num-arith.h
+
+gen-distclean:
+	-del $(GENDIR)\gen-stdafx.pch $(OUTDIR)\gen-stdafx.obj
+	-del /q $(GENDIR:/=\)\*.*
+
+.d{$(GENDIR)/}.h:
+	$(MAKE) $(GEN_SRC1_EXE)
+	$(GEN_SRC1_EXE) dpp "$<" "$@"
+
+$(OUTDIR)/chtab.obj: $(GENDIR)/chtab.cc
+$(OUTDIR)/dumpver.obj: $(GENDIR)/dumpver.cc
+$(OUTDIR)/msgdef.obj: $(GENDIR)/msgdef.cc
+$(OUTDIR)/symtable.obj: $(GENDIR)/symtable.cc
+
+$(GENDIR:/=\)\version-describe.h: ..\misc\update_version_describe.bat gen
 	..\misc\update_version_describe.bat
 
-gen\vars-decl.h: gen/gen-src1.exe
+#$(GENDIR:/=\))\vars-decl.h: $(GEN_SRC1EXE)
+gen\vars-decl.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-syms -vars > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-syms -vars > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\fns-decl.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\fns-decl.h: $(GEN_SRC1_EXE)
+gen\fns-decl.h: $(GEN_SRC1_EXE)
 	-@if exist "$@.tmp" del "$@" > nul
-	.\gen\gen-src1 gen-syms -proto > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-syms -proto > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\symtable.cc: gen/gen-src1.exe
+#$(GENDIR:/=\)\symtable.cc: $(GEN_SRC1_EXE)
+gen\symtable.cc: $(GEN_SRC1_EXE)
 	-@if exist "$@.tmp" del "$@" > nul
-	.\gen\gen-src1 gen-syms -symtable > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-syms -symtable > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\dumpver.cc: gen/gen-src1.exe version.h
+#$(GENDIR:/=\)\dumpver.cc: $(GEN_SRC1_EXE) version.h
+gen\dumpver.cc: $(GEN_SRC1_EXE) version.h
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-syms -version > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-syms -version > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\chtab.cc: gen/gen-src1.exe
+#$(GENDIR:/=\)\chtab.cc: $(GEN_SRC1_EXE)
+gen\chtab.cc: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-ctab > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\msgcode.h: gen/gen-src2.exe
+#$(GENDIR:/=\)\msgcode.h: $(GEN_SRC2_EXE)
+gen\msgcode.h: $(GEN_SRC2_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src2 gen-msg -enum > "$@.tmp"
+	$(GEN_SRC2_EXE) gen-msg -enum > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\msgdef.cc: gen/gen-src2.exe
+#$(GENDIR:/=\)\msgdef.cc: $(GEN_SRC2_EXE)
+gen\msgdef.cc: $(GEN_SRC2_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src2 gen-msg -c > "$@.tmp"
+	$(GEN_SRC2_EXE) gen-msg -c > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\kanjitab.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\kanjitab.h: $(GEN_SRC1_EXE)
+gen\kanjitab.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-ktab > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-ktab > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
+#$(GENDIR:/=\)\ucs2tab.h: ucs2tab.h
 gen\ucs2tab.h: ucs2tab.h
-	copy ucs2tab.h gen > nul
+	copy ucs2tab.h "$@" > nul
 ucs2tab.h:
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-ucs2tab > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-ucs2tab > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\utf2sjis.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\utf2sjis.h: $(GEN_SRC1_EXE)
+gen\utf2sjis.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-utf2sjis > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-utf2sjis > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\char-width.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\char-width.h: $(GEN_SRC1_EXE)
+gen\char-width.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-char-width > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-char-width > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
+#$(GENDIR:/=\)\jisx0212-width.h: jisx0212-width.h
 gen\jisx0212-width.h: jisx0212-width.h
-	copy jisx0212-width.h gen > nul
+	copy jisx0212-width.h "$@" > nul
 jisx0212-width.h:
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-jisx0212-width > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-jisx0212-width > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\jisx0212-hash.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\jisx0212-hash.h: $(GEN_SRC1_EXE)
+gen\jisx0212-hash.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-jisx0212-hash > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-jisx0212-hash > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
+#$(GENDIR:/=\)\lucida-width.h: lucida-width.h
 gen\lucida-width.h: lucida-width.h
-	copy lucida-width.h gen >nul
+	copy lucida-width.h "$@" >nul
 lucida-width.h:
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-lucida-width > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-lucida-width > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\iso2022state.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\iso2022state.h: $(GEN_SRC1_EXE)
+gen\iso2022state.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-iso2022state > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-iso2022state > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-gen\ibmext.h: gen/gen-src1.exe
+#$(GENDIR:/=\)\ibmext.h: $(GEN_SRC1_EXE)
+gen\ibmext.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-ibmext > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-ibmext > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
+#$(GENDIR:/=\)\fontrange.h: fontrange.h
 gen\fontrange.h: fontrange.h
-	copy fontrange.h gen > nul
+	copy fontrange.h "$@" > nul
 fontrange.h:
 	-@if exist "$@" del "$@" > nul
-	.\gen\gen-src1 gen-fontrange > "$@.tmp"
+	$(GEN_SRC1_EXE) gen-fontrange > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
 rebuild-gen:
+	$(MAKE) $(GEN_SRC1_EXE)
 	del ucs2tab.h lucida-width.h jisx0212-width.h fontrange.h
 	$(MAKE) ucs2tab.h lucida-width.h jisx0212-width.h fontrange.h
 
-gen/gen-src1.obj: gen-main.cc gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-main.cc
-gen/gen-src1.exe: gen/gen-src1.obj $(GEN_SRC1_OBJS)
-	$(CXX) -Fe$@ gen/gen-src1.obj $(GEN_SRC1_OBJS) user32.lib gdi32.lib
+GEN_CXXFLAGS=-MT -Fp$(GENDIR)/gen-stdafx.pch -I$(GENDIR)
+$(GENDIR)/gen-stdafx.pch: gen-stdafx.h targetver.h cdecl.h charset.h
+	$(CXX) $(GEN_CXXFLAGS) -Fo$(GENDIR)/ -Ycgen-stdafx.h -c -Tpgen-stdafx.cc
+.cc{$(GENDIR)/}.obj::
+	$(CXX) $(GEN_CXXFLAGS) -Fo$(GENDIR)/ -Yugen-stdafx.h -c -TP $<
 
-gen/gen-src2.obj: gen-main.cc gen
+$(GEN_SRC1_EXE): $(GENDIR)/gen-src1.obj $(GEN_SRC1_OBJS)
+	$(CXX) -MT -Fe$@ $(GENDIR)/gen-src1.obj $(GEN_SRC1_OBJS) user32.lib gdi32.lib
+
+$(GEN_SRC2_EXE): $(GENDIR)/gen-src2.obj $(GEN_SRC2_OBJS)
+	$(CXX) -MT -Fe$@ $(GENDIR)/gen-src2.obj $(GEN_SRC2_OBJS)
+
+$(GENDIR)/gen-src1.obj: gen-main.cc
+	$(CXX) -MT -Fo$@ -c -DGEN_SRC1 -Tpgen-main.cc
+
+$(GENDIR)/gen-src2.obj: gen-main.cc
 	$(CXX) -MT -Fo$@ -c -DGEN_SRC2 -Tpgen-main.cc
-gen/gen-src2.exe: gen/gen-src2.obj $(GEN_SRC2_OBJS)
-	$(CXX) -MT -Fe$@ gen/gen-src2.obj $(GEN_SRC2_OBJS)
 
-gen/gen-syms.obj: gen-syms.cc symbol.h function.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-syms.cc
+$(GENDIR)/gen-syms.obj: symbol.h function.h
+$(GENDIR)/gen-ctab.obj: chtype.h
+$(GENDIR)/gen-ktab.obj:
+$(GENDIR)/gen-msg.obj: chtype.h msgdef.h $(GENDIR)/chtab.cc
+$(GENDIR)/gen-ucs2tab.obj: $(GENDIR)/fontrange.h
+$(GENDIR)/gen-char-width.obj: $(GENDIR)/jisx0212-width.h
+$(GENDIR)/gen-jisx0212-hash.obj: $(GENDIR)/jisx0212-width.h
+$(GENDIR)/gen-jisx0212-width.obj:$(GENDIR)/ucs2tab.h
+$(GENDIR)/gen-ibmext.obj: $(GENDIR)/ucs2tab.h
+$(GENDIR)/gen-lucida-width.obj:
+$(GENDIR)/gen-utf2sjis.obj:
+$(GENDIR)/gen-fontrange.obj:
+$(GENDIR)/gen-iso2022state.obj:
+$(GENDIR)/dpp.obj:
+$(GEN_SRC1_OBJS) $(GEN_SRC2_OBJS): $(GENDIR)/gen-stdafx.pch
 
-gen/gen-ctab.obj: gen-ctab.cc chtype.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ctab.cc
-
-gen/gen-msg.obj: gen-msg.cc gen/chtab.cc chtype.h msgdef.h gen
-	$(CXX) -MT -Fo$@ -c -DGEN_SRC2 -Igen -Tpgen-msg.cc
-
-gen/gen-ktab.obj: gen-ktab.cc gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ktab.cc
-
-gen/gen-ucs2tab.obj: gen-ucs2tab.cc charset.h gen/fontrange.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ucs2tab.cc
-
-gen/gen-utf2sjis.obj: gen-utf2sjis.cc gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-utf2sjis.cc
-
-gen/gen-char-width.obj: gen-char-width.cc gen/jisx0212-width.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-char-width.cc
-
-gen/gen-jisx0212-hash.obj: gen-jisx0212-hash.cc charset.h gen/jisx0212-width.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-jisx0212-hash.cc
-
-gen/gen-jisx0212-width.obj: gen-jisx0212-width.cc gen/ucs2tab.h charset.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-jisx0212-width.cc
-
-gen/gen-lucida-width.obj: gen-lucida-width.cc charset.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-lucida-width.cc
-
-gen/gen-fontrange.obj: gen-fontrange.cc charset.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-fontrange.cc
-
-gen/gen-iso2022state.obj: gen-iso2022state.cc gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-iso2022state.cc
-
-gen/gen-ibmext.obj: gen-ibmext.cc gen/ucs2tab.h gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpgen-ibmext.cc
-
-gen/dpp.obj: dpp.cc gen
-	$(CXX) -Fo$@ -c -DGEN_SRC1 -Tpdpp.cc
-
-depend:
-	set CC=$(CXX)
-	set CFLAGS=$(CXXFLAGS)
-	mkdep $(SRCS:.cc=)
+DEPENDTEMP=tmp.$$
+depend: ../misc/makedep.pl
+	../misc/makedep.pl $(SRCS)             >  $(DEPENDTEMP)
+	../misc/makedep.pl $(PRIVCTRLDIR)/*.cc >> $(DEPENDTEMP)
+	../misc/makedep.pl $(DSFMTDIR)/*.cc >> $(DEPENDTEMP)
+	move tmp.$$ xyzzy.depend
 
 .cc.cod:
 	$(CXX) $(CXXFLAGS) -FAcs -c -Tp$<
