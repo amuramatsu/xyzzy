@@ -232,7 +232,7 @@ FINAL_TARGET=../$(BUILD)
 .asm{$(OUTDIR)/}.obj:
 	$(ASM) $(ASMFLAGS) -c /Fo$@ $<
 
-all: $(OUTDIR) $(GENDIRSRCS) ../xyzzyenv.exe \
+all: $(OUTDIR) $(GENDIR) $(GENDIRSRCS) ../xyzzyenv.exe \
      $(FINAL_TARGET) ../xyzzycli.exe libxpi.lib
 
 $(OUTDIR)/xyzzy.pch: stdafx.h targetver.h stdint_compat.h
@@ -244,9 +244,9 @@ $(OUTDIR)/$(BUILD): $(OBJS) $(PRIVCTRLOBJS) $(DSFMTOBJS) $(GENOBJS) $(OUTDIR)/xy
 <<
 
 $(OUTDIR): force
-	-@if not exist $(OUTDIR)\nul mkdir $(OUTDIR)
+	-@if not exist $(OUTDIR:/=\)\nul md $(OUTDIR:/=\)
 $(GENDIR): force
-	-@if not exist $(GENDIR)\nul mkdir $(GENDIR)
+	-@if not exist $(GENDIR:/=\)\nul md $(GENDIR:/=\)
 
 force:
 
@@ -510,7 +510,7 @@ depend: ../misc/makedep.py
 PROFDIR=$(OUTDIR)\prof
 
 prof-dir: force
-	-@if not exist $(PROFDIR)\nul mkdir $(PROFDIR)
+	-@if not exist $(PROFDIR)\nul md $(PROFDIR)
 
 prof-target: $(PROFDIR)\$(BUILD)
 
