@@ -1,126 +1,127 @@
-$(OUTDIR)/Buffer.obj: $(OUTDIR)/xyzzy.pch $(ED_H) syntaxinfo.h filer.h glob.h dialogs.h $(PRIVCTRLDIR)/privctrl.h DnD.h binfo.h version.h buffer-bar.h dockbar.h xlist.h environ.h
-$(OUTDIR)/ChooseFont.obj: $(OUTDIR)/xyzzy.pch $(ED_H) ChooseFont.h
-$(OUTDIR)/ColorDialog.obj: $(OUTDIR)/xyzzy.pch $(ED_H) ldialog.h ColorDialog.h colors.h ChooseFont.h conf.h font.h
-$(OUTDIR)/DnD.obj: $(OUTDIR)/xyzzy.pch $(ED_H) ctxmenu.h com.h filer.h glob.h dialogs.h $(PRIVCTRLDIR)/privctrl.h DnD.h buffer-bar.h dockbar.h xlist.h
-$(OUTDIR)/StrBuf.obj: $(OUTDIR)/xyzzy.pch $(ED_H) StrBuf.h cdecl.h stdint_compat.h
-$(OUTDIR)/Window.obj: $(OUTDIR)/xyzzy.pch $(ED_H) conf.h ipc.h wheel.h
+$(OUTDIR)/Buffer.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h DnD.h binfo.h buffer-bar.h dialogs.h dockbar.h environ.h filer.h glob.h syntaxinfo.h version.h xlist.h
+$(OUTDIR)/ChooseFont.obj: $(ED_H) $(OUTDIR)/xyzzy.pch ChooseFont.h
+$(OUTDIR)/ColorDialog.obj: $(ED_H) $(OUTDIR)/xyzzy.pch ChooseFont.h ColorDialog.h colors.h conf.h font.h ldialog.h
+$(OUTDIR)/DnD.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h DnD.h buffer-bar.h com.h ctxmenu.h dialogs.h dockbar.h filer.h glob.h xlist.h
+$(OUTDIR)/StrBuf.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h cdecl.h stdint_compat.h
+$(OUTDIR)/Window.obj: $(ED_H) $(OUTDIR)/xyzzy.pch conf.h ipc.h wheel.h
 $(OUTDIR)/alloc.obj: $(OUTDIR)/xyzzy.pch alloc.h cdecl.h stdint_compat.h
-$(OUTDIR)/appid.obj: $(OUTDIR)/xyzzy.pch lisp.h cdecl.h stdint_compat.h signal.h data.h alloc.h utils.h fns.h xcolor.h $(GENDIR)/vars-decl.h $(GENDIR)/fns-decl.h $(GENDIR)/msgcode.h cons.h symbol.h function.h closure.h number.h bignum.h char.h chtype.h charset.h list.h vector.h array.h string.h stream.h package.h hash.h message.h error.h trace.h random.h $(DSFMTDIR)/dSFMT.h structure.h readtab.h appid.h version.h
+$(OUTDIR)/appid.obj: $(GENDIR)/fns-decl.h $(GENDIR)/msgcode.h $(GENDIR)/vars-decl.h $(OUTDIR)/xyzzy.pch alloc.h appid.h cdecl.h data.h fns.h lisp.h signal.h stdint_compat.h utils.h version.h xcolor.h
 $(OUTDIR)/arc-if.obj: $(OUTDIR)/xyzzy.pch arc-if.h comm-arc.h vfs.h
-$(OUTDIR)/archiver.obj: $(OUTDIR)/xyzzy.pch $(ED_H) except.h arc-if.h comm-arc.h archiver.h safe_ptr.h unzip.h
-$(OUTDIR)/array.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
+$(OUTDIR)/archiver.obj: $(ED_H) $(OUTDIR)/xyzzy.pch arc-if.h archiver.h comm-arc.h except.h safe_ptr.h unzip.h
+$(OUTDIR)/array.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
 $(OUTDIR)/assert.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h
-$(OUTDIR)/backq.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/bignum.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/binfo.obj: $(OUTDIR)/xyzzy.pch $(ED_H) binfo.h version.h
-$(OUTDIR)/buffer-bar.obj: $(OUTDIR)/xyzzy.pch $(ED_H) $(MAINFRAME_H) buffer-bar.h dockbar.h xlist.h DnD.h colors.h
-$(OUTDIR)/byte-stream.obj: $(OUTDIR)/xyzzy.pch $(ED_H) byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h
-$(OUTDIR)/bytecode.obj: $(OUTDIR)/xyzzy.pch $(ED_H) lex.h
-$(OUTDIR)/ces.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/char.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/chname.obj: $(OUTDIR)/xyzzy.pch chtype.h cdecl.h stdint_compat.h
-$(OUTDIR)/clipboard.obj: $(OUTDIR)/xyzzy.pch $(ED_H) clipboard.h
-$(OUTDIR)/com.obj: $(OUTDIR)/xyzzy.pch $(ED_H) com.h oleconv.h sysdep.h cdecl.h stdint_compat.h
-$(OUTDIR)/conf.obj: $(OUTDIR)/xyzzy.pch $(ED_H) environ.h print.h monitor.h conf.h
-$(OUTDIR)/colors.obj: $(OUTDIR)/xyzzy.pch $(ED_H) colors.h conf.h Filer.h glob.h dialogs.h $(PRIVCTRLDIR)/privctrl.h DnD.h $(MAINFRAME_H)
-$(OUTDIR)/ctl3d.obj: $(OUTDIR)/xyzzy.pch sysdep.h cdecl.h stdint_compat.h ctl3d.h vfs.h
-$(OUTDIR)/chunk.obj: $(OUTDIR)/xyzzy.pch $(ED_H) except.h
-$(OUTDIR)/data.obj: $(OUTDIR)/xyzzy.pch $(ED_H) lex.h symtable.h $(MAINFRAME_H) dataP.h
-$(OUTDIR)/dde.obj: $(OUTDIR)/xyzzy.pch $(ED_H) xdde.h safe_ptr.h
-$(OUTDIR)/debug.obj: $(OUTDIR)/xyzzy.pch lisp.h cdecl.h stdint_compat.h signal.h data.h alloc.h utils.h fns.h xcolor.h $(GENDIR)/vars-decl.h $(GENDIR)/fns-decl.h $(GENDIR)/msgcode.h cons.h symbol.h function.h closure.h number.h bignum.h char.h chtype.h charset.h list.h vector.h array.h string.h stream.h package.h hash.h message.h error.h trace.h random.h $(DSFMTDIR)/dSFMT.h structure.h readtab.h debug.h
-$(OUTDIR)/dialogs.obj: $(OUTDIR)/xyzzy.pch $(ED_H) conf.h $(PRIVCTRLDIR)/privctrl.h dialogs.h ofn.h thread.h xstrlist.h version.h monitor.h
-$(OUTDIR)/disp.obj: $(OUTDIR)/xyzzy.pch $(ED_H) binfo.h version.h syntaxinfo.h $(GENDIR)/lucida-width.h $(GENDIR)/jisx0212-hash.h $(MAINFRAME_H) regex.h
-$(OUTDIR)/dll.obj: $(OUTDIR)/xyzzy.pch $(ED_H) except.h
-$(OUTDIR)/doc.obj: $(OUTDIR)/xyzzy.pch $(ED_H) except.h mman.h
-$(OUTDIR)/dockbar.obj: $(OUTDIR)/xyzzy.pch $(ED_H) dockbar.h xlist.h mman.h
-$(OUTDIR)/edict.obj: $(OUTDIR)/xyzzy.pch $(ED_H) except.h mman.h
-$(OUTDIR)/encdec.obj: $(OUTDIR)/xyzzy.pch $(ED_H) byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h md5.h sha1.h sha2.h
-$(OUTDIR)/encoding.obj: $(OUTDIR)/xyzzy.pch $(ED_H) encoding.h $(GENDIR)/ibmext.h $(GENDIR)/utf2sjis.h
-$(OUTDIR)/environ.obj: $(OUTDIR)/xyzzy.pch $(ED_H) environ.h conf.h fnkey.h monitor.h
-$(OUTDIR)/eval.obj: $(OUTDIR)/xyzzy.pch $(ED_H) lex.h symtable.h
-$(OUTDIR)/except.obj: $(OUTDIR)/xyzzy.pch $(ED_H) except.h signal.h version.h
-$(OUTDIR)/fileio.obj: $(OUTDIR)/xyzzy.pch $(ED_H) kanji.h except.h mman.h encoding.h
-$(OUTDIR)/filer.obj: $(OUTDIR)/xyzzy.pch $(ED_H) environ.h conf.h font.h filer.h glob.h dialogs.h $(PRIVCTRLDIR)/privctrl.h DnD.h colors.h ctxmenu.h com.h
-$(OUTDIR)/fnkey.obj: $(OUTDIR)/xyzzy.pch $(ED_H) fnkey.h
-$(OUTDIR)/font.obj: $(OUTDIR)/xyzzy.pch $(ED_H) conf.h
-$(OUTDIR)/frame.obj: $(OUTDIR)/xyzzy.pch $(ED_H) $(MAINFRAME_H)
+$(OUTDIR)/backq.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/bignum.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/binfo.obj: $(ED_H) $(OUTDIR)/xyzzy.pch binfo.h version.h
+$(OUTDIR)/buffer-bar.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch DnD.h buffer-bar.h colors.h dockbar.h xlist.h
+$(OUTDIR)/byte-stream.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h encoding.h stdint_compat.h
+$(OUTDIR)/bytecode.obj: $(ED_H) $(OUTDIR)/xyzzy.pch lex.h
+$(OUTDIR)/ces.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/char.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/chname.obj: $(OUTDIR)/xyzzy.pch cdecl.h chtype.h stdint_compat.h
+$(OUTDIR)/clipboard.obj: $(ED_H) $(OUTDIR)/xyzzy.pch clipboard.h
+$(OUTDIR)/com.obj: $(ED_H) $(OUTDIR)/xyzzy.pch cdecl.h com.h oleconv.h stdint_compat.h sysdep.h
+$(OUTDIR)/conf.obj: $(ED_H) $(OUTDIR)/xyzzy.pch conf.h environ.h monitor.h print.h
+$(OUTDIR)/colors.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h DnD.h Filer.h colors.h conf.h dialogs.h glob.h
+$(OUTDIR)/ctl3d.obj: $(OUTDIR)/xyzzy.pch cdecl.h ctl3d.h stdint_compat.h sysdep.h vfs.h
+$(OUTDIR)/chunk.obj: $(ED_H) $(OUTDIR)/xyzzy.pch except.h
+$(OUTDIR)/data.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch dataP.h lex.h symtable.h
+$(OUTDIR)/dde.obj: $(ED_H) $(OUTDIR)/xyzzy.pch safe_ptr.h xdde.h
+$(OUTDIR)/debug.obj: $(GENDIR)/fns-decl.h $(GENDIR)/msgcode.h $(GENDIR)/vars-decl.h $(OUTDIR)/xyzzy.pch alloc.h cdecl.h data.h debug.h fns.h lisp.h signal.h stdint_compat.h utils.h xcolor.h
+$(OUTDIR)/dialogs.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h conf.h dialogs.h monitor.h ofn.h thread.h version.h xstrlist.h
+$(OUTDIR)/disp.obj: $(ED_H) $(GENDIR)/jisx0212-hash.h $(GENDIR)/lucida-width.h $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch binfo.h regex.h syntaxinfo.h version.h
+$(OUTDIR)/dll.obj: $(ED_H) $(OUTDIR)/xyzzy.pch except.h
+$(OUTDIR)/doc.obj: $(ED_H) $(OUTDIR)/xyzzy.pch except.h mman.h
+$(OUTDIR)/dockbar.obj: $(ED_H) $(OUTDIR)/xyzzy.pch dockbar.h mman.h xlist.h
+$(OUTDIR)/edict.obj: $(ED_H) $(OUTDIR)/xyzzy.pch except.h mman.h
+$(OUTDIR)/encdec.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h encoding.h md5.h sha1.h sha2.h stdint_compat.h
+$(OUTDIR)/encoding.obj: $(ED_H) $(GENDIR)/ibmext.h $(GENDIR)/utf2sjis.h $(OUTDIR)/xyzzy.pch encoding.h
+$(OUTDIR)/environ.obj: $(ED_H) $(OUTDIR)/xyzzy.pch conf.h environ.h fnkey.h monitor.h
+$(OUTDIR)/eval.obj: $(ED_H) $(OUTDIR)/xyzzy.pch lex.h symtable.h
+$(OUTDIR)/except.obj: $(ED_H) $(OUTDIR)/xyzzy.pch except.h signal.h version.h
+$(OUTDIR)/fileio.obj: $(ED_H) $(OUTDIR)/xyzzy.pch encoding.h except.h kanji.h mman.h
+$(OUTDIR)/filer.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h DnD.h colors.h com.h conf.h ctxmenu.h dialogs.h environ.h filer.h font.h glob.h
+$(OUTDIR)/fnkey.obj: $(ED_H) $(OUTDIR)/xyzzy.pch fnkey.h
+$(OUTDIR)/font.obj: $(ED_H) $(OUTDIR)/xyzzy.pch conf.h
+$(OUTDIR)/frame.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch
 $(OUTDIR)/gime.obj: $(OUTDIR)/xyzzy.pch gime.h
-$(OUTDIR)/glob.obj: $(OUTDIR)/xyzzy.pch $(ED_H) glob.h
-$(OUTDIR)/guess.obj: $(OUTDIR)/xyzzy.pch $(ED_H) byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h guess.h guess_tab.c
+$(OUTDIR)/glob.obj: $(ED_H) $(OUTDIR)/xyzzy.pch glob.h
+$(OUTDIR)/guess.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h encoding.h guess.h guess_tab.c stdint_compat.h
 $(OUTDIR)/guid.obj: $(OUTDIR)/xyzzy.pch
-$(OUTDIR)/gzip.obj: $(OUTDIR)/xyzzy.pch $(ED_H) byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h $(ZLIBDIR)/zlib.h $(ZLIBDIR)/zconf.h
-$(OUTDIR)/hash.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/hashpjw.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h $(ED_H)
-$(OUTDIR)/init.obj: $(OUTDIR)/xyzzy.pch $(ED_H) ctl3d.h environ.h except.h $(PRIVCTRLDIR)/privctrl.h xdde.h fnkey.h syntaxinfo.h ipc.h kanji.h sock.h conf.h colors.h version.h $(MAINFRAME_H)
-$(OUTDIR)/insdel.obj: $(OUTDIR)/xyzzy.pch $(ED_H) syntaxinfo.h sequence.h byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h
+$(OUTDIR)/gzip.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(ZLIBDIR)/zconf.h $(ZLIBDIR)/zlib.h StrBuf.h byte-stream.h cdecl.h encoding.h stdint_compat.h
+$(OUTDIR)/hash.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/hashpjw.obj: $(ED_H) $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h
+$(OUTDIR)/init.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h colors.h conf.h ctl3d.h environ.h except.h fnkey.h ipc.h kanji.h sock.h syntaxinfo.h version.h xdde.h
+$(OUTDIR)/insdel.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h encoding.h sequence.h stdint_compat.h syntaxinfo.h
 $(OUTDIR)/ipc.obj: $(OUTDIR)/xyzzy.pch ipc.h
-$(OUTDIR)/kanji.obj: $(OUTDIR)/xyzzy.pch $(ED_H) StrBuf.h cdecl.h stdint_compat.h safe_ptr.h byte-stream.h encoding.h $(GENDIR)/iso2022state.h guess.h $(GENDIR)/kanjitab.h
-$(OUTDIR)/kbd.obj: $(OUTDIR)/xyzzy.pch $(ED_H) filer.h glob.h dialogs.h $(PRIVCTRLDIR)/privctrl.h DnD.h safe_ptr.h encoding.h environ.h
-$(OUTDIR)/keymap.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/ldialog.obj: $(OUTDIR)/xyzzy.pch $(ED_H) ldialog.h ColorDialog.h colors.h ChooseFont.h $(PRIVCTRLDIR)/privctrl.h
-$(OUTDIR)/lex.obj: $(OUTDIR)/xyzzy.pch $(ED_H) lex.h
-$(OUTDIR)/list.obj: $(OUTDIR)/xyzzy.pch $(ED_H) sequence.h
-$(OUTDIR)/listen.obj: $(OUTDIR)/xyzzy.pch $(ED_H) listen.h
-$(OUTDIR)/lprint.obj: $(OUTDIR)/xyzzy.pch $(ED_H) wstream.h StrBuf.h cdecl.h stdint_compat.h sock.h version.h
-$(OUTDIR)/lread.obj: $(OUTDIR)/xyzzy.pch $(ED_H) StrBuf.h cdecl.h stdint_compat.h
-$(OUTDIR)/md5c.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h md5.h
-$(OUTDIR)/menu.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/minibuf.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/mman.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h mman.h vfs.h
+$(OUTDIR)/kanji.obj: $(ED_H) $(GENDIR)/iso2022state.h $(GENDIR)/kanjitab.h $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h encoding.h guess.h safe_ptr.h stdint_compat.h
+$(OUTDIR)/kbd.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h DnD.h dialogs.h encoding.h environ.h filer.h glob.h safe_ptr.h
+$(OUTDIR)/keymap.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/ldialog.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h ChooseFont.h ColorDialog.h colors.h ldialog.h
+$(OUTDIR)/lex.obj: $(ED_H) $(OUTDIR)/xyzzy.pch lex.h
+$(OUTDIR)/list.obj: $(ED_H) $(OUTDIR)/xyzzy.pch sequence.h
+$(OUTDIR)/listen.obj: $(ED_H) $(OUTDIR)/xyzzy.pch listen.h
+$(OUTDIR)/lprint.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h cdecl.h sock.h stdint_compat.h version.h wstream.h
+$(OUTDIR)/lread.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h cdecl.h stdint_compat.h
+$(OUTDIR)/md5c.obj: $(OUTDIR)/xyzzy.pch cdecl.h md5.h stdint_compat.h
+$(OUTDIR)/menu.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/minibuf.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/mman.obj: $(OUTDIR)/xyzzy.pch cdecl.h mman.h stdint_compat.h vfs.h
 $(OUTDIR)/monitor.obj: $(OUTDIR)/xyzzy.pch monitor.h
-$(OUTDIR)/mouse.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/move.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/msgbox.obj: $(OUTDIR)/xyzzy.pch $(ED_H) msgbox.h monitor.h
-$(OUTDIR)/number.obj: $(OUTDIR)/xyzzy.pch $(ED_H) $(GENDIR)/num-arith.h
-$(OUTDIR)/oledata.obj: $(OUTDIR)/xyzzy.pch $(ED_H) com.h oleconv.h
-$(OUTDIR)/package.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/pane.obj: $(OUTDIR)/xyzzy.pch $(ED_H) $(MAINFRAME_H) resource.h
-$(OUTDIR)/pathname.obj: $(OUTDIR)/xyzzy.pch $(ED_H) pathname.h dyn-handle.h environ.h except.h mman.h thread.h xstrlist.h vwin32.h version.h
-$(OUTDIR)/popup.obj: $(OUTDIR)/xyzzy.pch $(ED_H) monitor.h
-$(OUTDIR)/popupl.obj: $(OUTDIR)/xyzzy.pch $(ED_H) monitor.h
-$(OUTDIR)/pred.obj: $(OUTDIR)/xyzzy.pch $(ED_H) lex.h
-$(OUTDIR)/preview.obj: $(OUTDIR)/xyzzy.pch $(ED_H) resource.h print.h preview.h wheel.h conf.h
-$(OUTDIR)/print.obj: $(OUTDIR)/xyzzy.pch $(ED_H) print.h preview.h wheel.h conf.h version.h $(GENDIR)/lucida-width.h
-$(OUTDIR)/printdlg.obj: $(OUTDIR)/xyzzy.pch $(ED_H) resource.h print.h printdlg.h conf.h
-$(OUTDIR)/process.obj: $(OUTDIR)/xyzzy.pch $(ED_H) dyn-handle.h sockinet.h sock.h byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h $(MAINFRAME_H)
-$(OUTDIR)/random.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/regex.obj: $(OUTDIR)/xyzzy.pch $(ED_H) regex.h
-$(OUTDIR)/resolver.obj: $(OUTDIR)/xyzzy.pch $(ED_H) resolver.h sockimpl.h
-$(OUTDIR)/search.obj: $(OUTDIR)/xyzzy.pch $(ED_H) regex.h StrBuf.h cdecl.h stdint_compat.h
-$(OUTDIR)/sequence.obj: $(OUTDIR)/xyzzy.pch $(ED_H) sequence.h safe_ptr.h
-$(OUTDIR)/sha1.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h sha1.h
-$(OUTDIR)/sha2.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h endian.h sha2.h
-$(OUTDIR)/signal.obj: $(OUTDIR)/xyzzy.pch $(ED_H) signal.h
-$(OUTDIR)/sock.obj: $(OUTDIR)/xyzzy.pch $(ED_H) sock.h resolver.h sockimpl.h
-$(OUTDIR)/sockinet.obj: $(OUTDIR)/xyzzy.pch $(ED_H) sockinet.h sock.h sockimpl.h
-$(OUTDIR)/sockssl.obj: $(OUTDIR)/xyzzy.pch $(ED_H) safe_ptr.h sockinet.h sock.h sockimpl.h sockssl.h
-$(OUTDIR)/statarea.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/stdctl.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/stream.obj: $(OUTDIR)/xyzzy.pch $(ED_H) sequence.h wstream.h StrBuf.h cdecl.h stdint_compat.h sockinet.h sock.h sockssl.h debug.h encoding.h
-$(OUTDIR)/string.obj: $(OUTDIR)/xyzzy.pch $(ED_H) byte-stream.h StrBuf.h cdecl.h stdint_compat.h encoding.h sequence.h
-$(OUTDIR)/structure.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/symbol.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
-$(OUTDIR)/syntax.obj: $(OUTDIR)/xyzzy.pch $(ED_H) syntaxinfo.h
-$(OUTDIR)/sysdep.obj: $(OUTDIR)/xyzzy.pch sysdep.h cdecl.h stdint_compat.h vfs.h resource.h
-$(OUTDIR)/system.obj: $(OUTDIR)/xyzzy.pch system.h $(ED_H)
-$(OUTDIR)/thread.obj: $(OUTDIR)/xyzzy.pch $(ED_H) thread.h
-$(OUTDIR)/toplev.obj: $(OUTDIR)/xyzzy.pch $(ED_H) appid.h ctl3d.h environ.h fnkey.h $(MAINFRAME_H) reconv.h wheel.h DnD.h
-$(OUTDIR)/ucs2.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h charset.h ucs2tab.h $(GENDIR)/char-width.h
-$(OUTDIR)/undo.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
+$(OUTDIR)/mouse.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/move.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/msgbox.obj: $(ED_H) $(OUTDIR)/xyzzy.pch monitor.h msgbox.h
+$(OUTDIR)/number.obj: $(ED_H) $(GENDIR)/num-arith.h $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/oledata.obj: $(ED_H) $(OUTDIR)/xyzzy.pch com.h oleconv.h
+$(OUTDIR)/package.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/pane.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch resource.h
+$(OUTDIR)/pathname.obj: $(ED_H) $(OUTDIR)/xyzzy.pch dyn-handle.h environ.h except.h mman.h pathname.h thread.h version.h vwin32.h xstrlist.h
+$(OUTDIR)/popup.obj: $(ED_H) $(OUTDIR)/xyzzy.pch monitor.h
+$(OUTDIR)/popupl.obj: $(ED_H) $(OUTDIR)/xyzzy.pch monitor.h
+$(OUTDIR)/pred.obj: $(ED_H) $(OUTDIR)/xyzzy.pch lex.h
+$(OUTDIR)/preview.obj: $(ED_H) $(OUTDIR)/xyzzy.pch conf.h preview.h print.h resource.h wheel.h
+$(OUTDIR)/print.obj: $(ED_H) $(GENDIR)/lucida-width.h $(OUTDIR)/xyzzy.pch conf.h preview.h print.h version.h wheel.h
+$(OUTDIR)/printdlg.obj: $(ED_H) $(OUTDIR)/xyzzy.pch conf.h print.h printdlg.h resource.h
+$(OUTDIR)/process.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h dyn-handle.h encoding.h sock.h sockinet.h stdint_compat.h
+$(OUTDIR)/random.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/regex.obj: $(ED_H) $(OUTDIR)/xyzzy.pch regex.h
+$(OUTDIR)/resolver.obj: $(ED_H) $(OUTDIR)/xyzzy.pch resolver.h sockimpl.h
+$(OUTDIR)/search.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h cdecl.h regex.h stdint_compat.h
+$(OUTDIR)/sequence.obj: $(ED_H) $(OUTDIR)/xyzzy.pch safe_ptr.h sequence.h
+$(OUTDIR)/sha1.obj: $(OUTDIR)/xyzzy.pch cdecl.h sha1.h stdint_compat.h
+$(OUTDIR)/sha2.obj: $(OUTDIR)/xyzzy.pch cdecl.h endian.h sha2.h stdint_compat.h
+$(OUTDIR)/signal.obj: $(ED_H) $(OUTDIR)/xyzzy.pch signal.h
+$(OUTDIR)/sock.obj: $(ED_H) $(OUTDIR)/xyzzy.pch resolver.h sock.h sockimpl.h
+$(OUTDIR)/sockinet.obj: $(ED_H) $(OUTDIR)/xyzzy.pch sock.h sockimpl.h sockinet.h
+$(OUTDIR)/sockssl.obj: $(ED_H) $(OUTDIR)/xyzzy.pch safe_ptr.h sock.h sockimpl.h sockinet.h sockssl.h
+$(OUTDIR)/statarea.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/stdctl.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/stream.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h cdecl.h debug.h encoding.h sequence.h sock.h sockinet.h sockssl.h stdint_compat.h wstream.h
+$(OUTDIR)/string.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h byte-stream.h cdecl.h encoding.h sequence.h stdint_compat.h
+$(OUTDIR)/structure.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/symbol.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
+$(OUTDIR)/syntax.obj: $(ED_H) $(OUTDIR)/xyzzy.pch syntaxinfo.h
+$(OUTDIR)/sysdep.obj: $(OUTDIR)/xyzzy.pch cdecl.h resource.h stdint_compat.h sysdep.h vfs.h
+$(OUTDIR)/system.obj: $(ED_H) $(OUTDIR)/xyzzy.pch system.h
+$(OUTDIR)/thread.obj: $(ED_H) $(OUTDIR)/xyzzy.pch thread.h
+$(OUTDIR)/toplev.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch DnD.h appid.h ctl3d.h environ.h fnkey.h reconv.h wheel.h
+$(OUTDIR)/ucs2.obj: $(GENDIR)/char-width.h $(OUTDIR)/xyzzy.pch cdecl.h charset.h stdint_compat.h ucs2tab.h
+$(OUTDIR)/undo.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
 $(OUTDIR)/unzip.obj: $(OUTDIR)/xyzzy.pch unzip.h
-$(OUTDIR)/usertab.obj: $(OUTDIR)/xyzzy.pch $(ED_H) $(MAINFRAME_H) dockbar.h xlist.h colors.h
-$(OUTDIR)/usertool.obj: $(OUTDIR)/xyzzy.pch $(ED_H) $(MAINFRAME_H) dockbar.h xlist.h
-$(OUTDIR)/utils.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h $(ED_H) utils.h chtype.h
-$(OUTDIR)/utimer.obj: $(OUTDIR)/xyzzy.pch $(ED_H)
+$(OUTDIR)/usertab.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch colors.h dockbar.h xlist.h
+$(OUTDIR)/usertool.obj: $(ED_H) $(MAINFRAME_H) $(OUTDIR)/xyzzy.pch dockbar.h xlist.h
+$(OUTDIR)/utils.obj: $(ED_H) $(OUTDIR)/xyzzy.pch cdecl.h chtype.h stdint_compat.h utils.h
+$(OUTDIR)/utimer.obj: $(ED_H) $(OUTDIR)/xyzzy.pch
 $(OUTDIR)/vc-compat.obj: $(OUTDIR)/xyzzy.pch
-$(OUTDIR)/vector.obj: $(OUTDIR)/xyzzy.pch $(ED_H) sequence.h
-$(OUTDIR)/version.obj: $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h version.h $(GENDIR)/version-describe.h
-$(OUTDIR)/vfs.obj: $(OUTDIR)/xyzzy.pch $(ED_H) dyn-handle.h vwin32.h
-$(OUTDIR)/wheel.obj: $(OUTDIR)/xyzzy.pch $(ED_H) wheel.h
-$(OUTDIR)/winhelp.obj: $(OUTDIR)/xyzzy.pch $(ED_H) resource.h oleconv.h
-$(OUTDIR)/wstream.obj: $(OUTDIR)/xyzzy.pch $(ED_H) wstream.h StrBuf.h cdecl.h stdint_compat.h
-$(OUTDIR)/xdde.obj: $(OUTDIR)/xyzzy.pch $(ED_H) xdde.h sysdep.h cdecl.h stdint_compat.h
+$(OUTDIR)/vector.obj: $(ED_H) $(OUTDIR)/xyzzy.pch sequence.h
+$(OUTDIR)/version.obj: $(GENDIR)/version-describe.h $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h version.h
+$(OUTDIR)/vfs.obj: $(ED_H) $(OUTDIR)/xyzzy.pch dyn-handle.h vwin32.h
+$(OUTDIR)/wheel.obj: $(ED_H) $(OUTDIR)/xyzzy.pch wheel.h
+$(OUTDIR)/winhelp.obj: $(ED_H) $(OUTDIR)/xyzzy.pch oleconv.h resource.h
+$(OUTDIR)/wstream.obj: $(ED_H) $(OUTDIR)/xyzzy.pch StrBuf.h cdecl.h stdint_compat.h wstream.h
+$(OUTDIR)/xdde.obj: $(ED_H) $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h sysdep.h xdde.h
 $(OUTDIR)/xlist.obj: $(OUTDIR)/xyzzy.pch xlist.h
 $(OUTDIR)/listviewex.obj: $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctlimpl.h $(PRIVCTRLDIR)/privctrl.h mousemsg.h
 $(OUTDIR)/privctrl.obj: $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctlimpl.h $(PRIVCTRLDIR)/privctrl.h
 $(OUTDIR)/url.obj: $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctlimpl.h $(PRIVCTRLDIR)/privctrl.h
+$(OUTDIR)/dSFMT.obj: $(DSFMTDIR)/dSFMT-common.h $(DSFMTDIR)/dSFMT-params.h $(DSFMTDIR)/dSFMT-params11213.h $(DSFMTDIR)/dSFMT-params1279.h $(DSFMTDIR)/dSFMT-params132049.h $(DSFMTDIR)/dSFMT-params19937.h $(DSFMTDIR)/dSFMT-params216091.h $(DSFMTDIR)/dSFMT-params2203.h $(DSFMTDIR)/dSFMT-params4253.h $(DSFMTDIR)/dSFMT-params44497.h $(DSFMTDIR)/dSFMT-params521.h $(DSFMTDIR)/dSFMT-params86243.h $(DSFMTDIR)/dSFMT.h $(OUTDIR)/xyzzy.pch cdecl.h stdint_compat.h

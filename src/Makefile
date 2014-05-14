@@ -505,12 +505,12 @@ $(GENDIR)/gen-iso2022state.obj:
 $(GENDIR)/dpp.obj:
 $(GEN_SRC1_OBJS) $(GEN_SRC2_OBJS): $(GENDIR)/gen-stdafx.pch
 
-DEPENDTEMP=tmp.$$
-depend: ../misc/makedep.pl
-	../misc/makedep.pl $(SRCS)             >  $(DEPENDTEMP)
-	../misc/makedep.pl $(PRIVCTRLDIR)/*.cc >> $(DEPENDTEMP)
-	../misc/makedep.pl $(DSFMTDIR)/*.cc >> $(DEPENDTEMP)
-	move tmp.$$ xyzzy.depend
+DEPENDTEMP=tmp.depend
+depend: ../misc/makedep.py
+	python ../misc/makedep.py $(SRCS)             >  $(DEPENDTEMP)
+	python ../misc/makedep.py $(PRIVCTRLDIR)/*.cc >> $(DEPENDTEMP)
+	python ../misc/makedep.py $(DSFMTDIR)/*.cc    >> $(DEPENDTEMP)
+	move $(DEPENDTEMP) xyzzy.depend
 
 .cc.cod:
 	$(CXX) $(CXXFLAGS) -FAcs -c -Tp$<
