@@ -1,3 +1,10 @@
+ED_H=$(GENDIR)/fns-decl.h $(GENDIR)/msgcode.h $(GENDIR)/vars-decl.h \
+Buffer.h Window.h alloc.h cdecl.h ces.h chunk.h clipboard.h data.h \
+dll.h fns.h font.h gime.h kanji.h kbd.h lisp.h mouse.h mousemsg.h msgbox.h \
+oledata.h process.h reconv.h resource.h signal.h statarea.h stdint_compat.h \
+syntax.h sysdep.h timer.h utils.h utimer.h vfs.h waitobj.h wm.h xcolor.h \
+xlist.h 
+MAINFRAME_H=dockbar.h pane.h xlist.h 
 $(OUTDIR)/Buffer.obj: $(ED_H) $(OUTDIR)/xyzzy.pch $(PRIVCTRLDIR)/privctrl.h DnD.h binfo.h buffer-bar.h dialogs.h dockbar.h environ.h filer.h glob.h syntaxinfo.h version.h xlist.h
 $(OUTDIR)/ChooseFont.obj: $(ED_H) $(OUTDIR)/xyzzy.pch ChooseFont.h
 $(OUTDIR)/ColorDialog.obj: $(ED_H) $(OUTDIR)/xyzzy.pch ChooseFont.h ColorDialog.h colors.h conf.h font.h ldialog.h

@@ -507,10 +507,11 @@ $(GEN_SRC1_OBJS) $(GEN_SRC2_OBJS): $(GENDIR)/gen-stdafx.pch
 
 DEPENDTEMP=tmp.depend
 depend: ../misc/makedep.py
-	python ../misc/makedep.py $(SRCS)             >  $(DEPENDTEMP)
+	python ../misc/makedep.py ed.h mainframe.h    >  $(DEPENDTEMP)
+	python ../misc/makedep.py $(SRCS)             >> $(DEPENDTEMP)
 	python ../misc/makedep.py $(PRIVCTRLDIR)/*.cc >> $(DEPENDTEMP)
 	python ../misc/makedep.py $(DSFMTDIR)/*.cc    >> $(DEPENDTEMP)
-	move $(DEPENDTEMP) xyzzy.depend
+	move $(DEPENDTEMP) xyzzy.depend > nul
 
 .cc.cod:
 	$(CXX) $(CXXFLAGS) -FAcs -c -Tp$<
@@ -539,13 +540,5 @@ profile: prof-dir prof-target
 	prep -nologo -M src/$(PROFDIR)/xyzzy
 	plist -nologo -sc src/$(PROFDIR)/xyzzy
 
-ED_H=alloc.h array.h bignum.h Buffer.h cdecl.h char.h chtype.h chunk.h \
-closure.h cons.h data.h dll.h ed.h error.h function.h hash.h \
-kanji.h kbd.h lisp.h list.h message.h mouse.h msgbox.h \
-number.h oledata.h package.h process.h random.h stream.h string.h \
-structure.h symbol.h syntax.h sysdep.h timer.h trace.h reconv.h \
-vector.h Window.h utils.h xcolor.h readtab.h vfs.h waitobj.h charset.h \
-font.h ces.h gime.h statarea.h utimer.h xlist.h mousemsg.h
-MAINFRAME_H=mainframe.h dockbar.h pane.h
 
 !INCLUDE "xyzzy.depend"
