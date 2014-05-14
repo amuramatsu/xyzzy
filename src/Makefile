@@ -353,113 +353,97 @@ $(OUTDIR)/dumpver.obj: $(GENDIR)/dumpver.cc
 $(OUTDIR)/msgdef.obj: $(GENDIR)/msgdef.cc
 $(OUTDIR)/symtable.obj: $(GENDIR)/symtable.cc
 
-$(GENDIR:/=\)\version-describe.h: ..\misc\update_version_describe.bat gen
+$(GENDIR)/version-describe.h: ..\misc\update_version_describe.bat
 	..\misc\update_version_describe.bat
 
-#$(GENDIR:/=\))\vars-decl.h: $(GEN_SRC1EXE)
-gen\vars-decl.h: $(GEN_SRC1_EXE)
+GENDIR_S=$(GENDIR:/=\)
+$(GENDIR_S)\vars-decl.h: $(GEN_SRC1EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-syms -vars > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\fns-decl.h: $(GEN_SRC1_EXE)
-gen\fns-decl.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\fns-decl.h: $(GEN_SRC1_EXE)
 	-@if exist "$@.tmp" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-syms -proto > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\symtable.cc: $(GEN_SRC1_EXE)
-gen\symtable.cc: $(GEN_SRC1_EXE)
+$(GENDIR_S)\symtable.cc: $(GEN_SRC1_EXE)
 	-@if exist "$@.tmp" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-syms -symtable > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\dumpver.cc: $(GEN_SRC1_EXE) version.h
-gen\dumpver.cc: $(GEN_SRC1_EXE) version.h
+$(GENDIR_S)\dumpver.cc: $(GEN_SRC1_EXE) version.h
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-syms -version > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\chtab.cc: $(GEN_SRC1_EXE)
-gen\chtab.cc: $(GEN_SRC1_EXE)
+$(GENDIR_S)\chtab.cc: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	.\gen\gen-src1 gen-ctab > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\msgcode.h: $(GEN_SRC2_EXE)
-gen\msgcode.h: $(GEN_SRC2_EXE)
+$(GENDIR_S)\msgcode.h: $(GEN_SRC2_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC2_EXE) gen-msg -enum > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\msgdef.cc: $(GEN_SRC2_EXE)
-gen\msgdef.cc: $(GEN_SRC2_EXE)
+$(GENDIR_S)\msgdef.cc: $(GEN_SRC2_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC2_EXE) gen-msg -c > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\kanjitab.h: $(GEN_SRC1_EXE)
-gen\kanjitab.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\kanjitab.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-ktab > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\ucs2tab.h: ucs2tab.h
-gen\ucs2tab.h: ucs2tab.h
+$(GENDIR_S)\ucs2tab.h: ucs2tab.h
 	copy ucs2tab.h "$@" > nul
 ucs2tab.h:
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-ucs2tab > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\utf2sjis.h: $(GEN_SRC1_EXE)
-gen\utf2sjis.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\utf2sjis.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-utf2sjis > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\char-width.h: $(GEN_SRC1_EXE)
-gen\char-width.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\char-width.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-char-width > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\jisx0212-width.h: jisx0212-width.h
-gen\jisx0212-width.h: jisx0212-width.h
+$(GENDIR_S)\jisx0212-width.h: jisx0212-width.h
 	copy jisx0212-width.h "$@" > nul
 jisx0212-width.h:
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-jisx0212-width > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\jisx0212-hash.h: $(GEN_SRC1_EXE)
-gen\jisx0212-hash.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\jisx0212-hash.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-jisx0212-hash > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\lucida-width.h: lucida-width.h
-gen\lucida-width.h: lucida-width.h
+$(GENDIR_S)\lucida-width.h: lucida-width.h
 	copy lucida-width.h "$@" >nul
 lucida-width.h:
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-lucida-width > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\iso2022state.h: $(GEN_SRC1_EXE)
-gen\iso2022state.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\iso2022state.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-iso2022state > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\ibmext.h: $(GEN_SRC1_EXE)
-gen\ibmext.h: $(GEN_SRC1_EXE)
+$(GENDIR_S)\ibmext.h: $(GEN_SRC1_EXE)
 	-@if exist "$@" del "$@" > nul
 	$(GEN_SRC1_EXE) gen-ibmext > "$@.tmp"
 	move "$@.tmp" "$@" > nul
 
-#$(GENDIR:/=\)\fontrange.h: fontrange.h
-gen\fontrange.h: fontrange.h
+$(GENDIR_S)\fontrange.h: fontrange.h
 	copy fontrange.h "$@" > nul
 fontrange.h:
 	-@if exist "$@" del "$@" > nul
