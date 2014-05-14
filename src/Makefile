@@ -539,7 +539,6 @@ profile: prof-dir prof-target
 	prep -nologo -M src/$(PROFDIR)/xyzzy
 	plist -nologo -sc src/$(PROFDIR)/xyzzy
 
-
 ED_H=alloc.h array.h bignum.h Buffer.h cdecl.h char.h chtype.h chunk.h \
 closure.h cons.h data.h dll.h ed.h error.h function.h hash.h \
 kanji.h kbd.h lisp.h list.h message.h mouse.h msgbox.h \
@@ -549,78 +548,4 @@ vector.h Window.h utils.h xcolor.h readtab.h vfs.h waitobj.h charset.h \
 font.h ces.h gime.h statarea.h utimer.h xlist.h mousemsg.h
 MAINFRAME_H=mainframe.h dockbar.h pane.h
 
-$(OUTDIR)/Buffer.obj: syntaxinfo.h filer.h glob.h dialogs.h binfo.h $(MAINFRAME_H) buffer-bar.h DnD.h
-$(OUTDIR)/ChooseFont.obj: ChooseFont.h
-$(OUTDIR)/ColorDialog.obj: ldialog.h ChooseFont.h ColorDialog.h colors.h DnD.h conf.h glob.h
-$(OUTDIR)/DnD.obj: $(PRIVCTRLDIR)/privctrl.h com.h dialogs.h DnD.h filer.h glob.h buffer-bar.h dockbar.h
-$(OUTDIR)/StrBuf.obj: StrBuf.h
-$(OUTDIR)/Window.obj: conf.h ipc.h wheel.h
-$(OUTDIR)/arc-if.obj: arc-if.h comm-arc.h
-$(OUTDIR)/archiver.obj: arc-if.h archiver.h except.h comm-arc.h
-$(OUTDIR)/buffer-bar.obj: buffer-bar.h DnD.h $(MAINFRAME_H) colors.h
-$(OUTDIR)/bytecode.obj: lex.h
-$(OUTDIR)/byte-stream.obj: byte-stream.h StrBuf.h encoding.h
-$(OUTDIR)/colors.obj: conf.h colors.h filer.h $(MAINFRAME_H)
-$(OUTDIR)/com.obj: com.h
-$(OUTDIR)/conf.obj: conf.h print.h wheel.h
-$(OUTDIR)/ctl3d.obj: ctl3d.h
-$(OUTDIR)/data.obj: dataP.h lex.h symtable.h $(MAINFRAME_H)
-$(OUTDIR)/dde.obj: safe_ptr.h xdde.h
-$(OUTDIR)/dialogs.obj: $(PRIVCTRLDIR)/privctrl.h dialogs.h conf.h thread.h xstrlist.h
-$(OUTDIR)/disp.obj: syntaxinfo.h gen/lucida-width.h gen/jisx0212-hash.h binfo.h $(MAINFRAME_H) regex.h
-$(OUTDIR)/doc.obj: except.h mman.h
-$(OUTDIR)/dockbar.obj: dockbar.h
-$(OUTDIR)/edict.obj: except.h mman.h
-$(OUTDIR)/encdec.obj: byte-stream.h StrBuf.h encoding.h
-$(OUTDIR)/encoding.obj: encoding.h gen/ibmext.h gen/utf2sjis.h
-$(OUTDIR)/environ.obj: environ.h fnkey.h conf.h
-$(OUTDIR)/eval.obj: lex.h
-$(OUTDIR)/except.obj: except.h
-$(OUTDIR)/fileio.obj: except.h mman.h encoding.h
-$(OUTDIR)/filer.obj: $(PRIVCTRLDIR)/privctrl.h dialogs.h DnD.h environ.h filer.h glob.h conf.h colors.h
-$(OUTDIR)/font.obj: font.h conf.h
-$(OUTDIR)/fnkey.obj: fnkey.h
-$(OUTDIR)/glob.obj: glob.h
-$(OUTDIR)/init.obj: $(PRIVCTRLDIR)/privctrl.h ctl3d.h environ.h except.h fnkey.h xdde.h syntaxinfo.h ipc.h sock.h $(MAINFRAME_H)
-$(OUTDIR)/insdel.obj: syntaxinfo.h sequence.h byte-stream.h StrBuf.h encoding.h
-$(OUTDIR)/ipc.obj: ipc.h
-$(OUTDIR)/kanji.obj: gen/kanjitab.h safe_ptr.h byte-stream.h StrBuf.h encoding.h gen/iso2022state.h
-$(OUTDIR)/kbd.obj: filer.h dialogs.h encoding.h
-$(OUTDIR)/ldialog.obj: ldialog.h ColorDialog.h colors.h DnD.h glob.h $(PRIVCTRLDIR)/privctrl.h
-$(OUTDIR)/lex.obj: lex.h
-$(OUTDIR)/list.obj: sequence.h
-$(OUTDIR)/listen.obj: listen.h
-$(OUTDIR)/lprint.obj: StrBuf.h wstream.h sock.h
-$(OUTDIR)/lread.obj: StrBuf.h
-$(OUTDIR)/mman.obj: mman.h
-$(OUTDIR)/number.obj: gen/num-arith.h
-$(OUTDIR)/pathname.obj: dyn-handle.h environ.h pathname.h comm-arc.h except.h mman.h thread.h xstrlist.h
-$(OUTDIR)/pane.obj: $(MAINFRAME_H)
-$(OUTDIR)/pred.obj: lex.h
-$(OUTDIR)/preview.obj: conf.h print.h preview.h wheel.h
-$(OUTDIR)/print.obj: print.h lucida-width.h preview.h wheel.h
-$(OUTDIR)/printdlg.obj: print.h printdlg.h
-$(OUTDIR)/process.obj: dyn-handle.h byte-stream.h StrBuf.h sock.h sockinet.h encoding.h $(MAINFRAME_H)
-$(OUTDIR)/regex.obj: regex.h
-$(OUTDIR)/search.obj: regex.h
-$(OUTDIR)/sequence.obj: safe_ptr.h sequence.h
-$(OUTDIR)/stream.obj: sequence.h StrBuf.h wstream.h sock.h sockinet.h
-$(OUTDIR)/string.obj: sequence.h StrBuf.h
-$(OUTDIR)/symtable.obj: symtable.cc gen/symtable.cc symtable.h
-	$(CXX) $(CXXFLAGS) -c -Tpsymtable.cc
-$(OUTDIR)/syntax.obj: syntaxinfo.h
-$(OUTDIR)/thread.obj: thread.h
-$(OUTDIR)/toplev.obj: ctl3d.h DnD.h environ.h fnkey.h $(MAINFRAME_H) wheel.h
-$(OUTDIR)/usertab.obj: $(MAINFRAME_H) colors.h
-$(OUTDIR)/usertool.obj: $(MAINFRAME_H)
-$(OUTDIR)/ucs2.obj: gen/ucs2tab.h gen/char-width.h
-$(OUTDIR)/vector.obj: sequence.h
-$(OUTDIR)/version.obj: version.h gen/version-describe.h
-$(OUTDIR)/wheel.obj: wheel.h
-$(OUTDIR)/wstream.obj: StrBuf.h wstream.h
-$(OUTDIR)/xdde.obj: xdde.h
-$(OUTDIR)/resolver.obj: resolver.h sockimpl.h
-$(OUTDIR)/sock.obj: sock.h resolver.h sockimpl.h
-$(OUTDIR)/sockinet.obj: sockinet.h sock.h sockimpl.h
-
-$(OBJS): $(ED_H)
+!INCLUDE "xyzzy.depend"
