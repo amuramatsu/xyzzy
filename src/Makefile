@@ -341,7 +341,7 @@ gen-clean:
 	-del $(GENDIR:/=\)\num-arith.h
 
 gen-distclean:
-	-del $(GENDIR)\gen-stdafx.pch $(OUTDIR)\gen-stdafx.obj
+	-del $(GENDIR:/=\)\gen-stdafx.pch $(OUTDIR:/=\)\gen-stdafx.obj
 	-del /q $(GENDIR:/=\)\*.*
 
 .d{$(GENDIR)/}.h:
