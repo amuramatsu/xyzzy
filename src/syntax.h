@@ -8,6 +8,7 @@
 # define SYNTAX_OPT_CSHARP 8
 # define SYNTAX_OPT_COLUMN_CHAR 16
 # define SYNTAX_OPT_CPLUSPLUS_CLI 32
+# define SYNTAX_OPT_LUA_LONG_BRACKET 64
 
 struct syntax_table
 {

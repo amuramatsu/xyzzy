@@ -91,7 +91,7 @@ Buffer::modify_chunk (Chunk *cp) const
 {
   cp->c_nlines = -1;
   cp->invalidate_fold_info();
-  cp->c_bstate = syntax_state::SS_INVALID;
+  cp->invalidate_syntax();
 }
 
 void

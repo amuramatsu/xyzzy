@@ -3510,7 +3510,7 @@ Frefresh_highlight_info (lisp buffer)
 {
   Buffer *bp = Buffer::coerce_to_buffer (buffer);
   for (Chunk *cp = bp->b_chunkb; cp; cp = cp->c_next)
-    cp->c_bstate = syntax_state::SS_INVALID;
+    cp->invalidate_syntax();
   bp->refresh_buffer ();
   return Qt;
 }
@@ -3648,6 +3648,7 @@ syntax_state::update_normal (const Char *p)
   assert (p >= ss_chunk->c_text);
   assert (p < ss_chunk->c_text + ss_chunk->c_used);
 
+  const int syntax_opt = ss_tab->flags;
   Char c = *p;
   u_char sc, xcomm;
   if (SBCP (c))
@@ -3672,7 +3673,20 @@ syntax_state::update_normal (const Char *p)
           if (!(xcomm & SFcplusplus_comment_char))
             ss_state = SS_MCOMM1S;
           else if (!(xcomm & SFcomment_start_first_char))
-            ss_state = SS_CPPCOMM1;
+            {
+              if (syntax_opt & SYNTAX_OPT_LUA_LONG_BRACKET)
+                {
+                  lua_long_bracket = look_forward_lua_long_bracket_comment(p);
+                  if (lua_long_bracket)
+                    ss_state = SS_MCOMM1S;
+                  else
+                    ss_state = SS_CPPCOMM1;
+                }
+              else
+                {
+                    ss_state = SS_CPPCOMM1;
+                }
+            }
           else
             ss_state = SS_MCOMM1S_OR_CPPCOMM1;
         }
@@ -3694,7 +3708,21 @@ syntax_state::update_normal (const Char *p)
             break;
 
           default:
-            ss_state = SS_NORMAL;
+            if (syntax_opt & SYNTAX_OPT_LUA_LONG_BRACKET)
+              {
+                lua_long_bracket = look_forward_lua_long_bracket_open(p);
+                if (lua_long_bracket)
+                  {
+                    ss_state = SS_STRING;
+                    ss_strch = 0;
+                  }
+                else
+                  {
+                    ss_state = SS_NORMAL;
+                  }
+              }
+            else
+              ss_state = SS_NORMAL;
             break;
           }
       break;
@@ -3713,7 +3741,9 @@ syntax_state::update_normal (const Char *p)
       break;
 
     case SS_MCOMM1S:
-      if (xcomm & SFcomment_start_second_char)
+      if (syntax_opt & SYNTAX_OPT_LUA_LONG_BRACKET)
+        ss_state = SS_MCOMMENT;
+      else if (xcomm & SFcomment_start_second_char)
         ss_state = SS_MCOMMENT;
       else
         goto normal_char;
@@ -3727,12 +3757,18 @@ syntax_state::update_normal (const Char *p)
       break;
 
     case SS_MCOMMENT:
-      if (xcomm & SFcomment_end_first_char)
+      if (syntax_opt & SYNTAX_OPT_LUA_LONG_BRACKET &&
+          (c == ']' || c == '=')                   &&
+          look_backward_lua_long_bracket_comment(p))
+        ss_state = SS_MCOMM1E;
+      else if (xcomm & SFcomment_end_first_char)
         ss_state = SS_MCOMM1E;
       break;
 
     case SS_MCOMM1E:
-      if (xcomm & SFcomment_end_second_char)
+      if (syntax_opt & SYNTAX_OPT_LUA_LONG_BRACKET)
+        ss_state = SS_NORMAL;
+      else if (xcomm & SFcomment_end_second_char)
         ss_state = SS_NORMAL;
       else if (!(xcomm & SFcomment_end_first_char))
         ss_state = SS_MCOMMENT;
@@ -3744,7 +3780,10 @@ syntax_state::update_normal (const Char *p)
       break;
 
     case SS_STRING:
-      if (sc == SCstring && c == ss_strch)
+      if ((syntax_opt & SYNTAX_OPT_LUA_LONG_BRACKET &&
+           c == ']'                                 &&
+           look_backward_lua_long_bracket_close(p)    ) ||
+          (sc == SCstring && c == ss_strch)           )
         {
           ss_state = SS_NORMAL;
           ss_strch = 0;
@@ -3878,11 +3917,180 @@ syntax_state::update_parentheses (const Char *p)
     }
 }
 
+// lua long bracket utility class.
+class buffer_lookup
+{
+private:
+    Chunk *p_chunk;
+    int offset;
+
+public:
+    buffer_lookup(Chunk *chunk, int current_offset)
+      {
+        p_chunk = chunk;
+        offset = current_offset;
+      }
+
+    Char next()
+      {
+      loop_here:
+        if (! p_chunk)
+          return 0;
+
+        if (++offset >= p_chunk->c_used) {
+          p_chunk = p_chunk->c_next;
+          offset = -1;
+          goto loop_here;       // to avoid recursive call.
+        }
+
+        return p_chunk->c_text[offset];
+      }
+
+    Char prev()
+      {
+      loop_here:
+        if (! p_chunk)
+          return 0;
+
+        if (offset >= p_chunk->c_used)
+          offset = p_chunk->c_used;
+
+        if (--offset < 0)
+          {
+            p_chunk = p_chunk->c_prev;
+            if (p_chunk)
+              offset = p_chunk->c_used;
+            else
+              offset = 0;
+            goto loop_here;     // to avoid recursive call.
+          }
+
+        return p_chunk->c_text[offset];
+      }
+
+    Char curr()
+      {
+        if (! p_chunk)
+          return 0;
+
+        if (offset < 0 || offset >= p_chunk->c_used)
+          return 0;
+
+        return p_chunk->c_text[offset];
+      }
+};
+
+int
+syntax_state::look_forward_lua_long_bracket_comment(const Char *p)
+{
+  if (!p || *p != '-')
+    return 0;
+
+  buffer_lookup b(ss_chunk, p - ss_chunk->c_text);
+
+  if (b.next() == '-' &&
+      b.next() == '[')
+    {
+      int length = 0;
+      Char c;
+
+      while (c = b.next())
+        {
+          ++length;
+          if (c == '=')
+            continue;
+          else if (c == '[')
+            return length;
+          else
+            return 0;
+        }
+    }
+
+  return 0;
+}
+
+bool
+syntax_state::look_backward_lua_long_bracket_comment(const Char *p)
+{
+  buffer_lookup b(ss_chunk, p - ss_chunk->c_text);
+  Char curr = b.curr();
+  Char next = b.next();
+
+  if (lua_long_bracket == 1)
+    return (curr == ']' && next == ']');
+  else if (lua_long_bracket > 1)
+    {
+      if (curr != '=' || next != ']')
+        return false;
+
+      for (int i = 1; i < lua_long_bracket; i++)
+        {
+          if (b.prev() != '=')
+            return false;
+        }
+
+      return (b.prev() == ']');
+    }
+
+  return false;
+}
+
+int
+syntax_state::look_forward_lua_long_bracket_open(const Char *p)
+{
+  buffer_lookup b(ss_chunk, p - ss_chunk->c_text);
+
+  if (b.curr() == '[')
+    {
+      int length = 0;
+      Char c;
+      while (c = b.next())
+        {
+          ++length;
+          if (c == '=')
+            continue;
+          else if (c == '[')
+            return length;
+          else
+            return 0;
+        }
+    }
+
+  return 0;
+}
+
+bool
+syntax_state::look_backward_lua_long_bracket_close(const Char *p)
+{
+  buffer_lookup b(ss_chunk, p - ss_chunk->c_text);
+
+  Char curr = b.curr();
+  Char prev = b.prev();
+
+  if (lua_long_bracket == 1)
+    return (curr == ']' && prev == ']');
+  else if (lua_long_bracket > 1)
+    {
+      if (curr != ']' || prev != '=')
+        return false;
+
+      for (int i = 2; i < lua_long_bracket; i++)
+        {
+          if (b.prev() != '=')
+            return false;
+        }
+
+      return (b.prev() == ']');
+    }
+
+  return false;
+}
+
 void
 Buffer::invalidate_syntax () const
 {
   for (Chunk *cp = b_chunkb; cp; cp = cp->c_next)
-    cp->c_bstate = syntax_state::SS_INVALID;
+    cp->invalidate_syntax();
   refresh_buffer ();
 }
 
@@ -3892,35 +4100,30 @@ Chunk::parse_syntax ()
   syntax_state si;
   if (c_prev)
     {
-      if (c_bstate == c_prev->c_estate
-          && c_bstrch == c_prev->c_estrch)
+      if (this->is_syntax_continuation_with(*c_prev))
         return;
-      si.ss_state = c_prev->c_estate;
-      si.ss_strch = c_prev->c_estrch;
+      c_prev->copy_end_syntax_state_to(&si);
     }
   else
     {
-      if (c_bstate != syntax_state::SS_INVALID)
+      if (has_valid_syntax_state())
         return;
       si.ss_state = syntax_state::SS_NORMAL;
       si.ss_strch = 0;
+      si.lua_long_bracket = 0;
     }
-  c_bstate = si.ss_state;
-  c_bstrch = si.ss_strch;
+  set_syntax_state_of_beginning_of_chunk(si);
   syntax_state::define_chunk (this);
   for (const Char *p = c_text, *pe = p + c_used; p < pe; p++)
     (si.*syntax_state::update) (p);
-  c_estate = si.ss_state;
-  c_estrch = si.ss_strch;
+  set_syntax_state_of_end_of_chunk(si);
 }
 
 void
 Chunk::update_syntax (const syntax_info &psi)
 {
-  c_bstate = psi.bsi.ss_state;
-  c_bstrch = psi.bsi.ss_strch;
-  c_estate = psi.si.ss_state;
-  c_estrch = psi.si.ss_strch;
+  set_syntax_state_of_beginning_of_chunk(psi.bsi);
+  set_syntax_state_of_end_of_chunk(psi.si);
 }
 
 syntax_info::syntax_info (Buffer *bp, lisp hashtab, int html)
@@ -3964,6 +4167,7 @@ syntax_info::point_syntax (const Point &goal)
     {
       si.ss_state = syntax_state::SS_NORMAL;
       si.ss_strch = 0;
+      si.lua_long_bracket = 0;
       bsi = si;
       point = 0;
     }
@@ -3984,9 +4188,8 @@ syntax_info::point_syntax (const Point &goal)
     {
       Chunk *cp = last.p_chunk;
       if (cp->c_prev
-          ? (cp->c_bstate != cp->c_prev->c_estate
-             || cp->c_estrch != cp->c_prev->c_estrch)
-          : cp->c_bstate == syntax_state::SS_INVALID)
+          ? (! cp->is_syntax_continuation_with(*(cp->c_prev)))
+          : (! cp->has_valid_syntax_state()))
         {
           syntax_state::define_chunk (cp);
           for (const Char *p = cp->c_text + last.p_offset,
@@ -3997,8 +4200,7 @@ syntax_info::point_syntax (const Point &goal)
       cp = cp->c_next;
       for (; cp != goal.p_chunk; cp = cp->c_next)
         cp->parse_syntax ();
-      si.ss_state = cp->c_prev->c_estate;
-      si.ss_strch = cp->c_prev->c_estrch;
+      cp->c_prev->copy_end_syntax_state_to(&si);
       bsi = si;
       syntax_state::define_chunk (cp);
       for (const Char *p = cp->c_text, *pe = p + goal.p_offset; p < pe; p++)
