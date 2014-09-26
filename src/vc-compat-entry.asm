@@ -1,7 +1,8 @@
+.386
 .model flat
 .data
 
-VCVER = PLATVER / 10
+;VCVER = PLATVER / 10
 
 ;
 ; VC10 + Windows 2000 SP4 Update Rollup 1

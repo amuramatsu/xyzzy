@@ -19,7 +19,6 @@ ApplicationFrame::ApplicationFrame ()
   drag_window = 0;
   drag_buffer = 0;
   f_protect_quit = 0;
-  hwnd_clipboard = 0;
   last_cmd_tick = GetTickCount ();
   f_auto_save_pending = 0;
   default_caret_blink_time = 0;
@@ -392,7 +391,7 @@ Fget_frame_window_handle (lisp frame)
   ApplicationFrame *app = ApplicationFrame::coerce_to_frame (frame);
   if (app)
     {
-      return make_integer (long_to_large_int ((u_long) (app->toplev)));
+      return make_integer (int64_t ((u_long) (app->toplev)));
     }
   else
     {
@@ -406,7 +405,7 @@ Fget_frame_index (lisp frame)
   ApplicationFrame *app = ApplicationFrame::coerce_to_frame (frame);
   if (app)
     {
-      return make_integer (long_to_large_int (app->frame_index));
+      return make_integer (int64_t (app->frame_index));
     }
   else
     {

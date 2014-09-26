@@ -143,3 +143,5 @@ Common Lisp との互換性向上
   * multiframe: 画面端の折り返しがウィンドウ単位でちゃんと動くようにする変更を取り込む (#25)
 
 `(provide "xyzzy-0.2.2.243")`
+
+  [QuickTour - XyzzyWiki]: http://xyzzy.s53.xrea.com/wiki/index.php?QuickTour

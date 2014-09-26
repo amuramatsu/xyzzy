@@ -10,6 +10,19 @@
 #include "vwin32.h"
 #include "version.h"
 
+typedef int (WINAPI *SHFILEOPERATION)(SHFILEOPSTRUCT *);
+
+static SHFILEOPERATION
+get_shfileoperation_proc ()
+{
+  SHFILEOPERATION f = (SHFILEOPERATION)GetProcAddress (GetModuleHandle ("shell32"),
+                                                       "SHFileOperation");
+  if (!f)
+    FEsimple_error (ESHFileOperation_not_supported);
+
+  return f;
+}
+
 static lisp
 file_error_condition (int e)
 {
@@ -1153,12 +1166,7 @@ Fdelete_file (lisp name, lisp keys)
   lisp access_denied = access_denied_option (keys);
   if (find_keyword_bool (Krecycle, keys))
     {
-      typedef int (WINAPI *SHFILEOPERATION)(SHFILEOPSTRUCT *);
-      SHFILEOPERATION f = (SHFILEOPERATION)GetProcAddress (GetModuleHandle ("shell32"),
-                                                           "SHFileOperation");
-      if (!f)
-        FEsimple_error (ESHFileOperation_not_supported);
-
+      SHFILEOPERATION f = get_shfileoperation_proc ();
       map_sl_to_backsl (buf);
       buf[strlen (buf) + 1] = 0;
 
@@ -1788,9 +1796,8 @@ Ffile_length (lisp lpath)
   WIN32_FIND_DATA fd;
   if (!strict_get_file_data (path, fd))
     return Qnil;
-  large_int i;
-  i.hi = fd.nFileSizeHigh;
-  i.lo = fd.nFileSizeLow;
+  int64_t i = (int64_t (fd.nFileSizeHigh) << 32 |
+               int64_t (fd.nFileSizeLow));
   return make_integer (i);
 }
 
@@ -1883,9 +1890,9 @@ Fget_disk_usage (lisp dirname, lisp recursive)
 
   lisp block = make_fixnum (du.blocksize);
   multiple_value::value (1) =
-    number_multiply (make_integer (long_to_large_int (Clusters)), block);
+    number_multiply (make_integer (int64_t (Clusters)), block);
   multiple_value::value (2) =
-    number_multiply (make_integer (long_to_large_int (FreeClusters)), block);
+    number_multiply (make_integer (int64_t (FreeClusters)), block);
   multiple_value::value (3) =
     number_multiply (make_integer (double_to_bignum_rep (du.blocks)), block);
   multiple_value::value (4) = make_integer (double_to_bignum_rep (du.nbytes));
@@ -2425,9 +2432,8 @@ Fget_short_path_name (lisp lpath)
 lisp
 make_file_info (const WIN32_FIND_DATA &fd)
 {
-  large_int sz;
-  sz.hi = fd.nFileSizeHigh;
-  sz.lo = fd.nFileSizeLow;
+  int64_t sz = (int64_t (fd.nFileSizeHigh) << 32 |
+                int64_t (fd.nFileSizeLow));
   return make_list (make_fixnum (fd.dwFileAttributes),
                     //file_time_to_universal_time (fd.ftCreationTime),
                     //file_time_to_universal_time (fd.ftLastAccessTime),
@@ -2483,4 +2489,130 @@ root_path_name (char *buf, const char *path)
         }
     }
   return buf;
+}
+
+static UINT
+file_operation_function (lisp operation)
+{
+  if (operation == Kmove)
+    return FO_MOVE;
+  if (operation == Kcopy)
+    return FO_COPY;
+  if (operation == Kdelete)
+    return FO_DELETE;
+  if (operation == Krename)
+    return FO_RENAME;
+
+  FEprogram_error(Einvalid_file_operation, operation);
+
+  /*NOTREACHED*/
+  return 0; /* avoid warning */
+}
+
+static FILEOP_FLAGS
+file_operation_flags (lisp keys)
+{
+  FILEOP_FLAGS r = 0;
+
+  if (find_keyword_bool (Kallow_undo, keys))
+    r |= FOF_ALLOWUNDO;
+  if (find_keyword_bool (Kfiles_only, keys))
+    r |= FOF_FILESONLY;
+  if (find_keyword_bool (Kno_connected_elements, keys))
+    r |= FOF_NO_CONNECTED_ELEMENTS;
+  if (find_keyword_bool (Kno_ui, keys))
+    r |= FOF_NO_UI;
+  if (find_keyword_bool (Kno_confirmation, keys))
+    r |= FOF_NOCONFIRMATION;
+  if (find_keyword_bool (Kno_confirm_mkdir, keys))
+    r |= FOF_NOCONFIRMMKDIR;
+  if (find_keyword_bool (Kno_copy_security_attributes, keys))
+    r |= FOF_NOCOPYSECURITYATTRIBS;
+  if (find_keyword_bool (Kno_error_ui, keys))
+    r |= FOF_NOERRORUI;
+  if (find_keyword_bool (Kno_recursion, keys))
+    r |= FOF_NORECURSION;
+  if (find_keyword_bool (Krename_on_collision, keys))
+    r |= FOF_RENAMEONCOLLISION;
+  if (find_keyword_bool (Ksilent, keys))
+    r |= FOF_SILENT;
+  if (find_keyword_bool (Kwant_nuke_warning, keys))
+    r |= FOF_WANTNUKEWARNING;
+
+  return r;
+}
+
+static int
+count_file_operation_files (lisp files)
+{
+  if (consp (files))
+    return xlist_length (files);
+  else
+    return 1;
+}
+
+static char *
+file_operation_file (char *buf, lisp file)
+{
+  pathname2cstr (file, buf);
+  map_sl_to_backsl (buf);
+
+  // Add double NULL
+  buf += strlen (buf) + 1;
+  *buf = '\0';
+
+  return buf;
+}
+
+static void
+file_operation_files (char *buf, lisp files)
+{
+  if (consp (files))
+    {
+      for (; consp (files); files = xcdr (files))
+        buf = file_operation_file (buf, xcar (files));
+    }
+  else
+    {
+      file_operation_file (buf, files);
+    }
+}
+
+lisp
+Fsi_file_operation (lisp operation, lisp from_names, lisp to_names, lisp keys)
+{
+  SHFILEOPERATION f = get_shfileoperation_proc ();
+
+  UINT func = file_operation_function (operation);
+  FILEOP_FLAGS flags = file_operation_flags (keys);
+
+  int from_len = count_file_operation_files (from_names);
+  char *fromf = (char *)alloca ((PATH_MAX + 10) * from_len);
+  file_operation_files (fromf, from_names);
+
+  char *tof = nullptr;
+  if (operation != Kdelete)
+    {
+      int to_len = count_file_operation_files (to_names);
+      tof = (char *)alloca ((PATH_MAX + 10) * to_len);
+      file_operation_files (tof, to_names);
+      if (to_len > 1)
+        flags |= FOF_MULTIDESTFILES;
+    }
+
+  SHFILEOPSTRUCT fs = {0};
+  fs.wFunc = func;
+  fs.fFlags = flags;
+  fs.pFrom = fromf;
+  fs.pTo = tof;
+
+  int e = (*f)(&fs);
+  if (e)
+    {
+      if (fs.fAnyOperationsAborted)
+        FEquit ();
+      file_error (e, from_names);
+    }
+
+  return Qt;
 }

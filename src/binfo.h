@@ -22,8 +22,7 @@ public:
   char *read_only (char *, int) const;
   char *progname (char *b, char *be) const
     {return stpncpy (b, ProgramName, be - b);}
-  char *version (char *b, char *be) const
-    {return stpncpy (b, VersionString, be - b);}
+  char *version (char *, char *, int) const;
   char *buffer_name (char *, char *) const;
   char *file_name (char *, char *, int) const;
   char *file_or_buffer_name (char *, char *, int) const;
@@ -36,6 +35,7 @@ public:
   char *position (char *, char *) const;
   char *host_name (char *, char *, int) const;
   char *process_id (char *, char *) const;
+  char *admin_user (char *, char *) const;
   char *percent(char *, char *) const;
   char *frame_index(char *, char *, const ApplicationFrame* app1) const;
 };

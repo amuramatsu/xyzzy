@@ -196,6 +196,16 @@
 
 ----
 
+### src/sockssl.h, src/sockssl.cc
+
+    THIS CODE AND INFORMATION IS PROVIDED 'AS IS' WITHOUT WARRANTY OF
+    ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+    PARTICULAR PURPOSE.
+    Author: Leon Finker  7/2002
+
+----
+
 ### src/zlib/zlib.h, src/zlib/zconf.h, src/zlib/*/zlib.lib
 
     zlib.h -- interface of the 'zlib' general purpose compression library
@@ -268,7 +278,7 @@
 ### reference/reference.xml
 
     Copyright (c) 2007 The Xyzzy Documentation Project
-    Copyright (C) 2012 xyzzy Project
+    Copyright (C) 2012-2013 xyzzy Project
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),

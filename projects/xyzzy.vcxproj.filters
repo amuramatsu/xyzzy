@@ -330,9 +330,6 @@
     <ClCompile Include="..\src\ipc.cc">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\largeint.cc">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\md5c.cc">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -428,6 +425,12 @@
     </ClCompile>
     <ClCompile Include="..\src\dsfmt\dSFMT.cc">
       <Filter>ソース ファイル\dsfmt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sockssl.cc">
+      <Filter>ソース ファイル\ed</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\clipboard.cc">
+      <Filter>ソース ファイル\ed</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -527,9 +530,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\src\kbd.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\largeint.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ldialog.h">
@@ -851,6 +851,12 @@
     </ClInclude>
     <ClInclude Include="..\src\dsfmt\dSFMT-params216091.h">
       <Filter>ヘッダー ファイル\dsfmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sockssl.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\clipboard.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

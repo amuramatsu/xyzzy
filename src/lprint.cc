@@ -1335,7 +1335,9 @@ print_stream (wStream &stream, const print_control &, lisp object)
       break;
 
     case st_socket:
-      print_unreadable_object (stream, object, "socket-stream");
+      print_unreadable_object (
+        stream, object,
+        (Fsocket_stream_ssl_p (object) == Qt) ? "ssl-socket-stream" : "socket-stream");
       break;
 
     case st_general_input:
@@ -1344,6 +1346,10 @@ print_stream (wStream &stream, const print_control &, lisp object)
 
     case st_general_output:
       print_unreadable_object (stream, object, "general-output-stream");
+      break;
+
+    case st_debug_output:
+      print_unreadable_object (stream, object, "debug-output-stream");
       break;
 
     default:
@@ -1605,7 +1611,15 @@ print_c_callable (wStream &stream, const print_control &pc, lisp object)
 static inline void
 print_oledata (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "oledata");
+  set_oledata_name (object);
+  stream.add ("#<oledata:");
+  if (xoledata_name (object) && xoledata_name (object) != Qnil)
+    {
+      stream.add (" ");
+      simple_print_string (stream, xoledata_name (object));
+    }
+  print_object_address (stream, object);
+  stream.add ('>');
 }
 
 static inline void

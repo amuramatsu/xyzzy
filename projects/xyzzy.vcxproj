@@ -79,7 +79,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)src\gen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;rpcrt4.lib;wsock32.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;rpcrt4.lib;wsock32.lib;crypt32.lib;secur32.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)src\zlib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>$(GenerateDebugInformation)</GenerateDebugInformation>
       <SubSystem>NotSet</SubSystem>
@@ -122,7 +122,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)src\gen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;rpcrt4.lib;wsock32.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;rpcrt4.lib;wsock32.lib;crypt32.lib;secur32.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)src\zlib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>$(GenerateDebugInformation)</GenerateDebugInformation>
       <SubSystem>NotSet</SubSystem>
@@ -157,6 +157,7 @@
     <ClCompile Include="..\src\chname.cc" />
     <ClCompile Include="..\src\ChooseFont.cc" />
     <ClCompile Include="..\src\chunk.cc" />
+    <ClCompile Include="..\src\clipboard.cc" />
     <ClCompile Include="..\src\ColorDialog.cc" />
     <ClCompile Include="..\src\colors.cc" />
     <ClCompile Include="..\src\com.cc" />
@@ -196,7 +197,6 @@
     <ClCompile Include="..\src\kanji.cc" />
     <ClCompile Include="..\src\kbd.cc" />
     <ClCompile Include="..\src\keymap.cc" />
-    <ClCompile Include="..\src\largeint.cc" />
     <ClCompile Include="..\src\ldialog.cc" />
     <ClCompile Include="..\src\lex.cc" />
     <ClCompile Include="..\src\list.cc" />
@@ -236,6 +236,7 @@
     <ClCompile Include="..\src\signal.cc" />
     <ClCompile Include="..\src\sock.cc" />
     <ClCompile Include="..\src\sockinet.cc" />
+    <ClCompile Include="..\src\sockssl.cc" />
     <ClCompile Include="..\src\statarea.cc" />
     <ClCompile Include="..\src\stdafx.cc">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -300,6 +301,7 @@
     <ClInclude Include="..\src\ChooseFont.h" />
     <ClInclude Include="..\src\chtype.h" />
     <ClInclude Include="..\src\chunk.h" />
+    <ClInclude Include="..\src\clipboard.h" />
     <ClInclude Include="..\src\closure.h" />
     <ClInclude Include="..\src\ColorDialog.h" />
     <ClInclude Include="..\src\colors.h" />
@@ -347,7 +349,6 @@
     <ClInclude Include="..\src\ipc.h" />
     <ClInclude Include="..\src\kanji.h" />
     <ClInclude Include="..\src\kbd.h" />
-    <ClInclude Include="..\src\largeint.h" />
     <ClInclude Include="..\src\ldialog.h" />
     <ClInclude Include="..\src\lex.h" />
     <ClInclude Include="..\src\lisp.h" />
@@ -388,6 +389,7 @@
     <ClInclude Include="..\src\signal.h" />
     <ClInclude Include="..\src\sock.h" />
     <ClInclude Include="..\src\sockinet.h" />
+    <ClInclude Include="..\src\sockssl.h" />
     <ClInclude Include="..\src\statarea.h" />
     <ClInclude Include="..\src\stdafx.h" />
     <ClInclude Include="..\src\StrBuf.h" />
@@ -460,12 +462,11 @@
     <Delete Files="$(TargetDir)xyzzy.wxp" Condition="Exists('$(TargetDir)xyzzy.wxp')" />
     <Delete Files="$(SolutionDir)xyzzy.wxp" Condition="Exists('$(SolutionDir)xyzzy.wxp')" />
   </Target>
-  <Target Name="BeforeClCompile" DependsOnTargets="UpdateVersionDescribe" />
-  <Target Name="AfterClCompile">
+  <Target Name="BeforeClCompile" DependsOnTargets="UpdateVersionDescribe">
     <CallTarget Targets="CopyLispFiles;CopyEtcFiles" Condition="'$(BuildingInsideVisualStudio)'=='true'" />
   </Target>
   <Target Name="AfterBuild" DependsOnTargets="DeleteXyzzyDumpFile">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)" SkipUnchangedFiles="true" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
   </Target>
   <Target Name="BeforeClean" DependsOnTargets="DeleteXyzzyDumpFile">
     <Delete Files="$(SolutionDir)$(TargetName)$(TargetExt)" Condition="Exists('$(SolutionDir)$(TargetName)$(TargetExt)')" />

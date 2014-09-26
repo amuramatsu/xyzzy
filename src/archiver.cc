@@ -464,7 +464,7 @@ ArchiverPCommonArchiverImpl::list (const char *path, int file_name_only) const
                 result = xcons (make_list
                                 (make_string (ii.szFileName),
                                  make_string (ii.szAttribute),
-                                 make_integer (long_to_large_int (ii.dwOriginalSize)),
+                                 make_integer (int64_t (ii.dwOriginalSize)),
                                  make_list (make_fixnum (1980 + d.b.year),
                                             make_fixnum (d.b.mon),
                                             make_fixnum (d.b.day),
@@ -845,7 +845,7 @@ UnzipBuiltin::list (const char *path, int file_name_only) const
 			result = xcons (make_list
 							(make_string (ze.name),
 								make_string (ze.attr),
-								make_integer (long_to_large_int (ze.unc_size)),
+								make_integer (int64_t (ze.unc_size)),
 								make_list (make_fixnum (systime.wYear),
 								make_fixnum (systime.wMonth),
 								make_fixnum (systime.wDay),

@@ -3,6 +3,8 @@
 #include "sequence.h"
 #include "wstream.h"
 #include "sockinet.h"
+#include "sockssl.h"
+#include "debug.h"
 
 static void
 close_file_stream (lisp stream, int abort)
@@ -126,6 +128,12 @@ make_socket_stream ()
   return stream;
 }
 
+static inline lisp
+make_debug_output_stream ()
+{
+  return make_stream (st_debug_output);
+}
+
 lisp
 Fstreamp (lisp object)
 {
@@ -214,6 +222,12 @@ lisp
 Fgeneral_output_stream_p (lisp stream)
 {
   return boole (streamp (stream) && xstream_type (stream) == st_general_output);
+}
+
+lisp
+Fdebug_output_stream_p (lisp stream)
+{
+  return boole (streamp (stream) && xstream_type (stream) == st_debug_output);
 }
 
 lisp
@@ -776,7 +790,15 @@ Fconnect (lisp lhost, lisp lport, lisp keys)
       sockinet::saddr addr (lhost, lport);
       stream = make_socket_stream ();
       protect_gc gcpro (stream);
-      xsocket_stream_sock (stream) = new sockinet;
+      if (find_keyword_bool (Kssl, keys))
+        {
+          lisp lverify_mode = find_keyword (Kssl_verify_mode, keys);
+          xsocket_stream_sock (stream) = new sockssl (lhost, lverify_mode);
+        }
+      else
+        {
+          xsocket_stream_sock (stream) = new sockinet;
+        }
       xsocket_stream_sock (stream)->set_eof_error_p (0);
       xsocket_stream_sock (stream)->create ();
       xsocket_stream_sock (stream)->connect (addr);
@@ -785,7 +807,7 @@ Fconnect (lisp lhost, lisp lport, lisp keys)
   catch (sock_error &e)
     {
       Fend_wait_cursor ();
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   Fend_wait_cursor ();
   return stream;
@@ -814,7 +836,7 @@ Fmake_listen_socket (lisp lhost, lisp lport, lisp keys)
   catch (sock_error &e)
     {
       Fend_wait_cursor ();
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   Fend_wait_cursor ();
   return stream;
@@ -828,6 +850,33 @@ valid_socket_stream_p (lisp stream)
     FEtype_error (stream, Qsocket_stream);
   if (!xstream_open_p (stream))
     FEtype_error (stream, Qopen_stream);
+}
+
+lisp
+Fssl_do_handshake (lisp stream, lisp lserver_name, lisp keys)
+{
+  valid_socket_stream_p (stream);
+
+  sockinet *so = xsocket_stream_sock (stream);
+  if (so->sslp ())
+    return Qnil;
+
+  try
+    {
+      Fbegin_wait_cursor ();
+      lisp lverify_mode = find_keyword (Kssl_verify_mode, keys);
+      sockssl *ssl = new sockssl (so, lserver_name, lverify_mode);
+      xsocket_stream_sock (stream) = ssl;
+      ssl->handshake ();
+    }
+  catch (sock_error &e)
+    {
+      Fend_wait_cursor ();
+      FEsocket_error (e.error_code (), e.ope ());
+    }
+  Fend_wait_cursor ();
+
+  return Qt;
 }
 
 lisp
@@ -855,7 +904,7 @@ Faccept_connection (lisp stream, lisp keys)
     }
   catch (sock_error &e)
     {
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   return new_stream;
 }
@@ -873,7 +922,7 @@ close_socket_stream (lisp stream, int abort)
   catch (sock_error &e)
     {
       delete so;
-      FEsocket_error (e.error_code ());
+      FEsocket_error (e.error_code (), e.ope ());
     }
   delete so;
 }
@@ -890,7 +939,7 @@ Fsocket_stream_local_address (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -907,7 +956,7 @@ Fsocket_stream_local_name (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -923,7 +972,7 @@ Fsocket_stream_local_port (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -939,7 +988,7 @@ Fsocket_stream_peer_address (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -956,7 +1005,7 @@ Fsocket_stream_peer_name (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -972,7 +1021,7 @@ Fsocket_stream_peer_port (lisp stream)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
 }
 
@@ -1018,7 +1067,7 @@ Fsocket_stream_set_oob_inline (lisp stream, lisp on)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
   return Qt;
 }
@@ -1037,9 +1086,16 @@ Fsocket_stream_send_oob_data (lisp stream, lisp string)
     }
   catch (sock_error &e)
     {
-      return FEsocket_error (e.error_code ());
+      return FEsocket_error (e.error_code (), e.ope ());
     }
   return Qnil;
+}
+
+lisp
+Fsocket_stream_ssl_p (lisp stream)
+{
+  valid_socket_stream_p (stream);
+  return boole (xsocket_stream_sock (stream)->sslp ());
 }
 
 lisp
@@ -1126,6 +1182,7 @@ Fclose (lisp stream, lisp keys)
 
     case st_status:
     case st_keyboard:
+    case st_debug_output:
       return Qt;
 
     case st_wstream:
@@ -1426,6 +1483,7 @@ readc_stream (lisp stream)
         case st_status:
         case st_wstream:
         case st_general_output:
+        case st_debug_output:
           FEtype_error (stream, Qinput_stream);
           return 0;
 
@@ -1514,7 +1572,7 @@ readc_stream (lisp stream)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
 
         case st_general_input:
@@ -1598,6 +1656,7 @@ listen_stream (lisp stream)
         case st_status:
         case st_wstream:
         case st_general_output:
+        case st_debug_output:
           FEtype_error (stream, Qinput_stream);
           return 0;
 
@@ -1641,7 +1700,7 @@ listen_stream (lisp stream)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
 
         case st_general_input:
@@ -1846,7 +1905,7 @@ writec_stream (lisp stream, Char cc)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
           return;
 
@@ -1854,6 +1913,10 @@ writec_stream (lisp stream, Char cc)
           funcall_1 (xgeneral_stream_io_callback (stream),
                      make_string (&cc, 1));
           xstream_column (stream) = update_column (xstream_column (stream), cc);
+          return;
+
+        case st_debug_output:
+          Debug (&cc, 1);
           return;
 
         default:
@@ -1953,7 +2016,7 @@ write_stream (lisp stream, const Char *b, size_t size)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
           return;
 
@@ -1961,6 +2024,10 @@ write_stream (lisp stream, const Char *b, size_t size)
           funcall_1 (xgeneral_stream_io_callback (stream),
                      make_string (b, size));
           xstream_column (stream) = update_column (xstream_column (stream), b, size);
+          return;
+
+        case st_debug_output:
+          Debug (b, size);
           return;
 
         default:
@@ -2023,6 +2090,9 @@ get_stream_column (lisp stream)
             Buffer *bp = buffer_stream_point (stream, point);
             return bp->point_column (point);
           }
+
+        case st_debug_output:
+          return 0;
 
         default:
           assert (0);
@@ -2095,7 +2165,7 @@ flush_stream (lisp stream)
             }
           catch (sock_error &e)
             {
-              FEsocket_error (e.error_code ());
+              FEsocket_error (e.error_code (), e.ope ());
             }
           return;
 
@@ -2105,6 +2175,9 @@ flush_stream (lisp stream)
               suppress_gc sgc;
               Ffuncall (xgeneral_output_stream_flush_callback (stream), Qnil);
             }
+          return;
+
+        case st_debug_output:
           return;
 
         default:
@@ -2135,6 +2208,7 @@ create_std_streams ()
   xsymbol_value (Vstandard_input) = xsymbol_value (Qkeyboard);
   xsymbol_value (Vstatus_window) = make_status_stream ();
   xsymbol_value (Vstandard_output) = xsymbol_value (Vstatus_window);
+  xsymbol_value (Vdebug_output) = make_debug_output_stream ();
 #endif
   xsymbol_value (Verror_output) = create_std_stream (st_file_output, 0, stderr);
   xsymbol_value (Vquery_io) = xsymbol_value (Vterminal_io);

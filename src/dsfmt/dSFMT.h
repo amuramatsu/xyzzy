@@ -91,7 +91,11 @@ extern "C" {
 #  include <inttypes.h>
 #elif defined(_MSC_VER) || defined(__BORLANDC__)
 #  if !defined(DSFMT_UINT32_DEFINED) && !defined(SFMT_UINT32_DEFINED)
-#    include <stdint.h>
+#    if defined(_MSC_VER) && _MSC_VER < 1600
+#     include "../stdint_compat.h"
+#    else
+#     include <stdint.h>
+#    endif
 #    define DSFMT_UINT32_DEFINED
 #    if !defined(inline)
 #      define inline __inline

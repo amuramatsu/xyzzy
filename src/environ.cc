@@ -405,9 +405,9 @@ decoded_time_to_universal_time (int year, int mon, int day,
 lisp
 file_time_to_universal_time (const FILETIME &ft)
 {
-  __int64 i = *(__int64 *)&ft;
+  int64_t i = *(int64_t *)&ft;
   i = i / FILETIME_UNIT_PER_SECOND - FILETIME_UTC_BASE;
-  return make_integer (*(large_int *)&i);
+  return make_integer (i);
 }
 
 lisp
@@ -578,10 +578,10 @@ Fget_internal_real_time ()
 lisp
 Fsi_performance_counter ()
 {
-  __int64 x;
+  int64_t x;
   if (sysdep.perf_counter_present_p
       && QueryPerformanceCounter ((LARGE_INTEGER *)&x))
-    return make_integer (*(large_int *)&x);
+    return make_integer (x);
   return Fget_internal_real_time ();
 }
 
@@ -868,25 +868,8 @@ environ::save_geometry ()
       w.length = sizeof w;
       if (GetWindowPlacement (active_app_frame().toplev, &w))
         {
-          RECT r;
-          if (save_window_snap_size && w.showCmd == SW_SHOWNORMAL && GetWindowRect (active_app_frame().toplev, &r))
-            {
-              w.rcNormalPosition.left = r.left;
-              w.rcNormalPosition.top = r.top;
-              w.rcNormalPosition.right = r.right;
-              w.rcNormalPosition.bottom = r.bottom;
-
-              MONITORINFO info;
-              if (monitor.get_monitorinfo_from_window (active_app_frame().toplev, &info))
-                {
-                  int taskbar_width = info.rcWork.left - info.rcMonitor.left;
-                  int taskbar_height = info.rcWork.top - info.rcMonitor.top;
-                  w.rcNormalPosition.left -= taskbar_width;
-                  w.rcNormalPosition.top -= taskbar_height;
-                  w.rcNormalPosition.right -= taskbar_width;
-                  w.rcNormalPosition.bottom -= taskbar_height;
-                }
-            }
+          if (save_window_snap_size)
+	    adjust_snap_window_size (active_app_frame().toplev, w);
           char name[256];
           make_geometry_key (name, sizeof name, 0);
           if (!save_window_size || !save_window_position)

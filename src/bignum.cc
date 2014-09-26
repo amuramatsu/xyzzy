@@ -266,30 +266,6 @@ br_copy (bignum_rep *old, int64_t x)
 }
 
 bignum_rep *
-br_copy (bignum_rep *old, large_int li)
-{
-  int sign;
-  if (li.hi >= 0)
-    sign = BR_POSITIVE;
-  else
-    {
-      li = negsi (li);
-      sign = BR_NEGATIVE;
-    }
-
-  bignum_rep *r = br_alloc (old, 0, SHORT_PER_LONG * 2, sign);
-  u_short *d = r->br_data;
-  u_long x;
-  for (x = li.lo; x; x = down (x))
-    *d++ = lowpart (x);
-  d = r->br_data + SHORT_PER_LONG;
-  for (x = li.hi; x; x = down (x))
-    *d++ += lowpart (x);
-  r->br_len = d - r->br_data;
-  return r;
-}
-
-bignum_rep *
 br_copy_zero (bignum_rep *r)
 {
   if (!r || r->constp ())
@@ -955,7 +931,7 @@ round (bignum_rep *&q, bignum_rep *&r,
 inline long
 bignum_rep::log2 () const
 {
-  return br_len ? (br_len - 1) * BR_SHIFT + ::log2 (br_data[br_len - 1]) : 0;
+  return static_cast <long> (br_len ? (br_len - 1) * BR_SHIFT + ::log2 (br_data[br_len - 1]) : 0);
 }
 
 long
@@ -973,7 +949,7 @@ bignum_rep::howlong () const
       if (i < 0)
         x--;
     }
-  return (br_len - 1) * BR_SHIFT + ::log2 (x);
+  return static_cast <long> ((br_len - 1) * BR_SHIFT + ::log2 (x));
 }
 
 static bignum_rep *
@@ -1416,7 +1392,7 @@ ato_bignum_rep (bignum_rep *&br, const Char *p, int pl, int radix)
 {
   static bignum_rep_long brl (0);
   const Char *pe = p + pl;
-  int width = pl * log2 (radix) / BR_SHIFT + 1;
+  int width = static_cast <int> (pl * log2 (radix) / BR_SHIFT + 1);
   bignum_rep *rep;
   if (width <= SHORT_PER_LONG)
     {

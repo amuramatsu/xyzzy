@@ -47,7 +47,7 @@ book
 -->
 <!--
 Copyright (c) 2007 The Xyzzy Documentation Project
-Copyright (C) 2012 xyzzy Project
+Copyright (C) 2012-2013 xyzzy Project
 
 Permission is hereby granted, free of charge, to any person obtaining a 
 copy of this software and associated documentation files (the "Software"), 
@@ -689,6 +689,9 @@ diff起動時に実行されます。
   prefix は、例えばファイル名の補完のときのディレクトリ名とか、
   シンボルの補完のときのパッケージ修飾部分とか。
 </description>
+<seealso>*print-completion-list-hook*</seealso>
+<seealso>*print-completion-sort-function*</seealso>
+<seealso>*popup-completion-list-default*</seealso>
 <section>テキスト</section>
 <file>builtin.l</file>
 </chapter>
@@ -2175,6 +2178,28 @@ do-completion実行時に、補完リストを表示するために使用され�
                      (length list) list) (point))))
 </description>
 <seealso>*popup-completion-list-default*</seealso>
+<seealso>*print-completion-sort-function*</seealso>
+<link></link>
+<section>変数と定数</section>
+<file>complete.l</file>
+</chapter>
+
+<chapter>
+<title>*print-completion-sort-function*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+do-completion実行時に、補完リストをソートする比較関数を指定します。
+デフォルトはstring&lt;です。nilを指定するとソートは行いません。
+
+使用例：
+  (setq *print-completion-sort-function* #'string-lessp)
+
+補足：
+  xyzzy 0.2.2.244 から利用可能です。
+</description>
+<seealso>*print-completion-list-hook*</seealso>
 <link></link>
 <section>変数と定数</section>
 <file>complete.l</file>
@@ -7582,11 +7607,26 @@ C 言語などの if ... else if ... のようなものです。
 <chapter>
 <title>connect</title>
 <type>Function</type>
-<arguments>connect HOSTNAME SERVICE &amp;key :encoding</arguments>
+<arguments>connect HOSTNAME SERVICE &amp;key :encoding :ssl (:ssl-verify-mode :peer)</arguments>
 <package>editor</package>
 <description>
 ホストのポートとのTCP接続を開きます。
 成功すれば接続へのストリームを返します。
+
+  HOSTNAME         : 接続先のホスト名またはIPアドレスを指定します。
+  SERVICE          : サービス名またはポート番号を指定します。
+  :encoding        : エンコーディングのモードを指定します。
+        :binary        バイナリモードです。
+        :text          テキストモードです。（省略時は:text）
+        :canonical     :text と同じ意味になります。
+        :raw           改行コードの扱いが、LF のみになります。
+                       それ以外は :text と同じです。
+  :ssl             : SSL通信を行う場合はtを指定します。
+  :ssl-verify-mode : SSL証明書の検証モードを指定します。
+        :none          サーバ証明書を検証しません。
+        :peer          サーバ証明書を検証します。
+                       検証が失敗した場合socket-errorが通知されます。
+                       デフォルトは:peerです。
 
 参考：
   ;;; http://www.yahoo.co.jp/を取得してみる。
@@ -7594,8 +7634,20 @@ C 言語などの if ... else if ... のようなものです。
     (format stream "GET / HTTP/1.0\n\n")
     (while (setq in (read-line stream nil))
       (insert in "\n")))
+
+  ;;; https://www.google.co.jp/を取得してみる。
+  (with-open-stream (stream (connect "www.google.co.jp" "https" :ssl t))
+    (format stream "GET / HTTP/1.1\n")
+    (format stream "Host: www.google.co.jp\n\n")
+    (while (setq in (read-line stream nil))
+      (insert in "\n")))
+
+備考：
+  SSL接続は xyzzy 0.2.2.248 から利用可能です。
 </description>
 <seealso>open-network-stream</seealso>
+<seealso>socket-stream-ssl-p</seealso>
+<seealso>ssl-do-handshake</seealso>
 <seealso>xyzzyで提供されているストリームの種類</seealso>
 <section>入出力</section>
 <file>builtin.l</file>
@@ -10512,7 +10564,10 @@ do*式の一般形は、
                  (progn (skip-syntax-spec-backward "^ ") (point))
                  :file-name)
 </description>
-<seealso></seealso>
+<seealso>*do-completion</seealso>
+<seealso>*print-completion-list-hook*</seealso>
+<seealso>*print-completion-sort-function*</seealso>
+<seealso>*popup-completion-list-default*</seealso>
 <link></link>
 <section>テキスト</section>
 <file>complete.l</file>
@@ -17150,6 +17205,64 @@ DIMENSIONS で示される大きさ・次元の配列をつくり、それを値
 </chapter>
 
 <chapter>
+<title>backup-by-copying</title>
+<type>BufferLocal</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+ファイル保存時のバックアップファイルの作成方法を指定する変数です。
+
+  nil     : 元のファイルをリネームしてバックアップファイルを作成してから、
+            バッファを新しいファイルとして保存します。
+            元のファイルのハードリンクはバックアップファイルを指すため
+            ハードリンクは切れます。
+            デフォルトは nil です。
+  t       : 元のファイルをコピーしてバックアップファイルを作成してから、
+            バッファをファイルに保存します。元のファイルのハードリンクは
+            切れません。
+  :remote : ファイルがリモートにある場合のみ元のファイルをコピーして
+            バックアップファイルを作成します。
+
+使用例：
+  ;;; ファイル保存時にハードリンクが切れないように
+  ;;; 常にコピーしてバックアップファイルを作成
+  (setq backup-by-copying t)
+  =&gt; t
+</description>
+<seealso>file-precious-flag</seealso>
+<link>[xyzzy:05968]</link>
+<section>バッファ</section>
+<file></file>
+</chapter>
+
+<chapter>
+<title>file-precious-flag</title>
+<type>BufferLocal</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+ファイル保存時にバックアップファイルを作成するかどうかを指定する変数です。
+
+  nil : ファイル保存時にバックアップファイルを作成しません。
+  t   : ファイルを保存するときにバックアップファイルを作成してから
+        バッファをファイルに保存します。ディスク容量の不足等でファイルの
+        保存に失敗した場合でも元のファイルを壊すことはありません。
+        デフォルトは t です。
+
+使用例：
+  ;;; ファイル保存時にバックアップファイルを作成しない
+  (setq file-precious-flag nil)
+  =&gt; nil
+
+補足：
+  xyzzy 0.2.2.244 から利用可能です。
+</description>
+<seealso>backup-by-copying</seealso>
+<section>バッファ</section>
+<file></file>
+</chapter>
+
+<chapter>
 <title>make-broadcast-stream</title>
 <type>Function</type>
 <arguments>make-broadcast-stream &amp;rest STREAMS</arguments>
@@ -18830,12 +18943,14 @@ NUMBER がゼロより小さければ t 、そうでなければ nil を返し�
   %i    IMEの状態
   %P    カーソル位置
   %/    カーソル位置がバッファ全体の何%の位置にあるか
+  %!    xyzzyが管理者として実行されている場合は "管理者: "
 
 備考：
   タイトルバーのフォーマットとほぼ同様ですが、
   %i, %P, %/ はモードラインのフォーマットでしか設定できません。
 
   %/, %$ は xyzzy 0.2.2.236 から利用可能です。
+  %! は xyzzy 0.2.2.247 から利用可能です。
 </description>
 <seealso>update-mode-line</seealso>
 <seealso>title-bar-format</seealso>
@@ -26164,7 +26279,7 @@ list の 7 番目の要素を返します。
 <chapter>
 <title>shell-execute</title>
 <type>Function</type>
-<arguments>shell-execute FILENAME &amp;optional DIRECTORY PARAMS</arguments>
+<arguments>shell-execute FILENAME &amp;optional DIRECTORY PARAMS &amp;key :verb</arguments>
 <package>editor</package>
 <description>
 何かを行います。URLであればそれを開き、実行ファイルであれば実行したり、
@@ -26174,6 +26289,21 @@ list の 7 番目の要素を返します。
   DIRECTORY : どこでそれを実行するかを指定します。
         t       (cwd)の返されるディレクトリで実行されるみたいです。
         nil     特に指定がないのでFILENAMEのディレクトリで実行されます。
+  :verb     : 実行するべき操作を指定します。
+              利用可能な操作の種類は、ファイルまたはファイルによって異なります。
+              通常は次の操作が有効です。
+                :open       : FILENAME で指定したファイルを開きます。
+                              文書ファイルまたは実行可能ファイルを指定できます。
+                              1 つのフォルダを指定することもできます。
+                :edit       : エディタを開きます。
+                              文書以外のファイルを指定すると失敗します。
+                :explore    : FILENAME で指定したフォルダを選択して、エクスプローラを起動します。
+                :print      : FILENAME で指定したファイルを印刷します。
+                              文書以外のファイルを指定すると失敗します。
+                :runas      : 管理者権限で FILENAME で指定したファイルを開きます。
+                              文書ファイルまたは実行可能ファイルを指定できます。
+                              1 つのフォルダを指定することもできます。
+              nil を指定すると :open が規定で利用されます。
 
 質問：
 
@@ -30002,6 +30132,7 @@ catchで指定されたラベルまで、非局所脱出します。
   %m    モード 
   %k    エンコーディング 
   %l    改行コード 
+  %!    xyzzyが管理者として実行されている場合は "管理者: "
 
 備考：
   モードラインのフォーマットとほぼ同様ですが、
@@ -30009,6 +30140,7 @@ catchで指定されたラベルまで、非局所脱出します。
 
 備考：
   %$ は xyzzy 0.2.2.236 から利用可能です。
+  %! は xyzzy 0.2.2.247 から利用可能です。
 </description>
 <seealso>mode-line-format</seealso>
 <link></link>
@@ -31773,6 +31905,7 @@ synonym-stream以降は使ったことないんで(^^;、動くかどうか分�
   status-window-stream    なし
   keyboard-stream         なし
   wstreams-stream         なし
+  debug-output-stream     なし
   ---------------------------------------------
 
 独自ストリームの概要：
@@ -31786,6 +31919,12 @@ synonym-stream以降は使ったことないんで(^^;、動くかどうか分�
     グローバル変数*keyboard*の値です。
   wstreams-stream
     formatからコールバックが呼ばれたときのstreamの実体。
+  debug-output-stream
+    現在のデバッガをストリームとみなして出力ができます。
+    グローバル変数*debug-output*の値です。
+
+補足：
+  debug-output-stream は xyzzy 0.2.2.246 から利用可能です。
 </description>
 <seealso>open</seealso>
 <seealso>make-string-input-stream</seealso>
@@ -36380,6 +36519,7 @@ FRAME のスロット deleted-fn に関数が設定されている場合、FRAME
 <seealso>next-pseudo-frame</seealso>
 <seealso>other-pseudo-frame</seealso>
 <seealso>switch-pseudo-frame</seealso>
+<seealso>*next-pseudo-frame-in-tab-order*</seealso>
 <link></link>
 <section>ウィンドウ</section>
 <file>pframe.l</file>
@@ -36391,11 +36531,13 @@ FRAME のスロット deleted-fn に関数が設定されている場合、FRAME
 <arguments>next-pseudo-frame</arguments>
 <package>editor</package>
 <description>
+次のフレームに移動します。[C-x 6 o]
 other-pseudo-frame の別名です。
 </description>
 <seealso>previous-pseudo-frame</seealso>
 <seealso>other-pseudo-frame</seealso>
 <seealso>switch-pseudo-frame</seealso>
+<seealso>*next-pseudo-frame-in-tab-order*</seealso>
 <link></link>
 <section>ウィンドウ</section>
 <file></file>
@@ -36412,6 +36554,7 @@ other-pseudo-frame の別名です。
 <seealso>previous-pseudo-frame</seealso>
 <seealso>next-pseudo-frame</seealso>
 <seealso>switch-pseudo-frame</seealso>
+<seealso>*next-pseudo-frame-in-tab-order*</seealso>
 <link></link>
 <section>ウィンドウ</section>
 <file>pframe.l</file>
@@ -37652,6 +37795,8 @@ write-file で APPEND を non-nil にした場合と同じです。
 <seealso>*after-save-buffer-hook*</seealso>
 <seealso>*save-buffer-no-filenames-hook*</seealso>
 <seealso>make-backup-files</seealso>
+<seealso>backup-by-copying</seealso>
+<seealso>file-precious-flag</seealso>
 <seealso>buffer-truncated-p</seealso>
 <seealso>buffer-modified-p</seealso>
 <seealso>save-all-buffers</seealso>
@@ -38920,6 +39065,21 @@ OBJECT がリードテーブルなら t 、それ以外なら nil を返しま�
 </chapter>
 
 <chapter>
+<title>run-admin-console</title>
+<type>Function</type>
+<arguments>run-admin-console</arguments>
+<package>editor</package>
+<description>
+xyzzy の外部でコンソールを管理者権限で起動します。
+変数 *eshell* または *shell* の値が実行されるコマンドとして使われます。
+</description>
+<seealso>run-console</seealso>
+<link></link>
+<section>プロセス</section>
+<file>process.l</file>
+</chapter>
+
+<chapter>
 <title>run-console</title>
 <type>Function</type>
 <arguments>run-console</arguments>
@@ -38928,7 +39088,7 @@ OBJECT がリードテーブルなら t 、それ以外なら nil を返しま�
 xyzzy の外部でコンソールを起動します。
 変数 *eshell* または *shell* の値が実行されるコマンドとして使われます。
 </description>
-<seealso></seealso>
+<seealso>run-admin-console</seealso>
 <link></link>
 <section>プロセス</section>
 <file>process.l</file>
@@ -39990,6 +40150,923 @@ xyzzy では special 以外の指定をしても効果はありません。
 <link></link>
 <section>ウィンドウ</section>
 <file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>*debug-output*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+現在のデバッガに文字列を送信する出力ストリームです。
+出力したメッセージはDebugViewやVisualStudioの出力ウィンドウで確認可能です。
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>si:output-debug-string</seealso>
+<seealso>debug-output-stream-p</seealso>
+<link></link>
+<section>変数と定数</section>
+<file></file>
+</chapter>
+
+<chapter>
+<title>debug-output-stream-p</title>
+<type>Function</type>
+<arguments>debug-output-stream-p STREAM</arguments>
+<package>editor</package>
+<description>
+ストリームがdebug-output-streamかどうかを返します。
+
+  STREAM : 判定するストリーム
+
+  t   ストリームはdebug-output-streamである。
+  nil ストリームはdebug-output-streamではない。
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>*debug-output*</seealso>
+<seealso>xyzzyで提供されているストリームの種類</seealso>
+<section>入出力</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>si:output-debug-string</title>
+<type>Function</type>
+<arguments>output-debug-string FMT &amp;rest ARGS</arguments>
+<package>system</package>
+<description>
+現在のデバッガに文字列を送信します。出力したメッセージはDebugViewや
+VisualStudioの出力ウィンドウで確認可能です。
+
+  FMT  : format同様の書式が指定できます。
+  ARGS : 出力書式へのパラメタとなります。
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>*debug-output*</seealso>
+<link></link>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>*filer-show-hidden-files*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+ファイラで隠しファイルを表示するかどうかを設定します。
+  non-nil  隠しファイルを表示する
+  nil      隠しファイルを表示しない
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>filer</seealso>
+<seealso>*filer-show-system-files*</seealso>
+<link></link>
+<section>ファイラ</section>
+<file>filer.l</file>
+</chapter>
+
+<chapter>
+<title>*filer-show-system-files*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+ファイラで保護されたオペレーティング システム ファイルを表示するかどうかを設定します。
+  non-nil  保護されたオペレーティング システム ファイルを表示する
+  nil      保護されたオペレーティング システム ファイルを表示しない
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>filer</seealso>
+<seealso>*filer-show-hidden-files*</seealso>
+<link></link>
+<section>ファイラ</section>
+<file>filer.l</file>
+</chapter>
+
+<chapter>
+<title>oledatap</title>
+<type>Function</type>
+<arguments>oledatap OBJECT</arguments>
+<package>lisp</package>
+<description>
+OBJECTがOLEオブジェクトならばt、それ以外ならnilを返します。
+
+  (oledatap x) == (typep x 'oledata)
+</description>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>データ型</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-create-object</title>
+<type>Function</type>
+<arguments>ole-create-object PROGRAM-ID</arguments>
+<package>editor</package>
+<description>
+OLEオートメーション・サーバを作成します。
+
+  PROGRAM-ID : 作成するOLEオートメーション・サーバのPROGIDを指定します。
+
+使用例 :
+  (ole-create-object "InternetExplorer.Application")
+  =&gt; #&lt;oledata: IWebBrowser2 56234972&gt;
+</description>
+<seealso>oledatap</seealso>
+<seealso>ole-get-object</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-get-object</title>
+<type>Function</type>
+<arguments>ole-get-object PROGRAM-ID</arguments>
+<package>editor</package>
+<description>
+起動しているOLEオートメーション・サーバに接続します。
+
+  PROGRAM-ID : 接続対象のOLEオートメーション・サーバのPROGIDを指定します。
+
+使用例 :
+  (ole-get-object "Excel.Application")
+  =&gt; #&lt;oledata: _Application 56234956&gt;
+</description>
+<seealso>oledatap</seealso>
+<seealso>ole-create-object</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-for-each</title>
+<type>Macro</type>
+<arguments>ole-for-each (VAR OBJ &amp;optional RESULTFORM) &amp;body BODY</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのコレクションを列挙します。
+
+  VAR           : BODY実行中に各シンボルに束縛される変数
+  OBJ           : OLEオブジェクトのコレクション
+  RESULTFORM    : ole-for-eachの戻り値
+  BODY          : 繰り返しの本体
+
+使用例 :
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (setf #{ie.Visible} t)
+    #{ie.Navigate["http://www.google.co.jp/"]}
+    (while (/= #{ie.ReadyState} 4)
+      (sit-for 0.1))
+    (ole-for-each (div #{ie.document.GetElementsByTagName["div"]})
+      (princ #{div.InnerText}))
+    #{ie.Quit})
+</description>
+<seealso></seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-getprop</title>
+<type>Function</type>
+<arguments>ole-getprop OBJECT PROPERTY &amp;rest ARGS</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのプロパティを取得します。
+
+  OBJECT     : OLEオブジェクトを指定します。
+  PROPERTY   : プロパティ名を指定します。
+  ARGS       : プロパティの引数をリストで指定します。
+
+使用例 :
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (ole-getprop ie :Path))
+  =&gt; "C:\\Program Files\\Internet Explorer\\"
+
+リーダーマクロを利用して以下のように記述することもできます。
+
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    #{ie.Path})
+  =&gt; "C:\\Program Files\\Internet Explorer\\"
+</description>
+<seealso>ole-method</seealso>
+<seealso>ole-method*</seealso>
+<seealso>ole-putprop</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-putprop</title>
+<type>Function</type>
+<arguments>ole-putprop OBJECT PROPERTY VALUE &amp;rest ARGS</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのプロパティを設定します。
+
+  OBJECT     : OLEオブジェクトを指定します。
+  PROPERTY   : プロパティ名を指定します。
+  VALUE      : プロパティに設定する値を指定します。
+  ARGS       : プロパティの引数をリストで指定します。
+
+使用例 :
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (ole-putprop ie :Visible t))
+  =&gt; t
+
+リーダーマクロを利用して以下のように記述することもできます。
+
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (setf #{ie.Visible} t))
+  =&gt; t
+</description>
+<seealso>ole-method</seealso>
+<seealso>ole-method*</seealso>
+<seealso>ole-getprop</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-method</title>
+<type>Function</type>
+<arguments>ole-method OBJECT PROPERTY &amp;rest ARGS</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのメソッドを起動します。
+引数を名前で指定したい場合はole-method*を利用します。
+
+  OBJECT     : OLEオブジェクトを指定します。
+  PROPERTY   : メソッド名を指定します。
+  ARGS       : 引数をリストで指定します。
+
+使用例 :
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (ole-putprop ie :Visible t)
+    (ole-method ie :Navigate "http://www.google.co.jp/"))
+
+リーダーマクロを利用して以下のように記述することもできます。
+
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (setf #{ie.Visible} t)
+    #{ie.Navigate["http://www.google.co.jp/"]})
+</description>
+<seealso>ole-method*</seealso>
+<seealso>ole-getprop</seealso>
+<seealso>ole-putprop</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-method*</title>
+<type>Function</type>
+<arguments>ole-method* OBJECT PROPERTY &amp;optional ARGS NAMED-ARGS</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのメソッドを起動します。
+
+  OBJECT     : OLEオブジェクトを指定します。
+  PROPERTY   : メソッド名を指定します。
+  ARGS       : 引数をリストで指定します。
+  NAMED-ARGS : 名前付き引数を属性リストで指定します。
+
+使用例 :
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (ole-putprop ie :Visible t)
+    (ole-method* ie :Navigate
+                 (list "http://www.google.co.jp/")
+                 (list :Headers "Referer: http://www.google.co.jp/")))
+
+リーダーマクロを利用して以下のように記述することもできます。
+
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (setf #{ie.Visible} t)
+    #{ie.Navigate["http://www.google.co.jp/" {:Headers "Referer: http://www.google.co.jp/"}]})
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>ole-method</seealso>
+<seealso>ole-getprop</seealso>
+<seealso>ole-putprop</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ole-create-event-sink</title>
+<type>Function</type>
+<arguments>ole-create-event-sink OBJECT &amp;optional INTERFACE TYPELIB-FILE</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのイベントを受け取るイベント・シンクを作成します。
+イベント・シンク作成後にset-ole-event-handlerでイベントハンドラを設定します。
+
+  OBJECT       : イベント発生元のOLEオブジェクトを指定します。
+  INTERFACE    : イベント・シンクのインターフェイス名を指定します。
+  TYPELIB-FILE : タイプライブラリのファイル名を指定します。
+                 通常は省略可能です。
+
+使用例 :
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (ole-create-event-sink ie "DWebBrowserEvents2")
+    (set-ole-event-handler ie "DownloadComplete"
+                           #'(lambda ()
+                               (msgbox "Download complete!")))
+    #{ie.Navigate["http://www.google.co.jp/"]})
+</description>
+<seealso>set-ole-event-handler</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>set-ole-event-handler</title>
+<type>Function</type>
+<arguments>set-ole-event-handler OBJECT EVENT-NAME HANDLER</arguments>
+<package>editor</package>
+<description>
+OLEオブジェクトのイベントハンドラを設定します。
+
+  OBJECT     : イベント発生元のOLEオブジェクトを指定します。
+  EVENT-NAME : イベント名を指定します。
+  HANDLER    : イベントハンドラを指定します。
+
+使用例 :
+  (require "ole")
+  (let ((ie (ole-create-object "InternetExplorer.Application")))
+    (ole-create-event-sink ie "DWebBrowserEvents2")
+    (set-ole-event-handler ie "DownloadComplete"
+                           #'(lambda ()
+                               (msgbox "Download complete!")))
+    #{ie.Navigate["http://www.google.co.jp/"]})
+</description>
+<seealso>ole-create-event-sink</seealso>
+<seealso>OLEオートメーションの使用例</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>si:get-key-state</title>
+<type>Function</type>
+<arguments>get-key-state VKEY</arguments>
+<package>system</package>
+<description>
+指定された仮想キーの状態を多値で返します。
+
+ VKEY : 仮想キーコードを指定します。
+        si:*vk- で始まる定数を指定します。
+
+戻り値
+   一つ目はキーが押されているか、押されていないか
+   二つ目はトグルになっているかどうか
+
+使用例 :
+  (multiple-value-bind (press toggle)
+      (si:get-key-state si:*vk-shift*)
+    (when press
+      (msgbox "Shift pressed"))
+    (when toggle
+      (msgbox "Shift toggled")))
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+
+仮想キー定数一覧：
+  si:*vk-lbutton*
+  si:*vk-rbutton*
+  si:*vk-cancel*
+  si:*vk-mbutton*
+  si:*vk-xbutton1*
+  si:*vk-xbutton2*
+  si:*vk-back*
+  si:*vk-tab*
+  si:*vk-clear*
+  si:*vk-return*
+  si:*vk-shift*
+  si:*vk-control*
+  si:*vk-menu*
+  si:*vk-pause*
+  si:*vk-capital*
+  si:*vk-kana*
+  si:*vk-hangul*
+  si:*vk-junja*
+  si:*vk-final*
+  si:*vk-hanja*
+  si:*vk-kanji*
+  si:*vk-escape*
+  si:*vk-convert*
+  si:*vk-nonconvert*
+  si:*vk-accept*
+  si:*vk-modechange*
+  si:*vk-space*
+  si:*vk-prior*
+  si:*vk-next*
+  si:*vk-end*
+  si:*vk-home*
+  si:*vk-left*
+  si:*vk-up*
+  si:*vk-right*
+  si:*vk-down*
+  si:*vk-select*
+  si:*vk-print*
+  si:*vk-execute*
+  si:*vk-snapshot*
+  si:*vk-insert*
+  si:*vk-delete*
+  si:*vk-help*
+  si:*vk-0*
+  si:*vk-1*
+  si:*vk-2*
+  si:*vk-3*
+  si:*vk-4*
+  si:*vk-5*
+  si:*vk-6*
+  si:*vk-7*
+  si:*vk-8*
+  si:*vk-9*
+  si:*vk-a*
+  si:*vk-b*
+  si:*vk-c*
+  si:*vk-d*
+  si:*vk-e*
+  si:*vk-f*
+  si:*vk-g*
+  si:*vk-h*
+  si:*vk-i*
+  si:*vk-j*
+  si:*vk-k*
+  si:*vk-l*
+  si:*vk-m*
+  si:*vk-n*
+  si:*vk-o*
+  si:*vk-p*
+  si:*vk-q*
+  si:*vk-r*
+  si:*vk-s*
+  si:*vk-t*
+  si:*vk-u*
+  si:*vk-v*
+  si:*vk-w*
+  si:*vk-x*
+  si:*vk-y*
+  si:*vk-z*
+  si:*vk-lwin*
+  si:*vk-rwin*
+  si:*vk-apps*
+  si:*vk-sleep*
+  si:*vk-numpad0*
+  si:*vk-numpad1*
+  si:*vk-numpad2*
+  si:*vk-numpad3*
+  si:*vk-numpad4*
+  si:*vk-numpad5*
+  si:*vk-numpad6*
+  si:*vk-numpad7*
+  si:*vk-numpad8*
+  si:*vk-numpad9*
+  si:*vk-multiply*
+  si:*vk-add*
+  si:*vk-separator*
+  si:*vk-subtract*
+  si:*vk-decimal*
+  si:*vk-divide*
+  si:*vk-f1*
+  si:*vk-f2*
+  si:*vk-f3*
+  si:*vk-f4*
+  si:*vk-f5*
+  si:*vk-f6*
+  si:*vk-f7*
+  si:*vk-f8*
+  si:*vk-f9*
+  si:*vk-f10*
+  si:*vk-f11*
+  si:*vk-f12*
+  si:*vk-f13*
+  si:*vk-f14*
+  si:*vk-f15*
+  si:*vk-f16*
+  si:*vk-f17*
+  si:*vk-f18*
+  si:*vk-f19*
+  si:*vk-f20*
+  si:*vk-f21*
+  si:*vk-f22*
+  si:*vk-f23*
+  si:*vk-f24*
+  si:*vk-numlock*
+  si:*vk-scroll*
+  si:*vk-oem-nec-equal*
+  si:*vk-oem-fj-jisho*
+  si:*vk-oem-fj-masshou*
+  si:*vk-oem-fj-touroku*
+  si:*vk-oem-fj-loya*
+  si:*vk-oem-fj-roya*
+  si:*vk-lshift*
+  si:*vk-rshift*
+  si:*vk-lcontrol*
+  si:*vk-rcontrol*
+  si:*vk-lmenu*
+  si:*vk-rmenu*
+  si:*vk-browser-back*
+  si:*vk-browser-forward*
+  si:*vk-browser-refresh*
+  si:*vk-browser-stop*
+  si:*vk-browser-search*
+  si:*vk-browser-favorites*
+  si:*vk-browser-home*
+  si:*vk-volume-mute*
+  si:*vk-volume-down*
+  si:*vk-volume-up*
+  si:*vk-media-next-track*
+  si:*vk-media-prev-track*
+  si:*vk-media-stop*
+  si:*vk-media-play-pause*
+  si:*vk-launch-mail*
+  si:*vk-launch-media-select*
+  si:*vk-launch-app1*
+  si:*vk-launch-app2*
+  si:*vk-oem-1*
+  si:*vk-oem-plus*
+  si:*vk-oem-comma*
+  si:*vk-oem-minus*
+  si:*vk-oem-period*
+  si:*vk-oem-2*
+  si:*vk-oem-3*
+  si:*vk-oem-4*
+  si:*vk-oem-5*
+  si:*vk-oem-6*
+  si:*vk-oem-7*
+  si:*vk-oem-8*
+  si:*vk-oem-ax*
+  si:*vk-oem-102*
+  si:*vk-ico-help*
+  si:*vk-ico-00*
+  si:*vk-processkey*
+  si:*vk-ico-clear*
+  si:*vk-packet*
+  si:*vk-oem-reset*
+  si:*vk-oem-jump*
+  si:*vk-oem-pa1*
+  si:*vk-oem-pa2*
+  si:*vk-oem-pa3*
+  si:*vk-oem-wsctrl*
+  si:*vk-oem-cusel*
+  si:*vk-oem-attn*
+  si:*vk-oem-finish*
+  si:*vk-oem-copy*
+  si:*vk-oem-auto*
+  si:*vk-oem-enlw*
+  si:*vk-oem-backtab*
+  si:*vk-attn*
+  si:*vk-crsel*
+  si:*vk-exsel*
+  si:*vk-ereof*
+  si:*vk-play*
+  si:*vk-zoom*
+  si:*vk-noname*
+  si:*vk-pa1*
+  si:*vk-oem-clear*
+</description>
+<seealso></seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>si:search-path</title>
+<type>Function</type>
+<arguments>search-path FILE &amp;optional PATH EXT</arguments>
+<package>system</package>
+<description>
+指定されたファイルを検索します。
+
+  FILE : 検索対象のファイル名を指定します。
+  PATH : ファイル検索対象のパス名を指定します。
+         nil を指定すると次の順序でファイルを検索します。
+           1. xyzzy.exe と同じディレクトリ
+           2. カレントディレクトリ
+           3. 32 ビットの Windows システムディレクトリ (SYSTEM32)
+           4. 16 ビットの Windows システムディレクトリ (SYSTEM)
+           5. Windows ディレクトリ
+           6. 環境変数 PATH に記述されている各ディレクトリ
+  EXT  : 検索対象のファイルの拡張子を指定します。
+         拡張子の先頭には、ピリオドを指定してください。
+         FILE パラメータで拡張子が指定されていなかった場合にのみ追加されます。
+         拡張子が不要な場合、または、FILE で拡張子を指定した場合は、EXT には
+         nil を指定してください。
+
+使用例 :
+  (si:search-path "cmd.exe")
+  =&gt; "C:/Windows/system32/cmd.exe"
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso></seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>si:control-pressed</title>
+<type>Function</type>
+<arguments>control-pressed</arguments>
+<package>system</package>
+<description>
+Control キーの状態を多値で返します。
+
+戻り値
+   一つ目は左右どちらかの Control キーが押されているか、押されていないか
+   二つ目はトグルになっているかどうか
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>si:get-key-state</seealso>
+<seealso>si:meta-pressed</seealso>
+<seealso>si:shift-pressed</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>si:meta-pressed</title>
+<type>Function</type>
+<arguments>meta-pressed</arguments>
+<package>system</package>
+<description>
+Alt キーの状態を多値で返します。
+
+戻り値
+   一つ目は左右どちらかの Alt キーが押されているか、押されていないか
+   二つ目はトグルになっているかどうか
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>si:get-key-state</seealso>
+<seealso>si:control-pressed</seealso>
+<seealso>si:shift-pressed</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>si:shift-pressed</title>
+<type>Function</type>
+<arguments>shift-pressed</arguments>
+<package>system</package>
+<description>
+Shift キーの状態を多値で返します。
+
+戻り値
+   一つ目は左右どちらかの Shift キーが押されているか、押されていないか
+   二つ目はトグルになっているかどうか
+
+補足：
+  xyzzy 0.2.2.246 から利用可能です。
+</description>
+<seealso>si:get-key-state</seealso>
+<seealso>si:control-pressed</seealso>
+<seealso>si:meta-pressed</seealso>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>admin-user-p</title>
+<type>Function</type>
+<arguments>admin-user-p</arguments>
+<package>editor</package>
+<description>
+xyzzyが管理者として実行されているならtを返します。
+
+補足：
+  xyzzy 0.2.2.247 から利用可能です。
+</description>
+<section>システム</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>socket-stream-ssl-p</title>
+<type>Function</type>
+<arguments>socket-stream-ssl-p STREAM</arguments>
+<package>editor</package>
+<description>
+STREAMがSSLストリームならtを返します。
+
+補足：
+  xyzzy 0.2.2.248 から利用可能です。
+</description>
+<section>入出力</section>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>ssl-do-handshake</title>
+<type>Function</type>
+<arguments>ssl-do-handshake STREAM SERVER-NAME &amp;key (:ssl-verify-mode :peer)</arguments>
+<package>editor</package>
+<description>
+STREAMに対してSSL認証を行いSSLストリームに変換しtを返します。
+STREAMがすでにSSLストリームなら何もせずnilを返します。
+その後の通信はすべてSSL通信となります。
+
+  STREAM           : ストリームを指定します。
+  SERVER-NAME      : 証明書の検証に使用するサーバ名（コモンネーム）を指定します。
+  :ssl-verify-mode : SSL証明書の検証モードを指定します。
+        :none          サーバ証明書を検証しません。
+        :peer          サーバ証明書を検証します。
+                       検証が失敗した場合socket-errorが通知されます。
+                       デフォルトは:peerです。
+
+参考：
+  ;;; Proxy経由でhttps://www.google.co.jp/を取得してみる。
+  (defun proxy-https-get (proxy-host proxy-port host port path)
+    (let (line res)
+      (with-open-stream (stream (connect proxy-host proxy-port))
+        (format stream "CONNECT ~A:~A HTTP/1.0~%~%" host port)
+        (setq line (read-line stream))
+        (unless (string-match "^HTTP/[0-9]\.[0-9] 200" line)
+          (plain-error "CONNECT failed: ~S" line))
+        (ssl-do-handshake stream host)
+        (format stream "GET ~A HTTP/1.0~%" path)
+        (format stream "Host: ~A~%~%" host)
+        (while (setq line (read-line stream nil))
+          (push line res))
+        (nreverse res))))
+
+  (format t "~{~A~%~}"
+          (proxy-https-get "proxy.example.com" 8080
+                           "www.google.co.jp" 443 "/"))
+
+補足：
+  xyzzy 0.2.2.248 から利用可能です。
+</description>
+<section>入出力</section>
+<seealso>connect</seealso>
+<seealso>socket-stream-ssl-p</seealso>
+<file>builtin.l</file>
+</chapter>
+
+<chapter>
+<title>*next-pseudo-frame-in-tab-order*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+next-pseudo-frameで次に移動するフレームを、タブでの順番どおりにするか否かを設
+定します。もちろんprevious-pseudo-frameにも影響します。
+  t    フレームバーでの次のフレームに移動する。
+  nil  フレームの作成順に次のフレームに移動する。
+
+補足：
+  xyzzy 0.2.2.249 から利用可能です。
+</description>
+<seealso>next-pseudo-frame</seealso>
+<seealso>other-pseudo-frame</seealso>
+<seealso>previous-pseudo-frame</seealso>
+<link></link>
+<section>ウィンドウ</section>
+<file>pframe.l</file>
+</chapter>
+
+<chapter>
+<title>*pseudo-frame-bar-context-menu*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+フレーム・バー上で右クリックしたときに出てくるコンテキストメニューです。
+define-popup-menu で作成されています。（作成は app-menu.l）
+
+補足：
+  xyzzy 0.2.2.250 から利用可能です。
+</description>
+<section>フレーム</section>
+<file>pframe.l</file>
+</chapter>
+
+<chapter>
+<title>*pseudo-frame-bar-context-menu-frame*</title>
+フレーム・バー上で選択されているフレームです。ただし、フレームバー上の
+コンテキストメニューで取得専用くらいしか使用できません。
+
+補足：
+  xyzzy 0.2.2.250 から利用可能です。
+</description>
+<section>フレーム</section>
+<file>pframe.l</file>
+</chapter>
+
+<chapter>
+<title>*pseudo-frame-bar-context-menu-handler*</title>
+デフォルトのフレーム・バー用コンテキストメニューハンドラです。
+標準の動作は *pseudo-frame-bar-context-menu-buffer* を定義し、
+*pseudo-frame-bar-context-menu* を返します。
+
+補足：
+  xyzzy 0.2.2.250 から利用可能です。
+</description>
+<seealso>*pseudo-frame-bar-context-menu*</seealso>
+<section>フレーム</section>
+<file>pframe.l</file>
+</chapter>
+
+<chapter>
+<title>*sync-kill-ring-with-clipboard*</title>
+non-nil ならば削除バッファとクリップボードを同期します。
+[共通設定] - [さまざま] - [削除バッファとクリップボードを同期する(C)] で値を
+指定することができます。
+
+  t       : 削除バッファとクリップボードを中途半端に同期します。
+            xyzzyから他のアプリに切り替えるタイミングで削除バッファの方が
+            新しければ削除バッファの内容をクリップボードにコピーします。
+            また、yank (C-y) のタイミングでクリップボードの方が新しければ
+            クリップボードの内容を削除バッファにコピーします。
+  :always : 削除バッファとクリップボードを完全に同期します。
+            削除バッファやクリップボードにコピーされたタイミングで
+            すぐに同期します。
+            クリップボードにコピーされた内容は削除バッファに追加されてるので、
+            yank-pop (M-y) で遡って貼り付けることができます。
+  nil     : 削除バッファとクリップボードを同期しません。
+
+補足：
+  :always は xyzzy 0.2.2.250 から利用可能です。
+</description>
+<seealso></seealso>
+<section>変数と定数</section>
+<file>region.l</file>
+</chapter>
+
+<chapter>
+<title>*change-clipboard-hook*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+クリップボードに値が設定された時に処理を行うために使用されます。
+デフォルトではクリップボードの同期を行っています。
+
+補足：
+  xyzzy 0.2.2.250 から利用可能です。
+</description>
+<seealso></seealso>
+<section>変数と定数</section>
+<file></file>
+</chapter>
+
+<chapter>
+<title>*filer-use-shell-file-operation*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
+ファイラでファイルの移動・コピー・削除をエクスプローラで行うかどうかを設定します。
+
+  non-nil  ファイルの移動・コピー・削除をエクスプローラで行う
+           ファイル操作の進捗状況の確認や GUI によるキャンセルができますが、
+           Ctrl-g によるキャンセルはできません
+  nil      ファイルの移動・コピー・削除を xyzzy で行う
+           Ctrl-g によるキャンセルができます
+
+補足：
+  xyzzy 0.2.2.251 から利用可能です。
+</description>
+<seealso>filer</seealso>
+<link></link>
+<section>ファイラ</section>
+<file>filer.l</file>
 </chapter>
 
 </book>

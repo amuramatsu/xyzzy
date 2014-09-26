@@ -27,6 +27,7 @@ add-menu-separator
 add-popup-menu
 adjoin
 adjustable-array-p
+admin-user-p
 alpha-char-p
 alphanumericp
 and
@@ -286,6 +287,7 @@ dde-initiate
 dde-poke
 dde-request
 dde-terminate
+debug-output-stream-p
 decf
 declaim
 decode-escape-sequence
@@ -874,6 +876,15 @@ numberp
 numerator
 nunion
 oddp
+ole-create-event-sink
+ole-create-object
+ole-for-each
+ole-get-object
+ole-getprop
+ole-method
+ole-method*
+ole-putprop
+oledatap
 open
 open-filer
 open-line
@@ -1066,6 +1077,7 @@ round
 row-major-aref
 rplaca
 rplacd
+run-admin-console
 run-console
 run-hook-with-args
 run-hook-with-args-until-success
@@ -1195,6 +1207,7 @@ set-menu
 set-meta-bit
 set-minor-mode-map
 set-number-of-function-bar-labels
+set-ole-event-handler
 set-per-device-directory
 set-process-eol-code
 set-process-filter
@@ -1258,8 +1271,10 @@ si:base64-decode
 si:base64-encode
 si:canonicalize-type
 si:closure-variable
+si:control-pressed
 si:dump-image-path
 si:environ
+si:get-key-state
 si:getenv
 si:getpid
 si:hmac-md5
@@ -1272,14 +1287,18 @@ si:list-builtin-packages
 si:make-chunk
 si:make-string-chunk
 si:md5
+si:meta-pressed
 si:octet-length
+si:output-debug-string
 si:putenv
 si:quoted-printable-decode
+si:search-path
 si:sha-1
 si:sha-224
 si:sha-256
 si:sha-384
 si:sha-512
+si:shift-pressed
 si:system-root
 si:unpack-string
 si:uudecode
@@ -1305,6 +1324,7 @@ skip-white-backward
 skip-white-forward
 sleep-for
 smart-indentation
+socket-stream-ssl-p
 software-type
 software-version
 some
@@ -1317,6 +1337,7 @@ split-string
 split-window
 split-window-vertically
 sqrt
+ssl-do-handshake
 stable-sort
 standard-char-p
 start-selection
@@ -1562,6 +1583,7 @@ zerop
 *buffer-menu-mode-hook*
 *buffer-package*
 *change-buffer-colors-hook*
+*change-clipboard-hook*
 *char-encoding-list*
 *command-line-args-base-directory*
 *command-line-mailto-hook*
@@ -1570,6 +1592,7 @@ zerop
 *dabbrev-search-this-buffer-only*
 *dabbrevs-no-undo*
 *deactivate-hook*
+*debug-output*
 *default-buffer-mode*
 *default-eol-code*
 *default-fileio-encoding*
@@ -1608,7 +1631,10 @@ zerop
 *filer-retrieve-icon*
 *filer-secondary-directory*
 *filer-secondary-file-mask*
+*filer-show-hidden-files*
+*filer-show-system-files*
 *filer-use-recycle-bin*
+*filer-use-shell-file-operation*
 *find-buffer-package-hook*
 *find-file-auto-encoding-use-utf8n*
 *find-file-auto-mode-function*
@@ -1660,6 +1686,7 @@ zerop
 *modules*
 *move-forward-after-undo-deletion*
 *next-buffer-in-tab-order*
+*next-pseudo-frame-in-tab-order*
 *next-screen-context-lines*
 *package*
 *page-scroll-half-window*
@@ -1672,10 +1699,14 @@ zerop
 *prefix-value*
 *print-circle*
 *print-completion-list-hook*
+*print-completion-sort-function*
 *print-length*
 *print-option-show-dialog*
 *print-pretty*
 *process-command-line-hook*
+*pseudo-frame-bar-context-menu*
+*pseudo-frame-bar-context-menu-frame*
+*pseudo-frame-bar-context-menu-handler*
 *query-kill-buffer-hook*
 *query-kill-xyzzy-hook*
 *quotation-prefix*
@@ -1701,6 +1732,7 @@ zerop
 *std-control-next-char*
 *std-control-prior-char*
 *std-control-up-char*
+*sync-kill-ring-with-clipboard*
 *tail-f-mode-hook*
 *this-command*
 *unicode-to-half-width*
@@ -1721,6 +1753,7 @@ zerop
 +++
 auto-fill-hook
 auto-save
+backup-by-copying
 buffer-mode
 buffer-read-only
 call-arguments-limit
@@ -1737,6 +1770,7 @@ ed::*last-search-string*
 ed::*register-alist*
 ed::build-summary-function
 esc-map
+file-precious-flag
 fill-column
 fill-region-hook
 hide-restricted-region
@@ -3011,18 +3045,11 @@ not-empty-datum
 not-empty-pathname
 not-same-device-datum
 not-same-device-pathname
-ole-create-event-sink
-ole-create-object
 ole-drop-files
+ole-enumerator-create
 ole-enumerator-next
 ole-enumerator-reset
 ole-enumerator-skip
-ole-for-each
-ole-get-object
-ole-getprop
-ole-method
-ole-putprop
-oledatap
 open-file-dialog
 option-property-sheet
 output-stream-p
@@ -3105,7 +3132,6 @@ set-kinsoku-extend-limit
 set-kinsoku-mode
 set-kinsoku-shorten-limit
 set-next-prefix-args
-set-ole-event-handler
 set-quit-char
 set-selection-type
 set-stream-encoding
@@ -3137,6 +3163,7 @@ si:*dll-function-p
 si:*dll-module-p
 si:*enum-hash-table
 si:*environmentp
+si:*file-operation
 si:*find-in-environment
 si:*fixnump
 si:*flet-helper
@@ -3326,6 +3353,7 @@ simple-warn
 simple-warning-format-arguments
 simple-warning-format-string
 socket-error-datum
+socket-error-operation
 socket-stream-get-timeout
 socket-stream-local-address
 socket-stream-local-name

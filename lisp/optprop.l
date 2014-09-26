@@ -382,6 +382,11 @@
 (register-history-variable
  '(auto-save *auto-save-interval* *auto-save-interval-timer*))
 
+(defconstant *buffer-list-sort-by-name* 0)
+(defconstant *buffer-list-sort-by-size* 1)
+(defconstant *buffer-list-sort-by-mode* 2)
+(defconstant *buffer-list-sort-by-file* 3)
+
 (add-option-prop-page
  'misc
  '(dialog 0 0 198 195
@@ -397,21 +402,28 @@
     (:button halfpage "ページスクロールは半画面ずつ(&P)" #x50010003 7 84 116 10)
     (:button sortc "バッファリストを作成順にソートする(&C)" #x50010003 7 95 126 10)
     (:button bsort "バッファリストを大文字小文字を区別しないでソートする(&B)" #x50010003 7 106 184 10)
-    (:static nil "スクロールマージン(&R):" #x50020000 7 124 68 8)
-    (:edit margin nil #x50810086 119 121 39 14)
-    (:spin marginspin nil #x500000b6 158 120 9 14)
-    (:static nil "アンドゥの回数(&U):" #x50020000 7 138 54 8)
-    (:edit undo nil #x50810086 119 135 39 14)
-    (:spin undospin nil #x500000b6 158 134 9 14)
-    (:static nil "ヒストリの個数(&H):" #x50020000 7 152 53 8)
-    (:edit hist nil #x50810086 119 149 39 14)
-    (:spin histspin nil #x500000b6 158 148 9 14)
-    (:static nil "保存するヒストリの個数(&S):" #x50020000 7 166 79 8)
-    (:edit savehist nil #x50810086 119 163 39 14)
-    (:spin savehistspin nil #x500000b6 158 163 9 14)
-    (:static nil "メニューに表示するファイル履歴(&M):" #x50020000 7 180 106 8)
-    (:edit menuhist nil #x50810086 119 177 39 14)
-    (:spin menuhistspin nil #x500000b6 158 177 9 14)))
+    (:button save-sort-flags "バッファリストで指定したソート方法を保存する(&T)" #x50010003 7 117 184 10)
+    (:button nil "バッファリストのソート方法のデフォルト" #x50000007 11 130 200 40)
+    (:button sort-by-buffer-name "バッファ名(&W)" #x50030009 16 141 48 10)
+    (:button sort-by-buffer-size "サイズ(&X)" #x50000009 66 141 42 10)
+    (:button sort-by-buffer-mode "モード(&Y)" #x50000009 110 141 44 10)
+    (:button sort-by-buffer-file "ファイル名(&Z)" #x50000009 156 141 50 10)
+    (:button sort-reverse "降順でソートする(&R)" #x50010003 16 154 184 10)
+    (:static nil "スクロールマージン(&R):" #x50020000 7 175 68 8)
+    (:edit margin nil #x50810086 119 172 39 14)
+    (:spin marginspin nil #x500000b6 158 171 9 14)
+    (:static nil "アンドゥの回数(&U):" #x50020000 7 189 54 8)
+    (:edit undo nil #x50810086 119 186 39 14)
+    (:spin undospin nil #x500000b6 158 185 9 14)
+    (:static nil "ヒストリの個数(&H):" #x50020000 7 203 53 8)
+    (:edit hist nil #x50810086 119 200 39 14)
+    (:spin histspin nil #x500000b6 158 199 9 14)
+    (:static nil "保存するヒストリの個数(&S):" #x50020000 7 217 79 8)
+    (:edit savehist nil #x50810086 119 214 39 14)
+    (:spin savehistspin nil #x500000b6 158 214 9 14)
+    (:static nil "メニューに表示するファイル履歴(&M):" #x50020000 7 231 106 8)
+    (:edit menuhist nil #x50810086 119 228 39 14)
+    (:spin menuhistspin nil #x500000b6 158 228 9 14)))
  #'(lambda ()
      (list (cons 'ime *ime-control*)
 	   (cons 'saveime *save-buffer-ime-mode*)
@@ -423,12 +435,20 @@
 	   (cons 'halfpage *page-scroll-half-window*)
 	   (cons 'bsort *buffer-list-sort-ignore-case*)
 	   (cons 'sortc *sort-buffer-list-by-created-order*)
+	   (cons 'sort-reverse *buffer-list-sort-reverse*)
+	   (cons 'save-sort-flags *save-buffer-list-sort-flags*)
+	   (cons 'sort-by-buffer-name (member *buffer-list-sort-type* '(nil *buffer-list-sort-by-name*)))
+	   (cons 'sort-by-buffer-size (eq *buffer-list-sort-type* *buffer-list-sort-by-size*))
+	   (cons 'sort-by-buffer-mode (eq *buffer-list-sort-type* *buffer-list-sort-by-mode*))
+	   (cons 'sort-by-buffer-file (eq *buffer-list-sort-type* *buffer-list-sort-by-file*))
 	   (cons 'histspin *minibuffer-maximum-history-count*)
 	   (cons 'savehistspin *save-history*)
 	   (cons 'menuhistspin *menu-history-max*)
 	   (cons 'marginspin (default-value '*scroll-margin*))
 	   (cons 'undospin (default-value 'kept-undo-information))))
- '((sortc :disable (bsort))
+ '((sortc :disable (bsort sort-reverse save-sort-flags
+			  sort-by-buffer-name sort-by-buffer-size
+			  sort-by-buffer-mode sort-by-buffer-file))
    (marginspin :min 0 :max 1000)
    (margin :min 0 :range-error "0以上を指定してください"
 	   :type integer :type-error "数値を入力してください")
@@ -457,6 +477,14 @@
      (setq *page-scroll-half-window* (cdr (assoc 'halfpage data)))
      (setq *buffer-list-sort-ignore-case* (cdr (assoc 'bsort data)))
      (setq *sort-buffer-list-by-created-order* (cdr (assoc 'sortc data)))
+     (setq *buffer-list-sort-reverse* (cdr (assoc 'sort-reverse data)))
+     (setq *save-buffer-list-sort-flags* (cdr (assoc 'save-sort-flags data)))
+     (setq *buffer-list-sort-type*
+	   (cond ((cdr (assoc 'sort-by-buffer-name data)) *buffer-list-sort-by-name*)
+		 ((cdr (assoc 'sort-by-buffer-size data)) *buffer-list-sort-by-size*)
+		 ((cdr (assoc 'sort-by-buffer-mode data)) *buffer-list-sort-by-mode*)
+		 ((cdr (assoc 'sort-by-buffer-file data)) *buffer-list-sort-by-file*)
+		 (t *buffer-list-sort-by-name*)))
      (setq *minibuffer-maximum-history-count* (cdr (assoc 'hist data)))
      (let ((margin (cdr (assoc 'margin data)))
 	   (omargin (default-value '*scroll-margin*)))
@@ -476,7 +504,7 @@
 
 (add-option-prop-page
  'misc2
- '(dialog 0 0 235 214
+ '(dialog 0 0 235 248
    (:caption "さまざま")
    (:control
     (:button nil "検索での表示" #x50000007 7 7 207 30)
@@ -484,22 +512,25 @@
     (:button select "選択する(&S)" #x50000009 75 20 51 10)
     (:button not "何もしない(&N)" #x50000009 142 20 55 10)
     (:button nowrap "キーボードマクロ実行中は戻って検索しない(&M)" #x50030003 7 41 153 10)
-    (:button sync "削除バッファとクリップボードを中途半端に同期する(&C)" #x50010003 7 54 173 10)
-    (:button shodat "クリップボードへのコピーで範囲をクリアしない(&T)" #x50010003 7 67 157 10)
-    (:button bra "[...] はワイルドカード(&I)" #x50010003 7 80 80 10)
-    (:button DnD "D&&D編集する(&D)" #x50010003 7 93 65 10)
-    (:button wheel "ホイールマウスに反応する(&H)" #x50010003 7 106 102 10)
-    (:button resume "終了時の状態を保存する(&U)" #x50010003 7 119 98 10)
-    (:button mild "エラーの表示をマイルドに(&L)" #x50010003 7 132 99 10)
-    (:button rwinpos "起動時にウィンドウの位置を復元(&F)" #x50010003 7 145 119 10)
-    (:button rwinsize "起動時にウィンドウサイズを復元(&G)" #x50010003 7 158 118 10)
-    (:button swinpos "終了時にウィンドウの位置を保存(&P)" #x50010003 7 171 119 10)
-    (:button swinsize "終了時にウィンドウサイズを保存(&Z)" #x50010003 7 184 118 10)
-    (:button ssnapsize "エアロスナップで変更した場合も保存(&X)" #x50010003 14 197 118 10)
-    (:button beepnever "いちいち音を鳴らすな(&B)" #x50010003 123 80 87 10)
-    (:button errbeep "エラーのとき音を鳴らす(&E)" #x50010003 130 93 93 10)
-    (:button warnbeep "警告のとき音を鳴らす(&W)" #x50010003 130 106 89 10)
-    (:button vbell "ビシブルベル(&V)" #x50010003 130 119 63 10)))
+    (:button sync "削除バッファとクリップボードを同期する(&C)" #x50010003 7 54 173 10)
+    (:button nil "同期の方法" #x50000007 14 67 200 30)
+    (:button sync-harfway "中途半端に同期(&J)" #x50030009 19 80 80 10)
+    (:button sync-always "完全に同期(&K)" #x50000009 100 80 80 10)
+    (:button shodat "クリップボードへのコピーで範囲をクリアしない(&T)" #x50010003 7 101 157 10)
+    (:button bra "[...] はワイルドカード(&I)" #x50010003 7 114 80 10)
+    (:button DnD "D&&D編集する(&D)" #x50010003 7 127 65 10)
+    (:button wheel "ホイールマウスに反応する(&H)" #x50010003 7 140 102 10)
+    (:button resume "終了時の状態を保存する(&U)" #x50010003 7 153 98 10)
+    (:button mild "エラーの表示をマイルドに(&L)" #x50010003 7 166 99 10)
+    (:button rwinpos "起動時にウィンドウの位置を復元(&F)" #x50010003 7 179 119 10)
+    (:button rwinsize "起動時にウィンドウサイズを復元(&G)" #x50010003 7 192 118 10)
+    (:button swinpos "終了時にウィンドウの位置を保存(&P)" #x50010003 7 205 119 10)
+    (:button swinsize "終了時にウィンドウサイズを保存(&Z)" #x50010003 7 218 118 10)
+    (:button ssnapsize "エアロスナップで変更した場合も保存(&X)" #x50010003 14 231 118 10)
+    (:button beepnever "いちいち音を鳴らすな(&B)" #x50010003 123 114 87 10)
+    (:button errbeep "エラーのとき音を鳴らす(&E)" #x50010003 130 127 93 10)
+    (:button warnbeep "警告のとき音を鳴らす(&W)" #x50010003 130 140 89 10)
+    (:button vbell "ビシブルベル(&V)" #x50010003 130 153 63 10)))
  #'(lambda ()
      (list (cons 'resume *save-resume-info*)
 	   (cons 'beepnever *beep-on-never*)
@@ -515,6 +546,9 @@
 	   (cons 'reverse *reverse-match*)
 	   (cons 'select (and *select-match* (null *reverse-match*)))
 	   (cons 'sync *sync-kill-ring-with-clipboard*)
+	   (cons 'sync-harfway (and *sync-kill-ring-with-clipboard*
+				    (not (eq *sync-kill-ring-with-clipboard* :always))))
+	   (cons 'sync-always (eq *sync-kill-ring-with-clipboard* :always))
 	   (cons 'non (null (or *select-match* *reverse-match*)))
 	   (cons 'swinpos *save-window-position*)
 	   (cons 'swinsize *save-window-size*)
@@ -522,6 +556,7 @@
 	   (cons 'rwinpos *restore-window-position*)
 	   (cons 'rwinsize *restore-window-size*)))
  '((swinsize :enable (ssnapsize))
+   (sync :enable (sync-harfway sync-always))
    (beepnever :disable (errbeep warnbeep vbell)))
  #'(lambda (data)
      (cond ((cdr (assoc 'reverse data))
@@ -533,7 +568,10 @@
 	   (t
 	    (setq *reverse-match* nil)
 	    (setq *select-match* nil)))
-     (setq *sync-kill-ring-with-clipboard* (cdr (assoc 'sync data)))
+     (setq *sync-kill-ring-with-clipboard*
+	   (cond ((cdr (assoc 'sync-always data)) :always)
+		 ((cdr (assoc 'sync data)) t)
+		 (t nil)))
      (setq *no-wrap-search-on-kbd-macro* (cdr (assoc 'nowrap data)))
      (setq *save-resume-info* (cdr (assoc 'resume data)))
      (setq si:*report-simple-errors-mildly* (cdr (assoc 'mild data)))
@@ -560,6 +598,10 @@
    *beep-on-never* *beep-on-warn* *save-history* *menu-history-max*
    kept-undo-information *buffer-list-sort-ignore-case*
    *sort-buffer-list-by-created-order*
+   *buffer-list-sort-reverse*
+   *last-buffer-list-sort-flags*
+   *save-buffer-list-sort-flags*
+   *buffer-list-sort-type*
    *brackets-is-wildcard-character*
    *save-resume-info* *enable-D&D-edit* *select-match* *reverse-match*
    *no-wrap-search-on-kbd-macro* *sync-kill-ring-with-clipboard*
@@ -705,7 +747,7 @@
 
 (add-option-prop-page
  'filer
- '(dialog 0 0 243 195
+ '(dialog 0 0 243 252
    (:caption "ファイラ")
    (:control
     (:button icon "アイコンをファイルから取ってくる(&I)" #x50010003 7 7 116 10)
@@ -713,19 +755,24 @@
     (:button savemask "マスクを保存する(&M)" #x50010003 7 19 76 10)
     (:button modeless "2画面ファイラをモードレスに(&L)" #x50010003 126 19 105 10)
     (:button comma "ファイルサイズをカンマ区切りで表示(&C)" #x50010003 7 31 130 10)
-    (:button precious "ファイルを削除するときにもっと丁寧に確認して(&P)" #x50010003 7 43 159 10)
-    (:button rdonly "書込み禁止ファイルを何も言わずに消す(&R)" #x50010003 7 55 142 10)
-    (:button dosname "MS-DOSファイル名が重複したとき勝手にリネームする(&U)" #x50010003 7 67 182 10)
-    (:button nil "同名ファイルの確認のデフォルト" #x50000007 7 83 176 49)
-    (:button yes "する(&Y)" #x50030009 13 95 37 10)
-    (:button no "しない(&S)" #x50000009 54 95 42 10)
-    (:button newer "日付が新しければ(&N)" #x50000009 100 95 78 10)
-    (:button all "いちいち聞くな(&A)" #x50030003 13 107 66 10)
-    (:button makedefault "新しく選択されたものをデフォルトにする(&D)" #x50010003 13 119 140 10)
-    (:button nil "中にファイルがあるディレクトリを削除するとき" #x50000007 7 137 176 51)
-    (:button force "有無を言わさずに消す(&O)" #x50030009 13 149 90 10)
-    (:button firsttime "最初の一回だけ確認する(&F)" #x50000009 13 161 98 10)
-    (:button everytime "毎回確認する(&E)" #x50000009 13 173 65 10)))
+    (:button savesnapsize "エアロスナップでウィンドウサイズを変更した場合も保存(&X)" #x50010003 7 43 182 10)
+    (:button hidden "隠しファイル、隠しフォルダ、または隠しドライブを表示しない(&H)" #x50010003 7 55 182 10)
+    (:button system "保護されたオペレーティング システム ファイルを表示しない(&J)" #x50010003 7 67 182 10)
+    (:button use-recycle-bin "ファイルの削除にゴミ箱を使用する(&G)" #x50010003 7 79 182 10)
+    (:button shell-operation "ファイルの移動・コピー・削除をエクスプローラに任せる(&W)" #x50010003 7 91 182 10)
+    (:button precious "ファイルを削除するときにもっと丁寧に確認して(&P)" #x50010003 7 103 159 10)
+    (:button rdonly "書込み禁止ファイルを何も言わずに消す(&R)" #x50010003 7 115 142 10)
+    (:button dosname "MS-DOSファイル名が重複したとき勝手にリネームする(&U)" #x50010003 7 127 182 10)
+    (:button nil "同名ファイルの確認のデフォルト" #x50000007 7 143 176 49)
+    (:button yes "する(&Y)" #x50030009 13 155 37 10)
+    (:button no "しない(&S)" #x50000009 54 155 42 10)
+    (:button newer "日付が新しければ(&N)" #x50000009 100 155 78 10)
+    (:button all "いちいち聞くな(&A)" #x50030003 13 167 66 10)
+    (:button makedefault "新しく選択されたものをデフォルトにする(&D)" #x50010003 13 179 140 10)
+    (:button nil "中にファイルがあるディレクトリを削除するとき" #x50000007 7 197 188 51)
+    (:button force "有無を言わさずに消す(&O)" #x50030009 13 209 90 10)
+    (:button firsttime "最初の一回だけ確認する(&F)" #x50000009 13 221 98 10)
+    (:button everytime "毎回確認する(&E)" #x50000009 13 233 65 10)))
  #'(lambda ()
      (list (cons 'icon *filer-retrieve-icon*)
 	   (cons 'query *filer-query-before-process*)
@@ -734,7 +781,12 @@
 	   (cons 'modeless (not *filer-modal*))
 	   (cons 'comma *filer-format-comma*)
 	   (cons 'savemask *filer-save-file-mask*)
+	   (cons 'savesnapsize *filer-save-window-snap-size*)
 	   (cons 'dosname *rename-alternate-file-name*)
+	   (cons 'hidden (not *filer-show-hidden-files*))
+	   (cons 'system (not *filer-show-system-files*))
+	   (cons 'use-recycle-bin *filer-use-recycle-bin*)
+	   (cons 'shell-operation *filer-use-shell-file-operation*)
 	   (cons 'yes (eq *filer-ask-same-name-default* :overwrite))
 	   (cons 'no (eq *filer-ask-same-name-default* :skip))
 	   (cons 'newer (eq *filer-ask-same-name-default* :newer))
@@ -743,14 +795,21 @@
 	   (cons 'force (eq *filer-delete-non-empty-directory* :force))
 	   (cons 'firsttime (eq *filer-delete-non-empty-directory* :first-time))
 	   (cons 'everytime (eq *filer-delete-non-empty-directory* :every-time))))
- nil
+ '((shell-operation :disable (precious rdonly dosname
+			      yes no newer all makedefault
+			      force firsttime everytime)))
  #'(lambda (data)
      (setq *filer-retrieve-icon* (cdr (assoc 'icon data)))
      (setq *filer-query-before-process* (cdr (assoc 'query data)))
      (setq *filer-query-delete-precisely* (cdr (assoc 'precious data)))
      (setq *filer-delete-read-only-files* (cdr (assoc 'rdonly data)))
      (setq *filer-save-file-mask* (cdr (assoc 'savemask data)))
+     (setq *filer-save-window-snap-size* (cdr (assoc 'savesnapsize data)))
      (setq *rename-alternate-file-name* (cdr (assoc 'dosname data)))
+     (setq *filer-show-hidden-files* (not (cdr (assoc 'hidden data))))
+     (setq *filer-show-system-files* (not (cdr (assoc 'system data))))
+     (setq *filer-use-recycle-bin* (cdr (assoc 'use-recycle-bin data)))
+     (setq *filer-use-shell-file-operation* (cdr (assoc 'shell-operation data)))
      (setq *filer-modal* (not (cdr (assoc 'modeless data))))
      (setq *filer-format-comma* (cdr (assoc 'comma data)))
      (setq *filer-ask-same-name-default*
@@ -784,5 +843,10 @@
    *filer-ask-same-name-all-default* *filer-ask-same-name-make-default*
    *filer-delete-read-only-files* *filer-delete-non-empty-directory*
    *filer-save-file-mask* *filer-modal* *filer-format-comma*
-   *rename-alternate-file-name*))
+   *filer-save-window-snap-size*
+   *rename-alternate-file-name*
+   *filer-show-hidden-files* *filer-show-system-files*
+   *filer-use-recycle-bin*
+   *filer-use-shell-file-operation*
+   ))
 

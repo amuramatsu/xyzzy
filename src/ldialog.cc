@@ -1345,8 +1345,9 @@ PropSheetFont::load ()
 HGLOBAL
 PropSheetFont::change_font (const DLGTEMPLATE *rtmpl, DWORD size)
 {
-  HGLOBAL h = GlobalAlloc (GMEM_MOVEABLE,
-                           size + sizeof (WCHAR) * (PropSheetFont::face_len + 1));
+  size_t face_padding = (PropSheetFont::face_len % sizeof (WORD));
+  HGLOBAL h = GlobalAlloc (GMEM_MOVEABLE | GMEM_ZEROINIT,
+                           size + sizeof (WCHAR) * (PropSheetFont::face_len + 1 + face_padding));
   if (!h)
     return 0;
   DLGTEMPLATE *tmpl = (DLGTEMPLATE *)GlobalLock (h);
@@ -1372,6 +1373,13 @@ PropSheetFont::change_font (const DLGTEMPLATE *rtmpl, DWORD size)
   *w++ = PropSheetFont::point;
   memcpy (w, PropSheetFont::face, sizeof (WCHAR) * (PropSheetFont::face_len + 1));
   w += PropSheetFont::face_len + 1;
+
+  // DWORD alignment
+#define ALIGN_DWORD(ptr) (reinterpret_cast <WORD *> (reinterpret_cast <uintptr_t> (ptr) + 3 & ~3))
+  w = ALIGN_DWORD (w);
+  r = ALIGN_DWORD (r);
+#undef ALIGN_DWORD
+
   memcpy (w, r, (const char *)rtmpl + size - (const char *)r);
   GlobalUnlock (h);
   return h;

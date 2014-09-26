@@ -333,7 +333,7 @@ do_dnd (HDROP hdrop)
 void
 set_ime_caret (ApplicationFrame *app1)
 {
-  if (app1->active_frame.has_caret && app1->ime_composition)
+  if (app1->active_frame.has_caret)
     {
       HIMC hIMC = app1->kbdq.gime.ImmGetContext (app1->toplev);
       if (!hIMC)
@@ -349,45 +349,10 @@ set_ime_caret (ApplicationFrame *app1)
       pt.x += font.offset ().x;
       pt.y += font.offset ().y;
 
-      RECT r;
-      int need_rect = (/*!app1->kbdq.gime.enable_p () // ‚æ‚¤‚í‚©‚ç‚ñ‚¯‚Ç‚Æ‚è‚ ‚¦‚¸(^^;
-                       ||*/ PRIMARYLANGID (app1->kbdq.kbd_langid ()) != LANG_KOREAN);
-      if (need_rect)
-        {
-          GetClientRect (app1->active_frame.has_caret, &r);
-
-		  Window *wp = app1->active_frame.windows;
-          for (; wp; wp = wp->w_next)
-            if (wp->w_hwnd == app1->active_frame.has_caret)
-              break;
-          r.left += app1->text_font.cell ().cx / 2;
-          if (wp && wp->w_bufp)
-            {
-              if (wp->w_last_flags & Window::WF_LINE_NUMBER)
-                r.left += (Window::LINENUM_COLUMNS + 1) * app1->text_font.cell ().cx;
-              if (wp->get_fold_columns() != Buffer::FOLD_NONE)
-                {
-                  LONG t = r.left + wp->get_fold_columns() * app1->text_font.cell ().cx;
-                  if (t > app1->active_frame.caret_pos.x)
-                    r.right = min (r.right, t);
-                }
-            }
-          MapWindowPoints (app1->active_frame.has_caret, app1->toplev,
-                           (POINT *)&r, 2);
-          pt.y = max (pt.y, r.top);
-        }
-
       COMPOSITIONFORM cf;
       cf.dwStyle = CFS_POINT;
       cf.ptCurrentPos = pt;
       app1->kbdq.gime.ImmSetCompositionWindow (hIMC, &cf);
-
-      if (need_rect)
-        {
-          cf.dwStyle = CFS_RECT;
-          cf.rcArea = r;
-          app1->kbdq.gime.ImmSetCompositionWindow (hIMC, &cf);
-        }
 
       app1->kbdq.gime.ImmSetCompositionFont (hIMC, (LOGFONT *)&font.logfont ());
       app1->kbdq.gime.ImmReleaseContext (app1->toplev, hIMC);
@@ -671,7 +636,7 @@ toplevel_wnd_create(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 #ifdef DnDTEST
   RegisterDragDrop (hwnd, &tdropt);
 #endif
-  app1->hwnd_clipboard = SetClipboardViewer (hwnd);
+  app1->clipboard.add_listener (hwnd);
   SetTimer (hwnd, TID_ITIMER, itimer::interval * 1000, 0);
   return 0;
 }
@@ -720,13 +685,13 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	#endif
 		  app1->user_timer.cleanup ();
 		  environ::save_geometry ();
-		  ChangeClipboardChain (hwnd, app1->hwnd_clipboard);
+		  app1->clipboard.remove_listener (hwnd);
 		  PostQuitMessage (0);
 	  }
 	  else
 	  {
 		  app1->user_timer.cleanup ();
-		  ChangeClipboardChain (hwnd, app1->hwnd_clipboard);
+		  app1->clipboard.remove_listener (hwnd);
 	  }
 	  app1->toplev = 0;
 	  delete_app_frame(app1);
@@ -774,17 +739,15 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
       }
 
     case WM_CHANGECBCHAIN:
-      if (HWND (wparam) == app1->hwnd_clipboard)
-        app1->hwnd_clipboard = HWND (lparam);
-      else if (app1->hwnd_clipboard)
-        SendMessage (app1->hwnd_clipboard, msg, wparam, lparam);
+      app1->clipboard.change_clipboard_chain (hwnd, msg, wparam, lparam);
       break;
 
     case WM_DRAWCLIPBOARD:
-      if (app1->hwnd_clipboard)
-        SendMessage (app1->hwnd_clipboard, msg, wparam, lparam);
-      xsymbol_value (Vclipboard_newer_than_kill_ring_p) = Qt;
-      xsymbol_value (Vkill_ring_newer_than_clipboard_p) = Qnil;
+      app1->clipboard.draw_clipboard (hwnd, msg, wparam, lparam);
+      break;
+
+    case WM_CLIPBOARDUPDATE:
+      app1->clipboard.clipboard_update (hwnd, msg, wparam, lparam);
       break;
 
     case WM_SYSCOLORCHANGE:
@@ -1091,6 +1054,7 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                   end_wait_cursor (1, app1);
                 }
             }
+          app1->clipboard.repair_clipboard_chain_if_need (hwnd);
           break;
         }
       return 0;
