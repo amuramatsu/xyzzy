@@ -41,8 +41,11 @@ cd %SRCDIR%
 call git clone %GIT_REPO% %SRCDIR% || exit /b 1
 call git checkout %TAG% || git tag exit /b 1
 rd /S /Q .git 2> nul
-7za a %SRC_ARCHIVE% %SRCDIR%
-call build.bat Release Build normal "/p:GenerateDebugInformation=false" || exit /b 1
+cd %DISTROOT%
+rem 7za a %SRC_ARCHIVE% %SRCDIR%
+zip -r -9 %SRC_ARCHIVE% %APPNAME%-src-%VERSION%
+cd %BASEDIR%
+call build.bat || exit /b 1
 call bytecompile.bat || exit /b 1
 
 xcopy /F /G /H /R /K /Y *.exe %DISTDIR%
@@ -54,7 +57,8 @@ xcopy /F /G /H /R /K /Y /S /E docs %DISTDIR%\docs\
 xcopy /F /G /H /R /K /Y /S /E reference %DISTDIR%\reference\
 
 cd %DISTROOT%
-7za a %DIST_ARCHIVE% %DISTDIR%
+rem 7za a %DIST_ARCHIVE% %DISTDIR%
+zip -r -9 %DIST_ARCHIVE% %APPNAME%
 goto :eof
 
 :usage
