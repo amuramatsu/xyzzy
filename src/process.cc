@@ -282,6 +282,7 @@ Fcall_process (lisp cmd, lisp keys)
       wait_process_terminate (pi.hProcess);
       GetExitCodeProcess (pi.hProcess, &exit_code);
       Fsi_minibuffer_message (Qnil, Qnil);
+      multiple_value::clear ();
     }
   else if (wait != Qnil)
     {
