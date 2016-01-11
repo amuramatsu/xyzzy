@@ -5,13 +5,13 @@
 # define PROGRAM_APP_USER_MODEL_ID PROGRAM_NAME
 // ファイルバージョンには複数書けない
 // # define PROGRAM_COPYRIGHT "Copyright (C) 1996-2005 T.Kamei"
-# define PROGRAM_COPYRIGHT "Copyright (C) 2012-2014 xyzzy Project"
+# define PROGRAM_COPYRIGHT "Copyright (C) 2012-2016 xyzzy Project"
 
 # define PROGRAM_MAJOR_VERSION 0
 # define PROGRAM_MINOR_VERSION 2
 # define PROGRAM_MAJOR_REVISION 3
 # define PROGRAM_MINOR_REVISION 12
-# define PROGRAM_PATCH_LEVEL 253000	// version of xyzzy-022 * 1000 + Patchlevel
+# define PROGRAM_PATCH_LEVEL 253001	// version of xyzzy-022 * 1000 + Patchlevel
 
 # define TITLE_BAR_STRING_SIZE 256
 extern char TitleBarString[];
