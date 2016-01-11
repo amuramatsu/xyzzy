@@ -555,7 +555,7 @@
     (goto-matched-parenthesis)))
   => nil)
 
-(deftest fix-ole-getmethod-immediate-array ()
+(deftest fix-ole-getmethod-immediate-array2 ()
   (let ((xhr (ole-create-object "MSXML2.XMLHTTP")))
     (ole-method xhr 'open "GET" "https://github.com/mumurik/xyzzy/" nil) ;; blocking!
     (ole-method xhr 'send nil)
