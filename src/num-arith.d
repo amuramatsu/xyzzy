@@ -1122,6 +1122,8 @@ bb: {
       return make_fixnum (x->minusp () ? -1 : 0);
     }
 ss: {
+      if (count <= -((int)BITS_PER_LONG))
+        return make_fixnum (0);
       if (count < 0)
         return make_fixnum (x >> -count);
       bignum_rep_long xx (x);
