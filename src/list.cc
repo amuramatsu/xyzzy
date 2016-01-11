@@ -220,10 +220,7 @@ Fnthcdr (lisp n, lisp list)
 lisp
 Flast (lisp list, lisp n)
 {
-  lisp l = Flist_length (list);
-  if (l == Qnil)
-    FEprogram_error (Eargument_is_circle);
-  int ll = fixnum_value (l);
+  int ll = xlist_length (list);
   int nn;
   if (!n || n == Qnil)
     nn = 1;
