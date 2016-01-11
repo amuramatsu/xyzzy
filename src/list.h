@@ -31,6 +31,7 @@ inline lisp Fcdddar (lisp x) {return Fcdr (Fcdr (Fcdr (Fcar (x))));}
 inline lisp Fcddddr (lisp x) {return Fcdr (Fcdr (Fcdr (Fcdr (x))));}
 
 int xlist_length (lisp list);
+int xlist_length_with_ccheck (lisp list);
 lisp find_keyword (lisp var, lisp list, lisp defalt = Qnil);
 lisp safe_find_keyword (lisp var, lisp list, lisp defalt = Qnil);
 

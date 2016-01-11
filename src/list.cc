@@ -11,6 +11,24 @@ xlist_length (lisp list)
   return l;
 }
 
+int
+xlist_length_with_ccheck (lisp list)
+{
+  if (list == Qnil)
+    return 0;
+  int l = 0;
+  for (lisp fast = list, slow = list;;
+       l += 2, fast = Fcddr (fast), slow = Fcdr (slow))
+    {
+      if (!consp (fast))
+        return l;
+      if (!consp (Fcdr (fast)))
+        return l + 1;
+      if (l && fast == slow)
+        return -1;
+    }
+}
+
 lisp
 find_keyword (lisp var, lisp list, lisp defalt)
 {
@@ -220,7 +238,9 @@ Fnthcdr (lisp n, lisp list)
 lisp
 Flast (lisp list, lisp n)
 {
-  int ll = xlist_length (list);
+  int ll = xlist_length_with_ccheck (list);
+  if (ll < 0)
+    FEprogram_error (Eargument_is_circle);
   int nn;
   if (!n || n == Qnil)
     nn = 1;
