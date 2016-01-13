@@ -11,7 +11,7 @@
 # define PROGRAM_MINOR_VERSION 2
 # define PROGRAM_MAJOR_REVISION 3
 # define PROGRAM_MINOR_REVISION 12
-# define PROGRAM_PATCH_LEVEL 253001	// version of xyzzy-022 * 1000 + Patchlevel
+# define PROGRAM_PATCH_LEVEL 253002	// version of xyzzy-022 * 1000 + Patchlevel
 
 # define TITLE_BAR_STRING_SIZE 256
 extern char TitleBarString[];
