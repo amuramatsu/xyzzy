@@ -4,11 +4,15 @@
 (deftest fix-issue422 ()
  (values
   (ash #xffffffff -31)
+  (ash #x7fffffff -31)
   (ash #xffffffff -32)
+  (ash #x7fffffff -32)
   (ash #xfffffffff -32)
   (ash -1 -32)
   (ash (- #xfffffffff) -32))
  => 1
+ => 0
+ => 0
  => 0
  => 15
  => -1
