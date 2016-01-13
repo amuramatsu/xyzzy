@@ -25,7 +25,7 @@
 		       #x50020000 34 7 123 8)
 		      (:static nil "Copyright (C) 1996-2005 Tetsuya Kamei"
 		       #x50020000 34 19 132 8)
-		      (:link org "Copyright (C) 2012-2014 \001xyzzy Project\002"
+		      (:link org "Copyright (C) 2012-2016 \001xyzzy Project\002"
 		       #x50020000 34 28 132 8)
 		      (:static nil "Icon designed by 797@2ch xyzzy Part 17."
 		       #x50020000 34 41 126 8)
