@@ -44,7 +44,7 @@ rd /S /Q .git 2> nul
 cd %DISTROOT%
 rem 7za a %SRC_ARCHIVE% %SRCDIR%
 zip -r -9 %SRC_ARCHIVE% %APPNAME%-src-%VERSION%
-cd %BASEDIR%
+cd %SRCDIR%
 call build.bat || exit /b 1
 call bytecompile.bat || exit /b 1
 
