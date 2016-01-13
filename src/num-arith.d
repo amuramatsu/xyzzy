@@ -1123,7 +1123,7 @@ bb: {
     }
 ss: {
       if (count <= -((int)BITS_PER_LONG))
-        return make_fixnum (0);
+        return make_fixnum (x >= 0 ? 0 : -1);
       if (count < 0)
         return make_fixnum (x >> -count);
       bignum_rep_long xx (x);
