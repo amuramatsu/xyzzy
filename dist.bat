@@ -56,6 +56,7 @@ xcopy /F /G /H /R /K /Y /S /E lisp %DISTDIR%\lisp\
 xcopy /F /G /H /R /K /Y /S /E etc %DISTDIR%\etc\
 xcopy /F /G /H /R /K /Y /S /E docs %DISTDIR%\docs\
 xcopy /F /G /H /R /K /Y /S /E reference %DISTDIR%\reference\
+del %DISTDIR%\etc\DOC
 
 cd %DISTROOT%
 rem 7za a %DIST_ARCHIVE% %DISTDIR%
