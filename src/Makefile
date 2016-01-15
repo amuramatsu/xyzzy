@@ -342,6 +342,7 @@ gen-clean:
 	-del $(GENDIR:/=\)\gen-src1.obj $(GENDIR:/=\)\gen-src1.exe
 	-del $(GENDIR:/=\)\gen-src2.obj $(GENDIR:/=\)\gen-src2.exe
 	-del $(GEN_SRC1_OBJS:/=\) $(GEN_SRC2_OBJS:/=\)
+	-del $(GENDIR:/=\)\version-describe.h
 	-del $(GENDIR:/=\)\num-arith.h
 
 gen-distclean:
