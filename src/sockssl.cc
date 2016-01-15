@@ -63,6 +63,11 @@ sockssl::close (int abort)
     }
   catch (nonlocal_jump &)
     { }
+  catch (sock_error &)
+    {
+      if (!abort)
+        throw;
+    }
 
   sock::close (abort);
 
@@ -215,7 +220,10 @@ sockssl::perform_handshake ()
       if (len <= 0)
         break;
 
-      decrypt_data (chunk, len);
+      if (decrypt_data (chunk, len)) {
+        close (1);
+        break;
+      }
       ss_recv_buf.free ();
     }
 }
@@ -462,13 +470,16 @@ sockssl::recv_decrypt (void *buf, int len, int flags)
       if (len <= 0)
         return nread;
 
-      decrypt_data (chunk, len);
+      if (decrypt_data (chunk, len)) {
+        close (1);
+        return nread;
+      }
     }
 
   return nread;
 }
 
-void
+int
 sockssl::decrypt_data (const char *data, int datalen)
 {
   // TODO:
@@ -504,13 +515,13 @@ sockssl::decrypt_data (const char *data, int datalen)
           // The input buffer contains only a fragment of an
           // encrypted record. Save the fragment and wait for more data.
           ss_extra_buf.set (buf, buflen);
-          return;
+          return 0;
         }
 
       if (extra_buf.cbBuffer == 0)
         {
           xfree (buf);
-          return;
+          return 0;
         }
 
       if (extra_buf.pvBuffer)
@@ -541,7 +552,7 @@ sockssl::decrypt_data (const char *data, int datalen)
           // encrypted data. Save the fragment and wait for more data.
           ss_extra_buf.set (buf, buflen);
           // buf is freed on next entry
-          return;
+          return 0;
         }
       if (status != SEC_E_OK &&
           status != SEC_I_RENEGOTIATE &&
@@ -558,7 +569,7 @@ sockssl::decrypt_data (const char *data, int datalen)
           encrypt_send ("", 0);
           dispose ();
           xfree (buf);
-          throw sock_error ("DecryptMessage (context expired)", status);
+          return 1;
         }
 
       // Locate data and (optional) extra buffers.
@@ -616,6 +627,7 @@ sockssl::decrypt_data (const char *data, int datalen)
         }
     }
   xfree (buf);
+  return 0;
 }
 
 void

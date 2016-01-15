@@ -166,7 +166,7 @@ protected:
   bool handshake_loop (void *buf, int &len, SecBuffer *extra_data);
   void verify_certificate (const char *server_name, DWORD cert_flags);
   int recv_decrypt (void *buf, int len, int flags);
-  void decrypt_data (const char *data, int len);
+  int decrypt_data (const char *data, int len);
   void encrypt_send (const void *buf, int len, int flags = 0) const;
   void raw_send (SecBuffer &buf) const;
   void disconnect ();
