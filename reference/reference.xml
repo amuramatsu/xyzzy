@@ -40982,6 +40982,10 @@ define-popup-menu で作成されています。（作成は app-menu.l）
 
 <chapter>
 <title>*pseudo-frame-bar-context-menu-frame*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
 フレーム・バー上で選択されているフレームです。ただし、フレームバー上の
 コンテキストメニューで取得専用くらいしか使用できません。
 
@@ -40994,6 +40998,10 @@ define-popup-menu で作成されています。（作成は app-menu.l）
 
 <chapter>
 <title>*pseudo-frame-bar-context-menu-handler*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
 デフォルトのフレーム・バー用コンテキストメニューハンドラです。
 標準の動作は *pseudo-frame-bar-context-menu-buffer* を定義し、
 *pseudo-frame-bar-context-menu* を返します。
@@ -41008,6 +41016,10 @@ define-popup-menu で作成されています。（作成は app-menu.l）
 
 <chapter>
 <title>*sync-kill-ring-with-clipboard*</title>
+<type>Variable</type>
+<arguments></arguments>
+<package>editor</package>
+<description>
 non-nil ならば削除バッファとクリップボードを同期します。
 [共通設定] - [さまざま] - [削除バッファとクリップボードを同期する(C)] で値を
 指定することができます。
