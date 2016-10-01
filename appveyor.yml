@@ -12,4 +12,4 @@ build_script:
 - cmd: bytecompile.bat
 
 test_script:
-- cmd: echo run-tests.bat (not work yet)
+- cmd: run-tests.bat

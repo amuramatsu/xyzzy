@@ -1,24 +1,22 @@
 (let ((dir (if *load-pathname*
                (directory-namestring *load-pathname*)
-             "."))
-      (tests))
+             ".")))
   (load-file (merge-pathnames "simple-test.l" dir))
 
   (defun process-command-line (arg)
     (cond ((string= "--run-all-tests" arg)
            (let ((*error-on-overwriting-test* t))
-             (if tests
-                 (dolist (test (reverse tests))
-                   (load-test-file test))
-               (dolist (test (sort (directory dir :absolute t :recursive t :wild "*-tests.l")
+             (dolist (test (sort (directory dir :absolute t :recursive t :wild "*-tests.l")
                                    #'string-lessp))
                  (load-test-file test))))
-           ;(test-changes)
-           (run-all-tests))
           (t
-           (push (merge-pathnames arg *command-line-args-base-directory*)
-                 tests))))
-
+           (load-test-file
+              (merge-pathnames arg *command-line-args-base-directory*)))))
+  (defun run-tests-and-exit ()
+     (run-all-tests)
+     (write-file "run-tests.log")
+     (kill-xyzzy t))
   (add-hook '*process-command-line-hook* 'process-command-line)
-  (setq si:*command-line-args* (append si:*command-line-args* (list "--run-all-tests")))
-  )
+  (when (eq si:*command-line-args* nil)
+    (setq si:*command-line-args* '("--run-all-tests")))
+  (add-hook '*post-startup-hook* 'run-tests-and-exit))
