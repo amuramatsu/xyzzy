@@ -1,0 +1,15 @@
+version: 1.0.{build}
+init:
+- ps: Set-WinSystemLocale ja-JP
+- ps: Start-Sleep -s 5
+- ps: Restart-Computer
+
+install:
+- '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
+
+build_script:
+- cmd: build.bat
+- cmd: bytecompile.bat
+
+test_script:
+- cmd: echo run-tests.bat (not work yet)
