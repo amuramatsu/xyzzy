@@ -19,3 +19,9 @@ set XYZZYHOME=%TESTDIR%\..
 set XYZZYINIFILE=
 set XYZZYCONFIGPATH=
 "%XYZZYHOME%\xyzzy.exe" -q -trace -l "%TESTDIR%\run-tests-helper.l" %*
+type run-tests.log
+findstr "Failed$" run-tests.log >NUL:
+IF ERRORLEVEL 1 GOTO OK
+exit 1
+:OK
+exit 0
