@@ -5,11 +5,18 @@ init:
 - ps: Restart-Computer
 
 install:
-- '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
+- SET PATH=%PATH%;C:\msys64\usr\bin
+- C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S zip"
+- '"C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat"'
 
 build_script:
-- cmd: build.bat
-- cmd: bytecompile.bat
+- build.bat
+- bytecompile.bat
+- archive.bat
 
 test_script:
-- cmd: run-tests.bat
+- run-tests.bat
+
+artifacts:
+  - path: _dist\xyzzy-dev.zip
+    name: xyzzy-dev
