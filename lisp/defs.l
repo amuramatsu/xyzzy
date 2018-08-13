@@ -36,6 +36,7 @@
 			    ("\\.inl$" . c++-mode)
 			    ("\\.l$" . lisp-mode)
 			    ("\\.lisp$" . lisp-mode)
+			    ("\\.lua$" . lua-mode)
 			    ("\\.txt$" . text-mode)
 			    ("\\.doc$" . text-mode)
 			    ("\\.log$" . text-mode)
@@ -288,6 +289,9 @@
 
 (export 'css-mode)
 (autoload 'css-mode "css-mode" t)
+
+(export 'lua-mode)
+(autoload 'lua-mode "lua-mode" t)
 
 (export 'list-function)
 (autoload 'list-function "listfn" t)
