@@ -47,6 +47,7 @@ extern const wcolor_index_name wcolor_index_names[];
 struct Buffer;
 
 class syntax_info;
+struct syntax_state;
 
 #define CHUNK_TEXT_SIZE 4096
 // #define CHUNK_FOLD_BREAK_SIZE ((CHUNK_TEXT_SIZE + 7) / 8)
@@ -114,6 +115,17 @@ struct Chunk
   Char c_estrch;
   u_char c_bstate;
   u_char c_estate;
+
+  int c_blua_long_bracket;
+  int c_elua_long_bracket;
+
+  /* chunk syntax manipulation */
+  void invalidate_syntax();
+  bool has_valid_syntax_state();
+  bool is_syntax_continuation_with(const Chunk &p);
+  void set_syntax_state_of_beginning_of_chunk(const syntax_state &ss);
+  void set_syntax_state_of_end_of_chunk(const syntax_state &ss);
+  void copy_end_syntax_state_to(syntax_state *ss);
 
   void update_syntax (const syntax_info &);
   void parse_syntax ();
@@ -567,7 +579,7 @@ struct Buffer
   void *fold_map;
   bool fold_columns_exist(const Window* win) const;
 
-  // ?U?e?O?É ?J???Ä(-1: ?É ?E?Åë)
+  // ê‹ÇËï‘ÇµÉJÉâÉÄ(-1: ÇµÇ»Ç¢)
   int get_fold_columns(const Window* win) const ;
   int get_first_fold_columns() const ;
   void set_fold_columns(Window* win, int column);

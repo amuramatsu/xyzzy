@@ -4,8 +4,9 @@ image: Visual Studio 2015
 init:
 - ps: >-
     Set-WinSystemLocale ja-JP
-    Start-Sleep -s 5
+    Start-Sleep -s 10
     Restart-Computer
+    Start-Sleep -s 10
 
 install:
 - cmd: >-

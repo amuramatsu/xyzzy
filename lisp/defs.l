@@ -20,6 +20,7 @@
 	  *syntax-option-c-preprocessor* *syntax-option-indent-c++*
 	  *syntax-option-indent-java* *syntax-option-column-comment-char*
 	  *syntax-option-indent-c++/cli*
+	  *syntax-option-lua-long-bracket*
 	  ))
 
 (or (boundp 'mode-line-format)
@@ -137,6 +138,7 @@
 (defconstant *syntax-option-indent-csharp* 8)
 (defconstant *syntax-option-column-comment-char* 16)
 (defconstant *syntax-option-indent-c++/cli* 32)
+(defconstant *syntax-option-lua-long-bracket* 64)
 
 (setq-default display-newline-char t)
 (setq-default display-first-tab-char t)

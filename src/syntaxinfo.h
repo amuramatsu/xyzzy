@@ -32,6 +32,7 @@ struct syntax_state
 
   Char ss_strch;
   u_char ss_state;
+  int lua_long_bracket;
 
   static const syntax_table *ss_tab;
   static void (syntax_state::*update)(const Char *);
@@ -45,12 +46,17 @@ struct syntax_state
   void update_column_comment (const Char *);
   void update_html (const Char *);
   void update_parentheses (const Char *);
+  int  look_forward_lua_long_bracket_comment(const Char *p);
+  bool look_backward_lua_long_bracket_comment(const Char *p);
+  int  look_forward_lua_long_bracket_open(const Char *p);
+  bool look_backward_lua_long_bracket_close(const Char *p);
 
-  syntax_state () : ss_state (SS_NORMAL), ss_strch (0) {}
+  syntax_state () : ss_state (SS_NORMAL), ss_strch (0), lua_long_bracket (0) {}
   void operator = (const syntax_state &src)
     {
       ss_state = src.ss_state;
       ss_strch = src.ss_strch;
+      lua_long_bracket = src.lua_long_bracket;
     }
 
   static u_int ss_normal_colors[SS_MAX][SS_MAX];
