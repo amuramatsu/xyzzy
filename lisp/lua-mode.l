@@ -201,7 +201,7 @@
   (save-excursion
     (goto-bol)
     (unless (eq (parse-point-syntax) :comment)
-      (return nil))
+      (return-from lua-multiline-comment-terminated-column nil))
     (while (and (eq (parse-point-syntax) :comment)
 		(not (eolp)))
       (forward-char))
@@ -259,25 +259,26 @@
     (goto-column comment-end-column)
     (unless  (scan-buffer *lua-multiline-comment-end-regexp*
 			  :no-dup t :reverse t :limit bol)
-      (return 0)))
-  
+      (return-from lua-calc-indent-in-comment-end 0)))
+
   (let ((end-bracket-start-column (lua-point-column (match-beginning 0)))
 	(end-bracket-equal        (match-string    1))
 	(current-indentation      (lua-count-current-indentation)))
     (goto-column end-bracket-start-column)
     (skip-chars-backward " \t")
     (when (bolp)
-      (return (lua-point-column
-	       (cadr (find-multiline-comment-start end-bracket-equal)))))
+      (return-from lua-calc-indent-in-comment-end
+	(lua-point-column (cadr (find-multiline-comment-start end-bracket-equal)))))
 
     (goto-column end-bracket-start-column)
     (skip-chars-backward "-=]")
     (skip-chars-backward " \t")
     (when (bolp)
-      (return (lua-point-column
-	       (car (find-multiline-comment-start end-bracket-equal)))))
+      (return-from lua-calc-indent-in-comment-end
+	(lua-point-column (car (find-multiline-comment-start end-bracket-equal)))))
 
-    (return (lua-count-previous-comment-indentation))))
+    (return-from lua-calc-indent-in-comment-end
+      (lua-count-previous-comment-indentation))))
 
 (defun lua-calc-indent-in-comment (&optional when-electric-indenting)
   (save-excursion
@@ -293,7 +294,7 @@
       (setq target-point (point))
       (lua-skip-indent-chars)
       (when (looking-for *lua-comment-out-string*)
-	(return 0))
+	(return-from lua-calc-indent-normal 0))
       (loop
 	(unless (lua-previous-not-blank-not-comment-out-line)
 	  (return-from lua-calc-indent-normal 0))
@@ -314,7 +315,7 @@
 			(keyword-column nil))
 		    (goto-char keyword-start)
 		    (setq keyword-column (current-column))
-		    
+
 		    (when (eq (parse-point-syntax) nil)
 		      (cond
 		       ((string= keyword "function")
@@ -348,7 +349,7 @@
 				      (current-column)
 				      keyword)
 				columns)))
-		       
+
 		       ((or (string= keyword "then")
 			    (string= keyword "elseif"))
 			(if (> (list-length columns) 1)
@@ -393,7 +394,7 @@
 			(if (> (list-length columns) 1)
 			    (pop columns)
 			  (return)))))
-		    
+
 		    (goto-char keyword-end))
 
 		;else
