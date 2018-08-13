@@ -23,7 +23,7 @@ set DIST_ARCHIVE=%DISTROOT%\%APPNAME%-%VERSION%.zip
 set SRC_ARCHIVE=%DISTROOT%\%APPNAME%-src-%VERSION%.zip
 
 call git tag %TAG% -a -m "%APPNAME% %VERSION% released!" || exit /b 1
-call git tag
+call git --no-pager tag
 
 cd %BASEDIR%
 rd /S /Q %DISTROOT% 2> nul
