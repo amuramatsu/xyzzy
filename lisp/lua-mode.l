@@ -21,12 +21,18 @@
 	  lua-indent-line
 	  lua-indent-line-and-next-line
 	  lua-newline-and-indent
-	  lua-toggle-comment-out))
+	  lua-toggle-comment-out
+	  lua-electric-insert
+	  lua-electric-close
+	  lua-completion
+	  lua-autoindent-d
+	  lua-autoindent-e))
 
 (defvar *lua-mode-hook*             nil)
 (defvar *lua-mode-map*              nil)
 (defvar *lua-mode-abbrev-table*     nil)
 (defvar *lua-mode-syntax-table*     nil)
+(defvar *lua-completion-list*       nil)
 
 (defvar *lua-indent-level*            2)
 (defvar *lua-label-offset*            2)
@@ -43,11 +49,16 @@
 
 (unless *lua-mode-map*
   (setq *lua-mode-map* (make-sparse-keymap))
+  (define-key *lua-mode-map* #\{      'lua-electric-insert)
+  (define-key *lua-mode-map* #\}      'lua-electric-close)
+  (define-key *lua-mode-map* #\d      'lua-autoindent-d)
+  (define-key *lua-mode-map* #\e      'lua-autoindent-e)
   (define-key *lua-mode-map* #\TAB    'lua-indent-line)
+  (define-key *lua-mode-map* #\M-TAB  'lua-completion)
   (define-key *lua-mode-map* #\C-F24  'lua-indent-line-and-next-line)
   (define-key *lua-mode-map* #\RET    'lua-newline-and-indent)
   (define-key *lua-mode-map* #\C-\'   'lua-toggle-comment-out)
-  (define-key *lua-mode-map* #\C-h    'delete-backward-char-or-selection))
+  (define-key *lua-mode-map* #\C-h    'backward-delete-char-untabify-or-selection))
 
 (unless *lua-mode-syntax-table*
   (setq *lua-mode-syntax-table* (make-syntax-table))
@@ -225,8 +236,8 @@
 		(t
 		 (return (lua-point-column (match-beginning 0))))))))))
 
-(defun lua-calc-indent-in-comment-mid (&optional when-inserting-new-line)
-  (if when-inserting-new-line
+(defun lua-calc-indent-in-comment-mid (&optional when-electric-indenting)
+  (if when-electric-indenting
       (lua-count-current-indentation)
     (lua-count-previous-comment-indentation)))
 
@@ -268,12 +279,12 @@
 
     (return (lua-count-previous-comment-indentation))))
 
-(defun lua-calc-indent-in-comment (&optional when-inserting-new-line)
+(defun lua-calc-indent-in-comment (&optional when-electric-indenting)
   (save-excursion
     (let ((comment-end-column (lua-multiline-comment-terminated-column)))
       (if comment-end-column
 	  (lua-calc-indent-in-comment-end comment-end-column)
-	(lua-calc-indent-in-comment-mid when-inserting-new-line)))))
+	(lua-calc-indent-in-comment-mid when-electric-indenting)))))
 
 (defun lua-calc-indent-normal ()
   (save-excursion
@@ -400,22 +411,23 @@
 	    ))))))
 
 
-(defun lua-calc-indent (&optional when-inserting-new-line)
+(defun lua-calc-indent (&optional when-electric-indenting)
   (save-excursion
     (goto-bol)
     (cond
-     ((and when-inserting-new-line
+     ((and when-electric-indenting
 	   (looking-at "[ \t]*$"))
       0)
      ((eq (parse-point-syntax) :comment)
-      (lua-calc-indent-in-comment when-inserting-new-line))
+      (lua-calc-indent-in-comment when-electric-indenting))
      (t
       (lua-calc-indent-normal)))))
 
-(defun lua-indent-line (&optional when-inserting-new-line)
+(defun lua-indent-line (&optional when-electric-indenting)
   (interactive "*")
   (cond
    ((or (interactive-p)
+	when-electric-indenting
 	*lua-tab-always-indent*
 	(save-excursion (skip-chars-backward " \t") (bolp)))
     (let ((original-column (current-column))
@@ -423,7 +435,7 @@
 			     (lua-skip-indent-from-bol)
 			     (current-column))))
       (unless (eq (save-excursion (goto-bol) (parse-point-syntax)) :string)
-	(smart-indentation (lua-calc-indent when-inserting-new-line))
+	(smart-indentation (lua-calc-indent when-electric-indenting))
 	(goto-column (+ (save-excursion
 			  (lua-skip-indent-from-bol)
 			  (current-column))
@@ -432,7 +444,7 @@
 		(skip-chars-backward " \t")
 		(bolp))
 	  (lua-skip-indent-chars)))))
-   ((not when-inserting-new-line)
+   (t
     (insert "\t"))))
 
 (defun lua-indent-line-and-next-line ()
@@ -481,6 +493,48 @@
 	(insert *lua-comment-out-string* " "))))
   (next-line)
   (lua-skip-indent-from-bol))
+
+(defun lua-electric-insert (&optional (arg 1))
+  (interactive "*p")
+  (self-insert-command arg)
+  (lua-indent-line t))
+
+(defun lua-electric-close (&optional (arg 1))
+  (interactive "*p")
+  (self-insert-command arg)
+  (lua-indent-line t)
+  (save-excursion
+    (forward-char -1)
+    (and (goto-matched-parenthesis)
+	 (show-matched-parenthesis)))
+  t)
+
+; 直前にstrがあればインデントする関数fnを作る関数
+(defun mk-lua-autoindent (fn str)
+  (setf (symbol-function fn)
+	(lambda (&optional (arg 1))
+	  (interactive "*p")
+	  (self-insert-command arg)
+	  (if (and (not (eq (parse-point-syntax) :string)) (looking-back str))
+	      (lua-indent-line t)))))
+
+; endを打ち終わったらインデント
+(mk-lua-autoindent 'lua-autoindent-d "end")
+
+; elseを打ち終わったらインデント
+(mk-lua-autoindent 'lua-autoindent-e "else")
+
+(defun lua-completion ()
+  "キーワードから補完"
+  (interactive)
+  (or *lua-completion-list*
+      (setq *lua-completion-list* (make-list-from-keyword-table *lua-keyword-hash-table*))
+      (return-from lua-completion nil))
+  (let ((opoint (point)))
+    (when (skip-syntax-spec-backward "w_")
+      (let ((from (point)))
+	(goto-char opoint)
+	(do-completion from opoint :list *lua-completion-list*)))))
 
 (defun lua-mode ()
   (interactive)
