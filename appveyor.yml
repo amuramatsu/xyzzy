@@ -1,21 +1,26 @@
 version: 1.0.{build}
+image: Visual Studio 2015
+
 init:
-- ps: Set-WinSystemLocale ja-JP
-- ps: Start-Sleep -s 5
-- ps: Restart-Computer
+- ps: >-
+    Set-WinSystemLocale ja-JP
+    Start-Sleep -s 5
+    Restart-Computer
 
 install:
-- SET PATH=%PATH%;C:\msys64\usr\bin
-- C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S zip"
-- '"C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat"'
+- cmd: >-
+    SET PATH=%PATH%;C:\msys64\usr\bin
+    C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S zip"
+    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars32.bat"
 
 build_script:
-- build.bat
-- bytecompile.bat
-- archive.bat
+- cmd: >-
+    build.bat
+    bytecompile.bat
+    archive.bat
 
 test_script:
-- run-tests.bat
+- cmd: run-tests.bat
 
 artifacts:
   - path: _dist\xyzzy-dev.zip
