@@ -139,7 +139,16 @@ GlobalIME::ImmSetCompositionFont (HIMC himc, LOGFONT *lf)
   if (gi_app)
     return gi_app->SetCompositionFontA (himc, lf) == S_OK;
 #endif /* HAVE_DIMM_H */
+#if 1
+  LOGFONTW lfw;
+  memcpy(&lfw, lf, sizeof(LOGFONT));
+  ::MultiByteToWideChar(CP_ACP, 0U,
+			lf->lfFaceName, LF_FACESIZE,
+			lfw.lfFaceName, LF_FACESIZE);
+  return ::ImmSetCompositionFontW (himc, &lfw);
+#else
   return ::ImmSetCompositionFont (himc, lf);
+#endif
 }
 
 LONG
