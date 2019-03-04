@@ -21,10 +21,10 @@ protected:
 public:
   struct WoW64SpecialRedirectionPath
   {
-    const char* name;
-    const char* expStr;
-    char path[MAX_PATH+1];
-    WIN32_FIND_DATA fd;
+    const wchar_t* name;
+    const wchar_t* expStr;
+    wchar_t path[MAX_PATH+1];
+    WIN32_FIND_DATAW fd;
   };
 
   static BOOL WINAPI IsWow64Process (HANDLE hProcess, PBOOL Wow64Process);
@@ -32,8 +32,8 @@ public:
   static BOOL WINAPI Wow64RevertWow64FsRedirection (PVOID *OldValue);
   static BOOL IsWow64 ();
   static const WoW64SpecialRedirectionPath* GetSpecialRedirectionPathArray ();
-  static BOOL IsSpecialRedirectionPath (const char *path, WIN32_FIND_DATA &fd);
-  static BOOL IsSpecialRedirectionFilename (const char *path);
+  static BOOL IsSpecialRedirectionPath (const wchar_t *path, WIN32_FIND_DATAW &fd);
+  static BOOL IsSpecialRedirectionFilename (const wchar_t *path);
   static file_path_mode GetFilePathMode ();
 };
 
@@ -123,33 +123,33 @@ WINWOW64::GetSpecialRedirectionPathArray ()
   // See : http://msdn.microsoft.com/en-us/library/aa384187(v=vs.85).aspx
   static WoW64SpecialRedirectionPath srp[] =
   {
-    { "Sysnative", "%windir%\\Sysnative" },
-    { "catroot", "%windir%\\System32\\catroot" },
-    { "catroot2", "%windir%\\System32\\catroot2" },
-    { "driverstore", "%windir%\\System32\\driverstore" },
-    { "etc", "%windir%\\System32\\drivers\\etc" },
-    { "logfiles", "%windir%\\System32\\logfiles" },
-    { "spool", "%windir%\\System32\\spool" },
+    { L"Sysnative",   L"%windir%\\Sysnative" },
+    { L"catroot",     L"%windir%\\System32\\catroot" },
+    { L"catroot2",    L"%windir%\\System32\\catroot2" },
+    { L"driverstore", L"%windir%\\System32\\driverstore" },
+    { L"etc",         L"%windir%\\System32\\drivers\\etc" },
+    { L"logfiles",    L"%windir%\\System32\\logfiles" },
+    { L"spool",       L"%windir%\\System32\\spool" },
     { NULL, NULL }
   };
   if(srp[0].path[0] == 0)
     {
       PVOID OldValue;
       WINWOW64::Wow64DisableWow64FsRedirection (&OldValue);
-      WIN32_FIND_DATA tfd = { 0 };
+      WIN32_FIND_DATAW tfd = { 0 };
       {
-        char path[MAX_PATH+1];
-        ExpandEnvironmentStrings ("%windir%\\System32", path, _countof (path));
-        HANDLE h = FindFirstFile (path, &tfd);
+        wchar_t path[MAX_PATH+1];
+        ExpandEnvironmentStringsW (L"%windir%\\System32", path, _countof (path));
+        HANDLE h = FindFirstFileW (path, &tfd);
         FindClose (h);
       }
 
       for(int i = 0; srp[i].name; i++)
         {
           WoW64SpecialRedirectionPath &s = srp[i];
-          ExpandEnvironmentStrings (s.expStr, s.path, _countof (s.path));
+          ExpandEnvironmentStringsW (s.expStr, s.path, _countof (s.path));
           s.fd = tfd;
-          strcpy (s.fd.cFileName, s.name);
+          wcscpy (s.fd.cFileName, s.name);
         }
       WINWOW64::Wow64RevertWow64FsRedirection (&OldValue);
     }
@@ -158,16 +158,16 @@ WINWOW64::GetSpecialRedirectionPathArray ()
 }
 
 BOOL
-WINWOW64::IsSpecialRedirectionFilename (const char* filename)
+WINWOW64::IsSpecialRedirectionFilename (const wchar_t* filename)
 {
   BOOL ret = FALSE;
-  char fname[MAX_PATH+1];
-  strcpy (fname, filename);
-  convert_backsl_with_sl (fname, '/', '\\');
+  wchar_t fname[MAX_PATH+1];
+  wcscpy (fname, filename);
+  convert_backsl_with_sl (fname, L'/', L'\\');
   const WINWOW64::WoW64SpecialRedirectionPath* srp = WINWOW64::GetSpecialRedirectionPathArray ();
   for (int i = 0; srp[i].name; i++)
     {
-      if (_memicmp (fname, srp[i].path, strlen (srp[i].path)) == 0)
+      if (_memicmp (fname, srp[i].path, wcslen (srp[i].path)) == 0)
         {
           ret = TRUE;
           break;
@@ -177,14 +177,14 @@ WINWOW64::IsSpecialRedirectionFilename (const char* filename)
 }
 
 BOOL
-WINWOW64::IsSpecialRedirectionPath (const char *path, WIN32_FIND_DATA &fd)
+WINWOW64::IsSpecialRedirectionPath (const wchar_t *path, WIN32_FIND_DATAW &fd)
 {
   BOOL r = FALSE;
   if (WINWOW64::IsWow64 ())
     {
-      char t[MAX_PATH+1];
-      strcpy (t, path);
-      for(char* p = t; *p != 0; p++)
+      wchar_t t[MAX_PATH+1];
+      wcscpy (t, path);
+      for(wchar_t* p = t; *p != 0; p++)
         {
           if(*p == '/')
             {
@@ -196,7 +196,7 @@ WINWOW64::IsSpecialRedirectionPath (const char *path, WIN32_FIND_DATA &fd)
       for(int i = 0; srp[i].name; i++)
         {
           const WoW64SpecialRedirectionPath &s = srp[i];
-          if(_stricmp (t, s.path) == 0)
+          if(strcasecmp (t, s.path) == 0)
             {
               fd = s.fd;
               r = TRUE;
@@ -239,45 +239,45 @@ Fsi_wow64_reinterpret_path (lisp string, lisp flag)
   lisp result = Qnil;
   if (WINWOW64::IsWow64 ())
     {
-      const char* replaceFromExp = NULL;
-      const char* replaceToExp = NULL;
+      const wchar_t* replaceFromExp = NULL;
+      const wchar_t* replaceToExp = NULL;
       bool isNativePath = (flag == Qnil);
 
-      char srcPath[MAX_PATH+1];
-      w2s (srcPath, xstring_contents (string), xstring_length (string));
+      wchar_t srcPath[MAX_PATH+1];
+      w2u (srcPath, xstring_contents (string), xstring_length (string));
 
       if (isNativePath && WINWOW64::GetFilePathMode () == WINWOW64::wow64)
         {
 		  if (! WINWOW64::IsSpecialRedirectionFilename (srcPath))
             {
-              replaceFromExp = "%windir%\\System32";
-              replaceToExp = "%windir%\\Sysnative";
+              replaceFromExp = L"%windir%\\System32";
+              replaceToExp = L"%windir%\\Sysnative";
             }
         }
       else if (!isNativePath && WINWOW64::GetFilePathMode () == WINWOW64::native)
         {
 		  if (! WINWOW64::IsSpecialRedirectionFilename (srcPath))
             {
-              replaceFromExp = "%windir%\\System32";
-              replaceToExp = "%windir%\\SysWOW64";
+              replaceFromExp = L"%windir%\\System32";
+              replaceToExp = L"%windir%\\SysWOW64";
             }
         }
 
       if (replaceFromExp && replaceToExp)
         {
-          char replaceFrom[MAX_PATH+1];
-          ExpandEnvironmentStrings (replaceFromExp, replaceFrom, _countof (replaceFrom));
-          size_t replaceFromLen = strlen (replaceFrom);
-          char sPath[MAX_PATH+1];
-		  strcpy (sPath, srcPath);
-          convert_backsl_with_sl (sPath, '/', '\\');
-		  if (_memicmp (sPath, replaceFrom, replaceFromLen) == 0)
+          wchar_t replaceFrom[MAX_PATH+1];
+          ExpandEnvironmentStringsW (replaceFromExp, replaceFrom, _countof (replaceFrom));
+          size_t replaceFromLen = wcslen (replaceFrom);
+          wchar_t sPath[MAX_PATH+1];
+          wcscpy (sPath, srcPath);
+          convert_backsl_with_sl (sPath, L'/', L'\\');
+          if (_memicmp (sPath, replaceFrom, replaceFromLen) == 0) //XXX
             {
-              char replaceTo[MAX_PATH+1];
-              ExpandEnvironmentStrings (replaceToExp, replaceTo, _countof (replaceTo));
-              char replaceResult[MAX_PATH+1];
-              sprintf (replaceResult, "%s%s", replaceTo, &srcPath[replaceFromLen]);
-              result = make_string (replaceResult);
+              wchar_t replaceTo[MAX_PATH+1];
+              ExpandEnvironmentStringsW (replaceToExp, replaceTo, _countof (replaceTo));
+              wchar_t replaceResult[MAX_PATH+1];
+              wsprintfW (replaceResult, L"%s%s", replaceTo, &srcPath[replaceFromLen]);
+              result = make_string_w (replaceResult);
             }
         }
     }
@@ -292,9 +292,9 @@ class NetPassDlg
 {
   HWND hwnd;
 public:
-  char username[256];
-  char passwd[256];
-  const char *remote;
+  wchar_t username[256];
+  wchar_t passwd[256];
+  const wchar_t *remote;
 
 private:
   static BOOL CALLBACK netpass_dlgproc (HWND, UINT, WPARAM, LPARAM);
@@ -303,11 +303,11 @@ private:
   void init_dialog ();
 
 public:
-  NetPassDlg (const char *);
+  NetPassDlg (const wchar_t *);
   int do_modal ();
 };
 
-NetPassDlg::NetPassDlg (const char *r)
+NetPassDlg::NetPassDlg (const wchar_t *r)
      : remote (r)
 {
   *username = 0;
@@ -320,8 +320,8 @@ NetPassDlg::do_command (int id, int code)
   switch (id)
     {
     case IDOK:
-      GetDlgItemText (hwnd, IDC_USERNAME, username, sizeof username);
-      GetDlgItemText (hwnd, IDC_PASSWD, passwd, sizeof passwd);
+      GetDlgItemTextW (hwnd, IDC_USERNAME, username, sizeof username);
+      GetDlgItemTextW (hwnd, IDC_PASSWD, passwd, sizeof passwd);
       /* fall thru... */
     case IDCANCEL:
       EndDialog (hwnd, id);
@@ -334,7 +334,7 @@ NetPassDlg::init_dialog ()
 {
   center_window (hwnd);
   set_window_icon (hwnd);
-  SetDlgItemText (hwnd, IDC_SHARE_NAME, remote);
+  SetDlgItemTextW (hwnd, IDC_SHARE_NAME, remote);
 }
 
 BOOL
@@ -392,38 +392,38 @@ NetPassDlg::do_modal ()
     return r; }
 
 #define WINFS_MAPSL(PATH) \
-  { char *__path = (char *)alloca (strlen (PATH) + 1); \
-    strcpy (__path, (PATH)); \
+  { wchar_t *__path = (wchar_t *)alloca ((wcslen (PATH) + 1)*sizeof(wchar_t)); \
+    wcscpy (__path, (PATH)); \
     map_sl_to_backsl (__path); \
     (PATH) = __path; }
 
-static const char *
-skip_share (const char *path, int noshare_ok)
+static const wchar_t *
+skip_share (const wchar_t *path, int noshare_ok)
 {
-  const char *p = path;
+  const wchar_t *p = path;
   if ((*p != '/' && *p != '\\')
       || (p[1] != '/' && p[1] != '\\'))
     return 0;
   p = find_slash (p + 2);
   if (p)
     {
-      const char *e = find_slash (p + 1);
-      return e ? e : p + strlen (p);
+      const wchar_t *e = find_slash (p + 1);
+      return e ? e : p + wcslen (p);
     }
-  return noshare_ok ? path + strlen (path) : 0;
+  return noshare_ok ? path + wcslen (path) : 0;
 }
 
 static int
-try_connect (char *remote, int e)
+try_connect (wchar_t *remote, int e)
 {
-  NETRESOURCE nr;
+  NETRESOURCEW nr;
   nr.dwType = RESOURCETYPE_DISK;
   nr.lpLocalName = 0;
   nr.lpRemoteName = remote;
   nr.lpProvider = 0;
 
   if (e == ERROR_ACCESS_DENIED
-      && WNetAddConnection2 (&nr, 0, 0, 0) == NO_ERROR)
+      && WNetAddConnection2W (&nr, 0, 0, 0) == NO_ERROR)
     return 1;
 
   while (1)
@@ -432,7 +432,7 @@ try_connect (char *remote, int e)
       if (!d.do_modal ())
         return 0;
 
-      switch (WNetAddConnection2 (&nr, d.passwd, d.username, 0))
+      switch (WNetAddConnection2W (&nr, d.passwd, d.username, 0))
         {
         case NO_ERROR:
           return 1;
@@ -449,7 +449,7 @@ try_connect (char *remote, int e)
 }
 
 static int
-askpass1 (const char *path, int noshare_ok)
+askpass1 (const wchar_t *path, int noshare_ok)
 {
   if (!path)
     return 0;
@@ -466,65 +466,65 @@ askpass1 (const char *path, int noshare_ok)
       break;
     }
 
-  const char *root = skip_share (path, noshare_ok);
+  const wchar_t *root = skip_share (path, noshare_ok);
   if (!root)
     return 0;
   int l = root - path;
-  char *remote = (char *)alloca (l + 1);
-  memcpy (remote, path, l);
+  wchar_t *remote = (wchar_t *)alloca ((l + 1)*sizeof(wchar_t));
+  memcpy (remote, path, l*sizeof(wchar_t));
   remote[l] = 0;
   map_sl_to_backsl (remote);
-  if (!_stricmp (WINFS::wfs_share_cache, remote))
+  if (!strcasecmp (WINFS::wfs_share_cache, remote))
     return 0;
   if (try_connect (remote, e))
     {
       *WINFS::wfs_share_cache = 0;
       return 1;
     }
-  strcpy (WINFS::wfs_share_cache, remote);
+  wcscpy (WINFS::wfs_share_cache, remote);
   SetLastError (e);
   return 0;
 }
 
 static inline int
-askpass (const char *path)
+askpass (const wchar_t *path)
 {
   return askpass1 (path, 0);
 }
 
 static inline int
-askpass_noshare (const char *path)
+askpass_noshare (const wchar_t *path)
 {
   return askpass1 (path, 1);
 }
 
 static inline int
-askpass (const char *path1, const char *path2)
+askpass (const wchar_t *path1, const wchar_t *path2)
 {
   return askpass1 (path1, 0) || askpass1 (path2, 0);
 }
 
-char WINFS::wfs_share_cache[MAX_PATH * 2];
+wchar_t WINFS::wfs_share_cache[MAX_PATH * 2];
 
 const WINFS::GETDISKFREESPACEEX WINFS::GetDiskFreeSpaceEx =
   (WINFS::GETDISKFREESPACEEX)GetProcAddress (GetModuleHandle ("KERNEL32"),
                                              "GetDiskFreeSpaceExA");
 
 BOOL WINAPI
-WINFS::CreateDirectory (LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+WINFS::CreateDirectory (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  WINFS_CALL1 (BOOL, FALSE, lpPathName, CreateDirectory (lpPathName, lpSecurityAttributes));
+  WINFS_CALL1 (BOOL, FALSE, lpPathName, CreateDirectoryW (lpPathName, lpSecurityAttributes));
 }
 
 HANDLE WINAPI
-WINFS::CreateFile (LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+WINFS::CreateFile (LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  HANDLE r = ::CreateFile (lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
-                           dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+  HANDLE r = ::CreateFileW (lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+                            dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
   if (r != INVALID_HANDLE_VALUE)
     return r;
   if (!sysdep.WinNTp () || !(dwFlagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS))
@@ -532,59 +532,59 @@ WINFS::CreateFile (LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
       int e = GetLastError ();
       if (e == ERROR_ACCESS_DENIED)
         {
-          DWORD a = ::GetFileAttributes (lpFileName);
+          DWORD a = ::GetFileAttributesW (lpFileName);
           SetLastError (e);
           if (a != -1 && a & FILE_ATTRIBUTE_DIRECTORY)
             return r;
         }
     }
   if (askpass (lpFileName))
-    r = ::CreateFile (lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
-                      dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+    r = ::CreateFileW (lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes,
+                       dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
   return r;
 }
 
 BOOL WINAPI
-WINFS::DeleteFile (LPCSTR lpFileName)
+WINFS::DeleteFile (LPCWSTR lpFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  WINFS_CALL1 (BOOL, FALSE, lpFileName, DeleteFile (lpFileName));
+  WINFS_CALL1 (BOOL, FALSE, lpFileName, DeleteFileW (lpFileName));
 }
 
 HANDLE WINAPI
-WINFS::FindFirstFile (LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
+WINFS::FindFirstFile (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (HANDLE, INVALID_HANDLE_VALUE, lpFileName,
-               FindFirstFile (lpFileName, lpFindFileData));
+               FindFirstFileW (lpFileName, lpFindFileData));
 }
 
 BOOL WINAPI
-WINFS::FindNextFile (HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
+WINFS::FindNextFile (HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   *lpFindFileData->cFileName = 0;
-  return (::FindNextFile (hFindFile, lpFindFileData)
+  return (::FindNextFileW (hFindFile, lpFindFileData)
           || (GetLastError () == ERROR_MORE_DATA
               && *lpFindFileData->cFileName));
 }
 
 static BOOL WINAPI
-GetDiskFreeSpaceFAT32 (LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+GetDiskFreeSpaceFAT32 (LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
                        LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters,
                        LPDWORD lpTotalNumberOfClusters)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  char buf[PATH_MAX + 1];
+  wchar_t buf[PATH_MAX + 1];
   if (!lpRootPathName)
     {
-      if (!GetCurrentDirectory (sizeof buf, buf))
+      if (!GetCurrentDirectoryW (sizeof buf, buf))
         return 0;
       lpRootPathName = root_path_name (buf, buf);
     }
 
-  dyn_handle hvwin32 (CreateFile ("\\\\.\\vwin32", 0, 0, 0, 0,
-                                  FILE_FLAG_DELETE_ON_CLOSE, 0));
+  dyn_handle hvwin32 (CreateFileW (L"\\\\.\\vwin32", 0, 0, 0, 0,
+                                   FILE_FLAG_DELETE_ON_CLOSE, 0));
   if (!hvwin32.valid ())
     return 0;
 
@@ -611,13 +611,13 @@ GetDiskFreeSpaceFAT32 (LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
 }
 
 BOOL WINAPI
-WINFS::GetDiskFreeSpace (LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
+WINFS::GetDiskFreeSpace (LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
                          LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters,
                          LPDWORD lpTotalNumberOfClusters)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  BOOL r = ::GetDiskFreeSpace (lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
-                               lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+  BOOL r = ::GetDiskFreeSpaceW (lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
+                                lpNumberOfFreeClusters, lpTotalNumberOfClusters);
   if (!r)
     {
       if (GetLastError () == ERROR_NOT_SUPPORTED)
@@ -629,8 +629,8 @@ WINFS::GetDiskFreeSpace (LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
         {
           if (!askpass (lpRootPathName))
             return 0;
-          r = ::GetDiskFreeSpace (lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
-                                  lpNumberOfFreeClusters, lpTotalNumberOfClusters);
+          r = ::GetDiskFreeSpaceW (lpRootPathName, lpSectorsPerCluster, lpBytesPerSector,
+                                   lpNumberOfFreeClusters, lpTotalNumberOfClusters);
           if (!r)
             return 0;
         }
@@ -647,10 +647,10 @@ WINFS::GetDiskFreeSpace (LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
       uint64_t FreeBytesAvailableToCaller;
       uint64_t TotalNumberOfBytes;
       uint64_t TotalNumberOfFreeBytes;
-      if (GetDiskFreeSpaceEx (lpRootPathName,
-                              (PULARGE_INTEGER)&FreeBytesAvailableToCaller,
-                              (PULARGE_INTEGER)&TotalNumberOfBytes,
-                              (PULARGE_INTEGER)&TotalNumberOfFreeBytes))
+      if (GetDiskFreeSpaceExW (lpRootPathName,
+                               (PULARGE_INTEGER)&FreeBytesAvailableToCaller,
+                               (PULARGE_INTEGER)&TotalNumberOfBytes,
+                               (PULARGE_INTEGER)&TotalNumberOfFreeBytes))
         {
           DWORD blk = *lpSectorsPerCluster * *lpBytesPerSector;
           if (!blk)
@@ -665,20 +665,20 @@ WINFS::GetDiskFreeSpace (LPCSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
 }
 
 DWORD WINAPI
-WINFS::internal_GetFileAttributes (LPCSTR lpFileName)
+WINFS::internal_GetFileAttributes (LPCWSTR lpFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  WINFS_CALL1 (DWORD, -1, lpFileName, GetFileAttributes (lpFileName));
+  WINFS_CALL1 (DWORD, -1, lpFileName, GetFileAttributesW (lpFileName));
 }
 
 DWORD WINAPI
-WINFS::GetFileAttributes (LPCSTR lpFileName)
+WINFS::GetFileAttributes (LPCWSTR lpFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   DWORD attr = internal_GetFileAttributes (lpFileName);
   if (attr == DWORD (-1) && GetLastError () != ERROR_INVALID_NAME)
     {
-      WIN32_FIND_DATA fd;
+      WIN32_FIND_DATAW fd;
       if (get_file_data (lpFileName, fd))
         attr = fd.dwFileAttributes;
     }
@@ -686,42 +686,42 @@ WINFS::GetFileAttributes (LPCSTR lpFileName)
 }
 
 UINT WINAPI
-WINFS::GetTempFileName (LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName)
+WINFS::GetTempFileName (LPCWSTR lpPathName, LPCWSTR lpPrefixString, UINT uUnique, LPWSTR lpTempFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (UINT, 0, lpPathName,
-               GetTempFileName (lpPathName, lpPrefixString, uUnique, lpTempFileName));
+               GetTempFileNameW (lpPathName, lpPrefixString, uUnique, lpTempFileName));
 }
 
 BOOL WINAPI
-WINFS::GetVolumeInformation (LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer,
+WINFS::GetVolumeInformation (LPCWSTR lpRootPathName, LPWSTR lpVolumeNameBuffer,
                              DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber,
                              LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
-                             LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize)
+                             LPWSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (BOOL, FALSE, lpRootPathName,
-               GetVolumeInformation (lpRootPathName, lpVolumeNameBuffer, nVolumeNameSize,
-                                     lpVolumeSerialNumber, lpMaximumComponentLength,
-                                     lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize));
+               GetVolumeInformationW (lpRootPathName, lpVolumeNameBuffer, nVolumeNameSize,
+                                      lpVolumeSerialNumber, lpMaximumComponentLength,
+                                      lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize));
 }
 
 HMODULE WINAPI
-WINFS::LoadLibrary (LPCSTR lpLibFileName)
+WINFS::LoadLibrary (LPCWSTR lpLibFileName)
 {
-  WINFS_CALL1 (HMODULE, NULL, lpLibFileName, LoadLibrary (lpLibFileName));
+  WINFS_CALL1 (HMODULE, NULL, lpLibFileName, LoadLibraryW (lpLibFileName));
 }
 
 static BOOL
-move_file (LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+move_file (LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL2 (BOOL, FALSE, lpExistingFileName, lpNewFileName,
-               MoveFile (lpExistingFileName, lpNewFileName));
+               MoveFileW (lpExistingFileName, lpNewFileName));
 }
 
 BOOL WINAPI
-WINFS::MoveFile (LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+WINFS::MoveFile (LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
 {
   for (int retry = 0;; retry++)
     {
@@ -734,40 +734,40 @@ WINFS::MoveFile (LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
 }
 
 BOOL WINAPI
-WINFS::RemoveDirectory (LPCSTR lpPathName)
+WINFS::RemoveDirectory (LPCWSTR lpPathName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  WINFS_CALL1 (BOOL, FALSE, lpPathName, RemoveDirectory (lpPathName));
+  WINFS_CALL1 (BOOL, FALSE, lpPathName, RemoveDirectoryW (lpPathName));
 }
 
 BOOL WINAPI
-WINFS::SetFileAttributes (LPCSTR lpFileName, DWORD dwFileAttributes)
+WINFS::SetFileAttributes (LPCWSTR lpFileName, DWORD dwFileAttributes)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (BOOL, FALSE, lpFileName,
-               SetFileAttributes (lpFileName, dwFileAttributes));
+               SetFileAttributesW (lpFileName, dwFileAttributes));
 }
 
 DWORD WINAPI
-WINFS::internal_GetFullPathName (LPCSTR lpFileName, DWORD nBufferLength,
-                                 LPSTR lpBuffer, LPSTR *lpFilePart)
+WINFS::internal_GetFullPathName (LPCWSTR lpFileName, DWORD nBufferLength,
+                                 LPWSTR lpBuffer, LPWSTR *lpFilePart)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_MAPSL (lpFileName);
   WINFS_CALL1 (DWORD, 0, lpFileName,
-               GetFullPathName (lpFileName, nBufferLength, lpBuffer, lpFilePart));
+               GetFullPathNameW (lpFileName, nBufferLength, lpBuffer, lpFilePart));
 }
 
 BOOL WINAPI
-WINFS::SetCurrentDirectory (LPCSTR lpPathName)
+WINFS::SetCurrentDirectory (LPCWSTR lpPathName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_MAPSL (lpPathName);
-  WINFS_CALL1 (BOOL, FALSE, lpPathName, SetCurrentDirectory (lpPathName));
+  WINFS_CALL1 (BOOL, FALSE, lpPathName, SetCurrentDirectoryW (lpPathName));
 }
 
 DWORD WINAPI
-WINFS::GetFullPathName (LPCSTR path, DWORD size, LPSTR buf, LPSTR *name)
+WINFS::GetFullPathName (LPCWSTR path, DWORD size, LPWSTR buf, LPWSTR *name)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   DWORD l = internal_GetFullPathName (path, size, buf, name);
@@ -775,10 +775,10 @@ WINFS::GetFullPathName (LPCSTR path, DWORD size, LPSTR buf, LPSTR *name)
     return l;
   if (!dir_separator_p (*path) || !dir_separator_p (path[1]))
     return l;
-  if (alpha_char_p (*buf & 0xff) && buf[1] == ':'
+  if (alpha_char_p (*buf & 0xff) && buf[1] == L':'
       && dir_separator_p (buf[2]) && dir_separator_p (buf[3]))
     {
-      strcpy (buf, buf + 2);
+      wcscpy (buf, buf + 2);
       l -= 2;
       if (name && *name >= buf + 2)
         *name -= 2;
@@ -788,19 +788,19 @@ WINFS::GetFullPathName (LPCSTR path, DWORD size, LPSTR buf, LPSTR *name)
 
 DWORD WINAPI
 WINFS::WNetOpenEnum (DWORD dwScope, DWORD dwType, DWORD dwUsage,
-                     LPNETRESOURCE lpNetResource, LPHANDLE lphEnum)
+                     LPNETRESOURCEW lpNetResource, LPHANDLE lphEnum)
 {
   if (!lpNetResource)
-    return ::WNetOpenEnum (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
+    return ::WNetOpenEnumW (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
 
-  DWORD r = ::WNetOpenEnum (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
+  DWORD r = ::WNetOpenEnumW (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
   if (r != NO_ERROR && askpass_noshare (lpNetResource->lpRemoteName))
-    r = ::WNetOpenEnum (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
+    r = ::WNetOpenEnumW (dwScope, dwType, dwUsage, lpNetResource, lphEnum);
   return r;
 }
 
 int WINAPI
-WINFS::get_file_data (const char *path, WIN32_FIND_DATA &fd)
+WINFS::get_file_data (const wchar_t *path, WIN32_FIND_DATAW &fd)
 {
   int r = 0;
   if (WINWOW64::IsSpecialRedirectionPath (path, fd))
@@ -809,7 +809,7 @@ WINFS::get_file_data (const char *path, WIN32_FIND_DATA &fd)
     }
   else
     {
-      HANDLE h = FindFirstFile (path, &fd);
+      HANDLE h = FindFirstFileW (path, &fd);
       if (h != INVALID_HANDLE_VALUE)
         {
           r = 1;

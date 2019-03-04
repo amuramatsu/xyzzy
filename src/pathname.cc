@@ -623,10 +623,19 @@ pathname2cstr (lisp pathname, char *buf)
   return w2s (buf, p, pe - p);
 }
 
+wchar_t *
+pathname2cstr (lisp pathname, wchar_t *buf)
+{
+  pathbuf_t tem;
+  const Char *p, *pe;
+  pathname = coerce_to_pathname (pathname, tem, p, pe);
+  return w2u (buf, p, pe - p);
+}
+
 static int
 file_attributes (lisp pathname)
 {
-  char path[PATH_MAX + 1];
+  TCHAR path[PATH_MAX + 1];
   pathname2cstr (pathname, path);
   return WINFS::GetFileAttributes (path);
 }
@@ -1812,17 +1821,17 @@ struct gdu
 };
 
 static void
-get_disk_usage (char *path, gdu *du)
+get_disk_usage (wchar_t *path, gdu *du)
 {
   QUIT;
-  int l = strlen (path);
+  int l = wcslen (path);
   if (l >= PATH_MAX)
     return;
-  char *pe = path + l;
-  *pe = '*';
+  wchar_t *pe = path + l;
+  *pe = L'*';
   pe[1] = 0;
 
-  WIN32_FIND_DATA fd;
+  WIN32_FIND_DATAW fd;
   HANDLE h = WINFS::FindFirstFile (path, &fd);
   if (h != INVALID_HANDLE_VALUE)
     {
@@ -1832,12 +1841,12 @@ get_disk_usage (char *path, gdu *du)
           if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
               if (!du->recursive
-                  || (*fd.cFileName == '.'
+                  || (*fd.cFileName == L'.'
                       && (!fd.cFileName[1]
-                          || (fd.cFileName[1] == '.' && !fd.cFileName[2]))))
+                          || (fd.cFileName[1] == L'.' && !fd.cFileName[2]))))
                 continue;
               du->ndirs++;
-              strcpy (stpcpy (pe, fd.cFileName), "/");
+              wcscpy (stpcpy (pe, fd.cFileName), L"/");
               get_disk_usage (path, du);
             }
           else
@@ -1858,11 +1867,11 @@ get_disk_usage (char *path, gdu *du)
 lisp
 Fget_disk_usage (lisp dirname, lisp recursive)
 {
-  char path[PATH_MAX * 2];
+  wchar_t path[PATH_MAX * 2];
   pathname2cstr (dirname, path);
-  char *p = jrindex (path, '/');
+  wchar_t *p = jrindex (path, L'/');
   if (p && p[1])
-    strcat (p, "/");
+    wcscat (p, L"/");
   gdu du;
   bzero (&du, sizeof du);
 
@@ -1871,7 +1880,7 @@ Fget_disk_usage (lisp dirname, lisp recursive)
   DWORD BytesPerSector;
   DWORD FreeClusters;
   DWORD Clusters;
-  int f = WINFS::GetDiskFreeSpace (0, &SectorsPerCluster, &BytesPerSector,
+  int f = WINFS::GetDiskFreeSpace ((wchar_t *)0, &SectorsPerCluster, &BytesPerSector,
                                    &FreeClusters, &Clusters);
   int e = GetLastError ();
   WINFS::SetCurrentDirectory (sysdep.curdir);
@@ -2268,13 +2277,13 @@ class list_servers: public list_net_resources
 {
 protected:
   virtual void doit () {list (0);}
-  int list (NETRESOURCE *);
+  int list (NETRESOURCEW *);
 public:
   list_servers (int pair) : list_net_resources (pair) {}
 };
 
 int
-list_servers::list (NETRESOURCE *r0)
+list_servers::list (NETRESOURCEW *r0)
 {
   HANDLE h;
   m_error = WINFS::WNetOpenEnum (RESOURCE_GLOBALNET, RESOURCETYPE_ANY, 0, r0, &h);
@@ -2283,9 +2292,9 @@ list_servers::list (NETRESOURCE *r0)
   wnet_enum_handle weh (h);
   while (!interrupted ())
     {
-      NETRESOURCE rb[8192];
+      NETRESOURCEW rb[8192];
       DWORD nent = DWORD (-1), size = sizeof rb;
-      m_error = WNetEnumResource (h, &nent, rb, &size);
+      m_error = WNetEnumResourceW (h, &nent, rb, &size);
       if (m_error == ERROR_NO_MORE_ITEMS)
         {
           m_error = NO_ERROR;
@@ -2294,7 +2303,7 @@ list_servers::list (NETRESOURCE *r0)
       if (m_error != NO_ERROR)
         return 0;
 
-      NETRESOURCE *r = rb;
+      NETRESOURCEW *r = rb;
       for (DWORD i = 0; i < nent && !interrupted (); i++, r++)
         switch (r->dwDisplayType)
           {
@@ -2306,9 +2315,14 @@ list_servers::list (NETRESOURCE *r0)
             break;
 
           case RESOURCEDISPLAYTYPE_SERVER:
-            if (r->lpRemoteName)
-              m_list.add (r->lpRemoteName + 2,
-                          m_pair && r->lpComment ? r->lpComment : "");
+            if (r->lpRemoteName) {
+              //XXX for change
+              char *p1 = make_tmpstr(r->lpRemoteName + 2);
+              char *p2 = make_tmpstr((m_pair && r->lpComment) ? r->lpComment : L"");
+              m_list.add (p1, p2);
+              delete[] p1;
+              delete[] p2;
+            }
             break;
           }
     }
@@ -2331,32 +2345,32 @@ public:
   list_server_resources (lisp lserver, int pair);
   ~list_server_resources () {delete m_server;}
 private:
-  char *m_server;
+  wchar_t *m_server;
 };
 
 list_server_resources::list_server_resources (lisp lserver, int pair)
      : list_net_resources (pair)
 {
   check_string (lserver);
-  m_server = new char [xstring_length (lserver) * 2 + 3];
-  m_server[0] = '\\';
-  m_server[1] = '\\';
-  w2s (m_server + 2, lserver);
+  m_server = new wchar_t [xstring_length (lserver) * 2 + 3];
+  m_server[0] = L'\\';
+  m_server[1] = L'\\';
+  w2u (m_server + 2, lserver);
 }
 
 void
 list_server_resources::doit ()
 {
-  int l = strlen (m_server) + 1;
+  int l = wcslen (m_server) + 1;
 
-  NETRESOURCE r;
+  NETRESOURCEW r;
   r.dwScope = RESOURCE_GLOBALNET;
   r.dwType = RESOURCETYPE_ANY;
   r.dwDisplayType = RESOURCEDISPLAYTYPE_SERVER;
   r.dwUsage = RESOURCEUSAGE_CONTAINER;
   r.lpLocalName = 0;
   r.lpRemoteName = m_server;
-  r.lpComment = "";
+  r.lpComment = L"";
   r.lpProvider = 0;
 
   HANDLE h;
@@ -2367,9 +2381,9 @@ list_server_resources::doit ()
   wnet_enum_handle weh (h);
   while (!interrupted ())
     {
-      NETRESOURCE rb[8192];
+      NETRESOURCEW rb[8192];
       DWORD nent = DWORD (-1), size = sizeof rb;
-      m_error = WNetEnumResource (h, &nent, rb, &size);
+      m_error = WNetEnumResourceW (h, &nent, rb, &size);
       if (m_error == ERROR_NO_MORE_ITEMS)
         {
           m_error = NO_ERROR;
@@ -2378,14 +2392,19 @@ list_server_resources::doit ()
       if (m_error != NO_ERROR)
         return;
 
-      NETRESOURCE *r = rb;
+      NETRESOURCEW *r = rb;
       for (DWORD i = 0; i < nent && !interrupted (); i++, r++)
         switch (r->dwDisplayType)
           {
           case RESOURCEDISPLAYTYPE_SHARE:
-            if (r->lpRemoteName)
-              m_list.add (r->lpRemoteName + l,
-                          m_pair && r->lpComment ? r->lpComment : "");
+            if (r->lpRemoteName) {
+              //XXX
+              char *p1 = make_tmpstr(r->lpRemoteName + l);
+              char *p2 = make_tmpstr((m_pair && r->lpComment) ? r->lpComment : L"");
+              m_list.add (p1, p2);
+              delete[] p1;
+              delete[] p2;
+            }
             break;
           }
     }

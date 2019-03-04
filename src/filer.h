@@ -25,14 +25,14 @@ struct filer_data
       ICON_DOTDOT = 3
     };
   volatile int icon_index;
-  char name[MAX_PATH];
+  wchar_t name[MAX_PATH];
 
   void *operator new (size_t, FilerView *);
 #if _MSC_VER >= 1100
   void operator delete (void *, FilerView *) {}
 #endif
 
-  filer_data (const WIN32_FIND_DATA &);
+  filer_data (const WIN32_FIND_DATAW &);
   filer_data (const FILETIME &);
   filer_data () {}
 };
@@ -136,21 +136,21 @@ protected:
   int fv_marks_changed;
 
   int fv_retrieve_icon;
-  char fv_buf[64];
+  wchar_t fv_buf[64];
 
 #ifdef DnD_TEST
   filer_drop_target dropt;
 #endif
 
   void cleanup_chunk ();
-  int load_contents (const char *);
+  int load_contents (const wchar_t *);
 
-  void add_list_view (const char *);
-  void set_mask_text (const char *) const;
+  void add_list_view (const wchar_t *);
+  void set_mask_text (const wchar_t *) const;
   static int chdir (lisp);
   static int chdevdir (lisp);
   lisp filename (const filer_data *) const;
-  static void disk_space (double, char *, int);
+  static void disk_space (double, wchar_t *, int);
 
 public:
   void *alloc_filer_data ();
@@ -170,11 +170,12 @@ public:
 
   void display_disk_info (HWND, int) const;
 
-  void dispinfo (LV_ITEM *);
+  void dispinfo (LVITEMW *);
 
 protected:
-  int find_focused (LV_ITEM *);
+  int find_focused (LVITEMW *);
   void set_title (const char *) const;
+  void set_title (const wchar_t *) const;
   void set_title () const;
   void set_path () const;
 
@@ -229,7 +230,7 @@ private:
   HANDLE fv_hthread;
   volatile int fv_stop_thread;
   volatile int fv_sequence;
-  char *fv_icon_path;
+  wchar_t *fv_icon_path;
   int fv_regular_file_index;
   int fv_directory_index;
 };
@@ -240,7 +241,7 @@ class ViewerBuffer: public Buffer
 {
 public:
   ViewerBuffer ();
-  int readin (ViewerWindow *, const char *);
+  int readin (ViewerWindow *, const wchar_t *);
   void clean (ViewerWindow *wp);
 };
 
@@ -388,14 +389,14 @@ filer_data::operator new (size_t, FilerView *fv)
 }
 
 inline
-filer_data::filer_data (const WIN32_FIND_DATA &fd)
+filer_data::filer_data (const WIN32_FIND_DATAW &fd)
 {
   attr = fd.dwFileAttributes;
   time = fd.ftLastWriteTime;
   bytes = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
            ? -1.0
            : fd.nFileSizeHigh * 4294967296.0 + fd.nFileSizeLow);
-  strcpy (name, fd.cFileName);
+  wcscpy (name, fd.cFileName);
   icon_index = ICON_INVALID;
 }
 

@@ -613,7 +613,7 @@ Buffer::insert_file_contents (Window *wp, lisp filename, lisp visit,
   if (visit == Qnil)
     prepare_modify_buffer ();
 
-  char path[PATH_MAX + 1];
+  wchar_t path[PATH_MAX + 1];
   pathname2cstr (filename, path);
 
   if (special_file_p (path))

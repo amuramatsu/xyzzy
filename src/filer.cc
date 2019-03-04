@@ -131,25 +131,25 @@ FilerView::chdevdir (lisp dir)
 lisp
 FilerView::filename (const filer_data *d) const
 {
-  const char *name = *d->name ? d->name : "..";
+  const wchar_t *name = *d->name ? d->name : L"..";
   int l = xstring_length (fv_ldir);
   int sl = (d->attr & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
-  lisp string = make_string (sl + l + s2wl (name));
+  lisp string = make_string (sl + l + u2wl (name));
   bcopy (xstring_contents (fv_ldir), xstring_contents (string), l);
-  Char *b = s2w (&xstring_contents (string) [l], name);
+  Char *b = u2w (&xstring_contents (string) [l], name);
   if (sl)
     *b = '/';
   return string;
 }
 
 int
-FilerView::load_contents (const char *mask)
+FilerView::load_contents (const wchar_t *mask)
 {
   if (!chdir (fv_ldir))
     file_error (GetLastError (), fv_ldir);
 
-  WIN32_FIND_DATA fd;
-  HANDLE h = WINFS::FindFirstFile ("*", &fd);
+  WIN32_FIND_DATAW fd;
+  HANDLE h = WINFS::FindFirstFile (L"*", &fd);
   int error = GetLastError ();
   fv_parent->restore_dir ();
   if (h == INVALID_HANDLE_VALUE && error != ERROR_FILE_NOT_FOUND)
@@ -168,14 +168,14 @@ FilerView::load_contents (const char *mask)
           do
             {
 #ifndef PATHNAME_ESCAPE_TILDE
-              if (*fd.cFileName == '~' && !fd.cFileName[1])
+              if (*fd.cFileName == L'~' && !fd.cFileName[1])
                 continue;
 #endif
-              if (*fd.cFileName == '.')
+              if (*fd.cFileName == L'.')
                 {
                   if (!fd.cFileName[1])
                     continue;
-                  if (fd.cFileName[1] == '.' && !fd.cFileName[2])
+                  if (fd.cFileName[1] == L'.' && !fd.cFileName[2])
                     {
                       dotdot = 1;
                       *fd.cFileName = 0;
@@ -223,7 +223,7 @@ FilerView::load_contents (const char *mask)
             ;
           if (p != pe)
             {
-              FindClose (WINFS::FindFirstFile (".", &fd));
+              FindClose (WINFS::FindFirstFile (L".", &fd));
               new (this) filer_data (fd.ftLastWriteTime);
             }
         }
@@ -249,14 +249,14 @@ FilerView::load_contents (const char *mask)
 }
 
 static void
-insert_comma (char *b, int l)
+insert_comma (wchar_t *b, int l)
 {
   if (l >= 4 && xsymbol_value (Vfiler_format_comma) != Qnil)
     {
-      char *f = b + l, *t = f + (l - 1) / 3;
+      wchar_t *f = b + l, *t = f + (l - 1) / 3;
       if (*f)
         {
-          char *const bb = f;
+          wchar_t *const bb = f;
           while (*++f)
             ;
           t += f - bb;
@@ -272,21 +272,21 @@ insert_comma (char *b, int l)
           *--t = *--f;
           *--t = *--f;
           *--t = *--f;
-          *--t = ',';
+          *--t = L',';
         }
     }
 }
 
 static inline void
-print_size (double d, char *b)
+print_size (double d, wchar_t *b)
 {
-  insert_comma (b, sprintf (b, "%.0f", d));
+  insert_comma (b, wsprintfW (b, L"%.0f", d));
 }
 
 void
-FilerView::add_list_view (const char *last)
+FilerView::add_list_view (const wchar_t *last)
 {
-  char lastb[PATH_MAX * 2];
+  wchar_t lastb[PATH_MAX * 2];
   if (last && !*last)
     last = 0;
   if (!last && stringp (fv_llastdir))
@@ -308,7 +308,7 @@ FilerView::add_list_view (const char *last)
               int e = xstring_length (fv_llastdir);
               if (e && xstring_contents (fv_llastdir) [e - 1] == '/')
                 e--;
-              w2s (lastb, xstring_contents (fv_llastdir) + l, e - l);
+              w2u (lastb, xstring_contents (fv_llastdir) + l, e - l);
               if (*lastb)
                 last = lastb;
             }
@@ -334,11 +334,11 @@ FilerView::add_list_view (const char *last)
         if (last && cur == -1 && strcaseeq (last, f->name))
           cur = i;
 
-        LV_ITEM lvi;
+        LVITEMW lvi;
         lvi.mask = LVIF_PARAM | LVIF_TEXT | LVIF_IMAGE;
         lvi.iItem = i++;
         lvi.iSubItem = 0;
-        lvi.pszText = LPSTR_TEXTCALLBACK;
+        lvi.pszText = (LPWSTR)LPSTR_TEXTCALLBACK;
         lvi.lParam = LPARAM (f);
 
         if (!*f->name)
@@ -368,13 +368,13 @@ FilerView::add_list_view (const char *last)
 }
 
 void
-FilerView::set_mask_text (const char *mask) const
+FilerView::set_mask_text (const wchar_t *mask) const
 {
   if (mask)
     {
-      char *b = (char *)alloca (strlen (mask) + 16);
-      stpcpy (stpcpy (b, "Mask: "), mask);
-      SetWindowText (fv_hwnd_mask, b);
+      wchar_t *b = (wchar_t *)alloca ((wcslen (mask) + 16)*sizeof(wchar_t));
+      stpcpy (stpcpy (b, L"Mask: "), mask);
+      SetWindowTextW (fv_hwnd_mask, b);
     }
   else
     fv_masks.set_text (fv_hwnd_mask);
@@ -490,13 +490,13 @@ check_share_folder (const char *path)
 }
 
 void
-FilerView::dispinfo (LV_ITEM *lv)
+FilerView::dispinfo (LVITEMW *lv)
 {
   filer_data *d = (filer_data *)lv->lParam;
   switch (lv->iSubItem)
     {
     case 0:
-      lv->pszText = *d->name ? d->name : "..";
+      lv->pszText = *d->name ? d->name : L"..";
       if (lv->mask & LVIF_IMAGE)
         {
           int image;
@@ -539,7 +539,7 @@ FilerView::dispinfo (LV_ITEM *lv)
           lv->pszText = fv_buf;
         }
       else
-        lv->pszText = "";
+        lv->pszText = L"";
       break;
 
     case 2:
@@ -548,19 +548,19 @@ FilerView::dispinfo (LV_ITEM *lv)
         FileTimeToLocalFileTime (&d->time, &ft);
         SYSTEMTIME st;
         FileTimeToSystemTime (&ft, &st);
-        sprintf (fv_buf, "%04d/%02d/%02d %02d:%02d:%02d",
-                 st.wYear, st.wMonth, st.wDay,
-                 st.wHour, st.wMinute, st.wSecond);
+        wsprintfW (fv_buf, L"%04d/%02d/%02d %02d:%02d:%02d",
+                   st.wYear, st.wMonth, st.wDay,
+                   st.wHour, st.wMinute, st.wSecond);
         lv->pszText = fv_buf;
         break;
       }
 
     case 3:
-      fv_buf[0] = d->attr & FILE_ATTRIBUTE_DIRECTORY ? 'd' : '-';
-      fv_buf[1] = d->attr & FILE_ATTRIBUTE_ARCHIVE ? 'a' : '-';
-      fv_buf[2] = d->attr & FILE_ATTRIBUTE_HIDDEN ? 'h' : '-';
-      fv_buf[3] = d->attr & FILE_ATTRIBUTE_READONLY ? '-' : 'w';
-      fv_buf[4] = d->attr & FILE_ATTRIBUTE_SYSTEM ? 's' : '-';
+      fv_buf[0] = d->attr & FILE_ATTRIBUTE_DIRECTORY ? L'd' : L'-';
+      fv_buf[1] = d->attr & FILE_ATTRIBUTE_ARCHIVE ? L'a' : L'-';
+      fv_buf[2] = d->attr & FILE_ATTRIBUTE_HIDDEN ? L'h' : L'-';
+      fv_buf[3] = d->attr & FILE_ATTRIBUTE_READONLY ? L'-' : L'w';
+      fv_buf[4] = d->attr & FILE_ATTRIBUTE_SYSTEM ? L's' : L'-';
       fv_buf[5] = 0;
       lv->pszText = fv_buf;
       break;
@@ -572,42 +572,37 @@ FilerView::dispinfo (LV_ITEM *lv)
 }
 
 static int
-compare_filename (const char *s1, const char *s2, int param)
+compare_filename (const wchar_t *s1, const wchar_t *s2, int param)
 {
   if (!(param & FilerView::SORT_NUM))
     return (param & FilerView::SORT_CASE
-            ? strcmp (s1, s2) : strcasecmp (s1, s2));
+            ? wcscmp (s1, s2) : strcasecmp (s1, s2));
 
   extern u_char char_no_translate_table[];
   extern u_char char_translate_downcase_table[];
   const u_char *const translate = (param & FilerView::SORT_CASE
                                    ? char_no_translate_table
                                    : char_translate_downcase_table);
-  const u_char *p1 = (const u_char *)s1;
-  const u_char *p2 = (const u_char *)s2;
+  const wchar_t *p1 = (const wchar_t *)s1;
+  const wchar_t *p2 = (const wchar_t *)s2;
   while (*p1 && *p2)
     {
-      u_char c1 = *p1++, c2 = *p2++;
+      wchar_t c1 = *p1++, c2 = *p2++;
       if (digit_char_p (c1) && digit_char_p (c2))
         {
-          int n1 = atoi (reinterpret_cast <const char *> (p1 - 1));
-          int n2 = atoi (reinterpret_cast <const char *> (p2 - 1));
+          int n1 = _wtoi (reinterpret_cast <const wchar_t *> (p1 - 1));
+          int n2 = _wtoi (reinterpret_cast <const wchar_t *> (p2 - 1));
           if (n1 != n2)
             return n1 - n2;
         }
       else
         {
-          c1 = translate[c1];
-          c2 = translate[c2];
+          if (c1 <= 0xff && c2 <= 0xff) {
+            c1 = translate[c1&0xff];
+            c2 = translate[c2&0xff];
+          }
           if (c1 != c2)
             return c1 - c2;
-          if (SJISP (c1) && *p1)
-            {
-              if (*p1 != *p2)
-                return *p1 - *p2;
-              p1++;
-              p2++;
-            }
         }
     }
   return *p1 - *p2;
@@ -646,13 +641,13 @@ compare_file (LPARAM p1, LPARAM p2, LPARAM param)
 
     case FilerView::SORT_EXT:
       {
-        const char *p1, *p2;
-        for (p1 = f1->name; *p1 == '.'; p1++)
+        const wchar_t *p1, *p2;
+        for (p1 = f1->name; *p1 == L'.'; p1++)
           ;
-        for (p2 = f2->name; *p2 == '.'; p2++)
+        for (p2 = f2->name; *p2 == L'.'; p2++)
           ;
-        p1 = jrindex (p1, '.');
-        p2 = jrindex (p2, '.');
+        p1 = jrindex (p1, L'.');
+        p2 = jrindex (p2, L'.');
         if (p1 && p2)
           d = compare_filename (p1, p2, param);
         else if (p1)
@@ -719,14 +714,32 @@ FilerView::set_title (const char *mask) const
 }
 
 void
+FilerView::set_title (const wchar_t *mask) const
+{
+  int l = xstring_length (fv_ldir) * 2 + 1;
+  lisp title = fv_parent->title ();
+  if (stringp (title))
+    l += xstring_length (title) * 2 + 3;
+  if (mask)
+    l += wcslen (mask) + 1;
+  wchar_t *b0 = (wchar_t *)alloca (l*sizeof(wchar_t));
+  wchar_t *b = w2u (b0, fv_ldir);
+  if (mask)
+    b = stpcpy (b, mask);
+  if (stringp (title))
+    b = w2u (stpcpy (b, L" - "), title);
+  SetWindowTextW (fv_parent->id_hwnd, b0);
+}
+
+void
 FilerView::set_title () const
 {
   if (!stringp (fv_lmask))
-    set_title (0);
+    set_title ((char *)0);
   else
     {
-      char *mask = (char *)alloca (xstring_length (fv_lmask) * 2 + 1);
-      w2s (mask, fv_lmask);
+      wchar_t *mask = (wchar_t *)alloca ((xstring_length (fv_lmask) * 2 + 1)*sizeof(wchar_t));
+      w2u (mask, fv_lmask);
       set_title (mask);
     }
 }
@@ -756,14 +769,14 @@ FilerView::reload (lisp lmask)
   wait_cursor wc;
   fv_subscribed = 0;
   fv_marks_changed = 1;
-  char last[MAX_PATH];
+  wchar_t last[MAX_PATH];
   *last = 0;
   if (fv_llastdir == fv_ldir
       || (stringp (fv_llastdir) && string_equal (fv_llastdir, fv_ldir)))
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       if (find_focused (&lvi) >= 0)
-        strcpy (last, ((filer_data *)lvi.lParam)->name);
+        wcscpy (last, ((filer_data *)lvi.lParam)->name);
     }
   else
     {
@@ -773,11 +786,11 @@ FilerView::reload (lisp lmask)
     }
 
   fv_lmask = lmask ? lmask : Qnil;
-  char *mask;
+  wchar_t *mask;
   if (stringp (fv_lmask))
     {
-      mask = (char *)alloca (xstring_length (fv_lmask) * 2 + 1);
-      w2s (mask, fv_lmask);
+      mask = (wchar_t *)alloca ((xstring_length (fv_lmask) * 2 + 1)*sizeof(wchar_t));
+      w2u (mask, fv_lmask);
     }
   else
     mask = 0;
@@ -825,7 +838,7 @@ FilerView::show_marks (int force)
   double nbytes = 0;
   for (int i = -1; (i = ListView_GetNextItem (fv_hwnd, i, LVNI_SELECTED)) >= 0;)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
@@ -844,12 +857,12 @@ FilerView::show_marks (int force)
 
   if (ndirs + nfiles)
     {
-      char b[256], nb[128];
+      wchar_t b[256], nb[128];
       disk_space (nbytes, nb, (charp (xsymbol_value (Vfiler_mark_file_size_unit))
                                ? xchar_code (xsymbol_value (Vfiler_mark_file_size_unit))
                                : -1));
-      sprintf (b, "Marks: %d dirs, %d files, total: %sytes", ndirs, nfiles, nb);
-      SetWindowText (fv_hwnd_marks, b);
+      wsprintfW (b, L"Marks: %d dirs, %d files, total: %sytes", ndirs, nfiles, nb);
+      SetWindowTextW (fv_hwnd_marks, b);
     }
   else
     SetWindowText (fv_hwnd_marks, "");
@@ -878,24 +891,24 @@ FilerView::set_directory (lisp dir)
 }
 
 void
-FilerView::disk_space (double nbytes, char *buf, int c)
+FilerView::disk_space (double nbytes, wchar_t *buf, int c)
 {
 
-  const char *const u[] = {"B", "KB", "MB", "GB", "TB"};
+  const wchar_t *const u[] = {L"B", L"KB", L"MB", L"GB", L"TB"};
   int i;
   for (i = 0; i < numberof (u) - 1 && c != *u[i] && nbytes >= 1024.0;
        i++, nbytes /= 1024.0)
     ;
-  sprintf (buf, "%.2f", nbytes);
-  char *b;
-  for (b = buf + strlen (buf); b > buf && b[-1] == '0'; b--)
+  wsprintfW (buf, L"%.2f", nbytes);
+  wchar_t *b;
+  for (b = buf + wcslen (buf); b > buf && b[-1] == L'0'; b--)
     ;
-  if (b > buf && b[-1] == '.')
+  if (b > buf && b[-1] == L'.')
     b--;
-  char *e = b;
-  for (; *e != '.'; e--)
+  wchar_t *e = b;
+  for (; *e != L'.'; e--)
     ;
-  strcpy (b, u[i]);
+  wcscpy (b, u[i]);
   insert_comma (buf, e - buf);
 }
 
@@ -904,20 +917,20 @@ FilerView::display_disk_info (HWND hwnd, int n) const
 {
   chdir (fv_ldir);
   DWORD s_per_c, b_per_s, free_c, total_c;
-  if (!WINFS::GetDiskFreeSpace (0, &s_per_c, &b_per_s, &free_c, &total_c))
+  if (!WINFS::GetDiskFreeSpace ((wchar_t *)0, &s_per_c, &b_per_s, &free_c, &total_c))
     s_per_c = b_per_s = free_c = total_c = 0;
   fv_parent->restore_dir ();
 
-  char total[128], free[128];
+  wchar_t total[128], free[128];
   disk_space (double (total_c) * s_per_c * b_per_s, total, -1);
   disk_space (double (free_c) * s_per_c * b_per_s, free, -1);
-  char buf[256];
-  sprintf (buf, "Free: %s, Total: %s", free, total);
-  SendMessage (hwnd, SB_SETTEXT, n, LPARAM (buf));
+  wchar_t buf[256];
+  wsprintfW (buf, L"Free: %s, Total: %s", free, total);
+  SendMessageW (hwnd, SB_SETTEXT, n, LPARAM (buf));
 }
 
 int
-FilerView::find_focused (LV_ITEM *lvi)
+FilerView::find_focused (LVITEMW *lvi)
 {
   int i = ListView_GetNextItem (fv_hwnd, -1, LVNI_FOCUSED);
   if (i >= 0)
@@ -949,7 +962,7 @@ int
 FilerView::mark (int fo)
 {
   fv_marks_changed = 1;
-  LV_ITEM lvi;
+  LVITEMW lvi;
   int i = find_focused (&lvi);
   if (i == -1)
     return 0;
@@ -968,7 +981,7 @@ FilerView::mark_all (int fo)
   int nitems = ListView_GetItemCount (fv_hwnd);
   for (int i = 0; i < nitems; i++)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
@@ -987,7 +1000,7 @@ int
 FilerView::toggle_mark (int fo)
 {
   fv_marks_changed = 1;
-  LV_ITEM lvi;
+  LVITEMW lvi;
   int i = find_focused (&lvi);
   if (i == -1)
     return 0;
@@ -1008,7 +1021,7 @@ FilerView::toggle_all_marks (int fo)
   int nitems = ListView_GetItemCount (fv_hwnd);
   for (int i = 0; i < nitems; i++)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM | LVIF_STATE;
@@ -1033,7 +1046,7 @@ FilerView::get_mark_files (int fo)
   lisp r = Qnil;
   for (int i = -1; (i = ListView_GetNextItem (fv_hwnd, i, LVNI_SELECTED)) >= 0;)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
@@ -1050,7 +1063,7 @@ FilerView::get_mark_files (int fo)
 lisp
 FilerView::get_current_file ()
 {
-  LV_ITEM lvi;
+  LVITEMW lvi;
   int i = find_focused (&lvi);
   if (i == -1)
     return Qnil;
@@ -1060,7 +1073,7 @@ FilerView::get_current_file ()
 int
 FilerView::current_file_directory_p ()
 {
-  LV_ITEM lvi;
+  LVITEMW lvi;
   int i = find_focused (&lvi);
   if (i == -1)
     return 0;
@@ -1070,7 +1083,7 @@ FilerView::current_file_directory_p ()
 int
 FilerView::current_file_dot_dot_p ()
 {
-  LV_ITEM lvi;
+  LVITEMW lvi;
   int i = find_focused (&lvi);
   if (i == -1)
     return 0;
@@ -1081,14 +1094,14 @@ int
 FilerView::search (lisp string, lisp lstart, lisp lreverse, lisp lwild)
 {
   check_string (string);
-  char *pat = (char *)alloca (xstring_length (string) * 2 + 2);
-  char *pe = w2s (pat, string);
+  wchar_t *pat = (wchar_t *)alloca ((xstring_length (string) * 2 + 2)*sizeof(wchar_t));
+  wchar_t *pe = w2u (pat, string);
 
   int inc = !lreverse || lreverse == Qnil ? 1 : -1;
   int wild = lwild && lwild != Qnil;
   if (wild && lwild != Qt)
     {
-      *pe++ = '*';
+      *pe++ = L'*';
       *pe = 0;
     }
 
@@ -1112,16 +1125,16 @@ FilerView::search (lisp string, lisp lstart, lisp lreverse, lisp lwild)
       else if (index >= nitems)
         index = 0;
 
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = index;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
       if (ListView_GetItem (fv_hwnd, &lvi))
         {
-          const char *name = ((filer_data *)lvi.lParam)->name;
+          const wchar_t *name = ((filer_data *)lvi.lParam)->name;
           if (!*name)
-            name = "..";
-          if (wild ? pathname_match_p (pat, name) : !_stricmp (pat, name))
+            name = L"..";
+          if (wild ? pathname_match_p (pat, name) : !strcasecmp (pat, name))
             {
               ListView_SetItemState (fv_hwnd, index, LVIS_FOCUSED, LVIS_FOCUSED);
               ListView_EnsureVisible (fv_hwnd, index, 0);
@@ -1144,7 +1157,7 @@ FilerView::mark_match_files (lisp lmasks)
   int nitems = ListView_GetItemCount (fv_hwnd);
   for (int i = 0; i < nitems; i++)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM | LVIF_STATE;
@@ -1175,7 +1188,7 @@ FilerView::count_marks (int fo)
   int nmarks = 0;
   for (int i = -1; (i = ListView_GetNextItem (fv_hwnd, i, LVNI_SELECTED)) >= 0;)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
@@ -1205,7 +1218,7 @@ FilerView::calc_directory_size (int based_on_bytes)
   int index = based_on_bytes ? 4 : 3;
   for (int i = -1; (i = ListView_GetNextItem (fv_hwnd, i, LVNI_SELECTED)) >= 0;)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
@@ -1216,10 +1229,10 @@ FilerView::calc_directory_size (int based_on_bytes)
             {
               Fget_disk_usage (filename (d), Qt);
               d->bytes = coerce_to_double_float (multiple_value::value (index));
-              char buf[128];
-              *buf = '[';
+              wchar_t buf[128];
+              *buf = L'[';
               disk_space (d->bytes, buf + 1, -1);
-              strcat (buf, "]");
+              wcscat (buf, L"]");
               lvi.mask = LVIF_TEXT;
               lvi.iSubItem = 1;
               lvi.pszText = buf;
@@ -1262,11 +1275,11 @@ FilerView::echo_filename ()
     active_app_frame().status_window.clear ();
   else if (fv_parent->check_idle ())
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       if (find_focused (&lvi) >= 0)
         {
           const filer_data *f = (filer_data *)lvi.lParam;
-          active_app_frame().status_window.text (*f->name ? f->name : "..");
+          active_app_frame().status_window.text (*f->name ? f->name : L"..");
         }
       active_app_frame().status_window.clear (1);
     }
@@ -1339,7 +1352,7 @@ FilerView::thread_main ()
       if (fv_stop_thread)
         break;
 
-      char *path;
+      wchar_t *path;
       int sequence;
       int len;
       find_chunk *chunk;
@@ -1349,9 +1362,9 @@ FilerView::thread_main ()
         if (!fv_icon_path || !fv_chunk)
           continue;
 
-        len = strlen (fv_icon_path);
-        path = (char *)alloca (len + MAX_PATH + 1);
-        strcpy (path, fv_icon_path);
+        len = wcslen (fv_icon_path);
+        path = (wchar_t *)alloca ((len + MAX_PATH + 1)*sizeof(wchar_t));
+        wcscpy (path, fv_icon_path);
         sequence = fv_sequence;
         chunk = fv_chunk;
       }
@@ -1384,14 +1397,14 @@ FilerView::thread_main ()
                                && fd->icon_index != filer_data::ICON_INVALID_REF))
               continue;
 
-            strcpy (path + len, fd->name);
+            wcscpy (path + len, fd->name);
             attr = fd->attr;
           }
 
-          SHFILEINFO fi;
-          if (!SHGetFileInfo (path, attr, &fi, sizeof fi,
-                              (SHGFI_ICON | SHGFI_OVERLAYINDEX
-                               | ((filer_font.size ().cy >= 32 ? SHGFI_LARGEICON : SHGFI_SMALLICON)))))
+          SHFILEINFOW fi;
+          if (!SHGetFileInfoW (path, attr, &fi, sizeof fi,
+                               (SHGFI_ICON | SHGFI_OVERLAYINDEX
+                                | ((filer_font.size ().cy >= 32 ? SHGFI_LARGEICON : SHGFI_SMALLICON)))))
             continue;
 
           DestroyIcon (fi.hIcon);
@@ -1432,10 +1445,10 @@ FilerView::restart_thread ()
 {
   if (!fv_hthread)
     return;
-  char *path = (char *)malloc (xstring_length (fv_ldir) * 2 + 1);
+  wchar_t *path = (wchar_t *)malloc ((xstring_length (fv_ldir) * 2 + 1)*sizeof(wchar_t));
   if (!path)
     return;
-  w2s (path, fv_ldir);
+  w2u (path, fv_ldir);
   map_sl_to_backsl (path);
 
   ex_lock lock (fv_lockobj);
@@ -1931,11 +1944,11 @@ Filer::Notify (NMHDR *nm)
           context_menu (nm);
           return 1;
 
-        case LVN_GETDISPINFO:
+        case LVN_GETDISPINFOW:
           if (nm->idFrom == IDC_LIST1)
-            f_fv1.dispinfo (&((LV_DISPINFO *)nm)->item);
+            f_fv1.dispinfo (&((NMLVDISPINFOW *)nm)->item);
           else
-            f_fv2.dispinfo (&((LV_DISPINFO *)nm)->item);
+            f_fv2.dispinfo (&((NMLVDISPINFOW *)nm)->item);
           return 1;
 
         case LVN_ITEMCHANGED:
@@ -3060,7 +3073,7 @@ ViewerBuffer::clean (ViewerWindow *wp)
 }
 
 int
-ViewerBuffer::readin (ViewerWindow *wp, const char *path)
+ViewerBuffer::readin (ViewerWindow *wp, const wchar_t *path)
 {
   clean (wp);
   if (path)
@@ -3164,7 +3177,7 @@ Filer::do_keyup ()
   if (!v)
     return;
   f_changed_view = 0;
-  LV_ITEM lvi;
+  LVITEMW lvi;
   lvi.iItem = lv_find_focused_item (v->fv_hwnd);
   lvi.iSubItem = 0;
   lvi.mask = LVIF_PARAM;
@@ -3178,8 +3191,8 @@ Filer::do_keyup ()
       else
         {
           lisp dir = v->get_directory ();
-          char *path = (char *)alloca (xstring_length (dir) * 2 + MAX_PATH + 1);
-          strcpy (w2s (path, dir), d->name);
+          wchar_t *path = (wchar_t *)alloca ((xstring_length (dir) * 2 + MAX_PATH + 1)*sizeof(wchar_t));
+          wcscpy (w2u (path, dir), d->name);
           try
             {
               f_vbuffer.readin (&f_vwindow, path);

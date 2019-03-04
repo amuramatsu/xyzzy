@@ -710,9 +710,9 @@ Buffer::coerce_to_buffer (lisp object)
 }
 
 Buffer *
-Buffer::make_internal_buffer (const char *bufname)
+Buffer::make_internal_buffer (const wchar_t *bufname)
 {
-  lisp name = make_string (bufname);
+  lisp name = make_string_w (bufname);
   Buffer *bp = Buffer::find_buffer (name, 1, 0);
   if (bp)
     bp->erase ();

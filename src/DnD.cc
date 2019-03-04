@@ -247,13 +247,7 @@ make_idl (HWND hwnd, lisp ldir, void *param,
       lvi.stateMask = LVIS_FOCUSED;
       if (ListView_GetItem (hwnd, &lvi))
         {
-#if 0
-          MultiByteToWideChar (CP_ACP, 0, ((filer_data *)lvi.lParam)->name,
-                               -1, w, sz);
-#else
-          const filer_data *f = (const filer_data *)lvi.lParam;
-          MultiByteToWideChar (CP_ACP, 0, *f->name ? f->name : "..", -1, w, sz);
-#endif
+          wcscpy(w, ((filer_data *)lvi.lParam)->name);
           ole_error (sf->ParseDisplayName (hwnd, 0, w, &eaten,
                                            &idls[nstored], 0));
           if (lvi.state & LVIS_FOCUSED)
@@ -479,9 +473,9 @@ filer_drop_target::target_path_length () const
 }
 
 void
-filer_drop_target::target_path (char *buf, const POINTL &pt)
+filer_drop_target::target_path (wchar_t *buf, const POINTL &pt)
 {
-  w2s (buf, fdt_view->get_directory ());
+  w2u (buf, fdt_view->get_directory ());
 
   LV_HITTESTINFO ht;
   ht.pt.x = pt.x;
@@ -508,10 +502,10 @@ filer_drop_target::target_path (char *buf, const POINTL &pt)
     {
       fdt_hilited = index;
       if (*f->name)
-        strcpy (strappend (buf, f->name), "/");
+        wcscpy (strappend (buf, f->name), L"/");
       else
         {
-          char *sl = find_last_slash (buf);
+          wchar_t *sl = find_last_slash (buf);
           if (!sl)
             return;
           if (sl[1])
@@ -520,9 +514,9 @@ filer_drop_target::target_path (char *buf, const POINTL &pt)
               return;
             }
           *sl = 0;
-          char *up = find_last_slash (buf);
+          wchar_t *up = find_last_slash (buf);
           if (!up)
-            *sl = '/';
+            *sl = L'/';
           else
             up[1] = 0;
         }

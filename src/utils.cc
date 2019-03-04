@@ -42,6 +42,12 @@ xstrdup (const char *s)
   return strcpy ((char *)xmalloc (strlen (s) + 1), s);
 }
 
+wchar_t *
+xstrdup (const wchar_t *s)
+{
+  return wcscpy ((wchar_t *)xmalloc ((wcslen (s) + 1)*sizeof(wchar_t)), s);
+}
+
 void *
 xmemdup (const void *p, size_t size)
 {
@@ -56,8 +62,28 @@ stpcpy (char *d, const char *s)
   return d - 1;
 }
 
+wchar_t *
+stpcpy (wchar_t *d, const wchar_t *s)
+{
+  while ((*d++ = *s++))
+    ;
+  return d - 1;
+}
+
 char *
 stpncpy (char *d, const char *s, int n)
+{
+  for (; n > 0; n--)
+  {
+    if (!(*d++ = *s++))
+      return d - 1;
+  }
+  *d = 0;
+  return d;
+}
+
+wchar_t *
+stpncpy (wchar_t *d, const wchar_t *s, int n)
 {
   for (; n > 0; n--)
   {
@@ -85,6 +111,18 @@ jindex (const char *p, int c)
   return 0;
 }
 
+wchar_t *
+jindex (const wchar_t *p, wchar_t c)
+{
+  return (wchar_t *)wcschr(p, c);
+}
+
+wchar_t *
+jindex (const wchar_t *p, int c)
+{
+  return (wchar_t *)wcschr(p, (wchar_t)c);
+}
+
 char *
 jrindex (const char *p, int c)
 {
@@ -103,6 +141,18 @@ jrindex (const char *p, int c)
   return (char *)save;
 }
 
+wchar_t *
+jrindex (const wchar_t *p, wchar_t c)
+{
+  return (wchar_t *)wcsrchr(p, c);
+}
+
+wchar_t *
+jrindex (const wchar_t *p, int c)
+{
+  return (wchar_t *)wcsrchr(p, (wchar_t)c);
+}
+
 char *
 find_slash (const char *p)
 {
@@ -116,6 +166,18 @@ find_slash (const char *p)
             return (char *)s;
           s++;
         }
+    }
+  return 0;
+}
+
+wchar_t *
+find_slash (const wchar_t *p)
+{
+  for (wchar_t *s = (wchar_t *)p; *s;)
+    {
+      if (*s == L'/' || *s == L'\\')
+        return (wchar_t *)s;
+      s++;
     }
   return 0;
 }
@@ -136,6 +198,19 @@ find_last_slash (const char *p)
         }
     }
   return (char *)save;
+}
+
+wchar_t *
+find_last_slash (const wchar_t *p)
+{
+  wchar_t *save, *s;
+  for (save = 0, s = (wchar_t *)p; *s;)
+    {
+      if (*s == L'/' || *s == L'\\')
+        save = s;
+      s++;
+    }
+  return (wchar_t *)save;
 }
 
 long

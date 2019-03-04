@@ -290,6 +290,99 @@ w2s_chunk (char *b, char *be, const Char *s, size_t size)
     *b = 0;
 }
 
+size_t
+u2wl (const wchar_t *string)
+{
+  return wcslen(string);
+}
+
+Char *
+u2w (Char *b, size_t size, const wchar_t **string)
+{
+  Char *be = b + size;
+  const ucs2_t *s = (const ucs2_t *)*string;
+  while (b < be && *s)
+    {
+      *b++ = w2i(*s++);
+    }
+  *string = (const wchar_t *)s;
+  return b;
+}
+
+Char *
+u2w (Char *b, const wchar_t *string)
+{
+  const ucs2_t *s = (const ucs2_t *)string;
+  while (*s)
+    {
+      *b++ = w2i(*s++);
+    }
+  return b;
+}
+
+Char *
+u2w (const wchar_t *string, size_t size)
+{
+  Char *b = (Char *)xmalloc (sizeof (Char) * size);
+  u2w (b, string);
+  return b;
+}
+
+size_t
+w2ul (const Char *s, size_t size)
+{
+  return size;
+}
+
+wchar_t *
+w2u (wchar_t *b, const Char *s, size_t size)
+{
+  for (const Char *se = s + size; s < se; s++)
+    {
+	*b++ = (wchar_t)i2w(*s);
+    }
+  *b = 0;
+  return b;
+}
+
+wchar_t *
+w2u (const Char *s, size_t size)
+{
+  wchar_t *b = (wchar_t *)xmalloc (sizeof(wchar_t) * (w2ul (s, size) + 1));
+  w2u (b, s, size);
+  return b;
+}
+
+wchar_t *
+w2u (wchar_t *b, wchar_t *be, const Char *s, size_t size)
+{
+  be--;
+  for (const Char *se = s + size; s < se && b < be; s++)
+    {
+      *b++ = i2w (*s);
+    }
+  *b = 0;
+  return b;
+}
+
+//size_t
+//u2wl (const wchar_t *string, const wchar_t *se, int zero_term)
+//{
+//  /*XXX*/
+//}
+//
+//Char *
+//u2w (Char *b, const char *string, const char *se, int zero_term)
+//{
+//  /*XXX*/
+//}
+//
+//void
+//w2u_chunk (char *b, char *be, const Char *s, size_t size)
+//{
+//  /*XXX*/
+//}
+
 lisp
 make_string (const u_char *string)
 {
@@ -307,6 +400,16 @@ make_string (const char *string)
 }
 
 lisp
+make_string (const wchar_t *string)
+{
+  lisp p = make_simple_string ();
+  size_t size = u2wl (string);
+  xstring_contents (p) = u2w (string, size);
+  xstring_length (p) = size;
+  return p;
+}
+
+lisp
 make_string (const char *string, size_t size)
 {
   lisp p = make_simple_string ();
@@ -314,6 +417,17 @@ make_string (const char *string, size_t size)
   xstring_contents (p) = b;
   xstring_length (p) = size;
   s2w (b, size, &string);
+  return p;
+}
+
+lisp
+make_string_w (const wchar_t *string, size_t size)
+{
+  lisp p = make_simple_string ();
+  Char *b = (Char *)xmalloc (size * sizeof (Char));
+  xstring_contents (p) = b;
+  xstring_length (p) = size;
+  u2w (b, size, &string);
   return p;
 }
 

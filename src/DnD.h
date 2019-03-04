@@ -118,6 +118,7 @@ private:
   int check_self (const POINTL &);
   DWORD query_drop (DWORD, const POINTL &, DWORD *);
   void target_path (char *, const POINTL &);
+  void target_path (wchar_t *, const POINTL &);
   int target_path_length () const;
   int process_drop (IDataObject *, const POINTL &, DWORD);
   void hilite_item (int);

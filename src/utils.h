@@ -8,9 +8,12 @@ void *xmalloc (size_t);
 void *xrealloc (void *, size_t);
 void xfree (void *);
 char *xstrdup (const char *);
+wchar_t *xstrdup (const wchar_t *);
 void *xmemdup (const void *, size_t);
 char *stpcpy (char *, const char *);
+wchar_t *stpcpy (wchar_t *, const wchar_t *);
 char *stpncpy (char *, const char *, int);
+wchar_t *stpncpy (wchar_t *, const wchar_t *, int);
 long log2 (u_long);
 
 # define NF_BAD 0
@@ -32,22 +35,40 @@ int streq (const Char *, int, const char *);
 int strequal (const char *, const Char *);
 int strequal (const char *, const Char *, int);
 int strcasecmp (const char *, const char *);
+int strcasecmp (const wchar_t *, const wchar_t *);
 static inline int
 strcaseeq (const char *s1, const char *s2)
 {
   return !strcasecmp (s1, s2);
 }
+static inline int
+strcaseeq (const wchar_t *s1, const wchar_t *s2)
+{
+  return !strcasecmp (s1, s2);
+}
 
 char *jindex (const char *, int);
+wchar_t *jindex (const wchar_t *, int);
+wchar_t *jindex (const wchar_t *, wchar_t);
 char *jrindex (const char *, int);
+wchar_t *jrindex (const wchar_t *, int);
+wchar_t *jrindex (const wchar_t *, wchar_t);
 char *find_last_slash (const char *);
+wchar_t *find_last_slash (const wchar_t *);
 char *find_slash (const char *);
+wchar_t *find_slash (const wchar_t *);
 void convert_backsl_with_sl (char *, int, int);
+void convert_backsl_with_sl (wchar_t *, int, int);
 
 inline void
 map_backsl_to_sl (char *s)
 {
   convert_backsl_with_sl (s, '\\', '/');
+}
+inline void
+map_backsl_to_sl (wchar_t *s)
+{
+  convert_backsl_with_sl (s, L'\\', L'/');
 }
 
 inline void
@@ -55,11 +76,21 @@ map_sl_to_backsl (char *s)
 {
   convert_backsl_with_sl (s, '/', '\\');
 }
+inline void
+map_sl_to_backsl (wchar_t *s)
+{
+  convert_backsl_with_sl (s, L'/', L'\\');
+}
 
 inline char *
 strappend (char *d, const char *s)
 {
   return stpcpy (d + strlen (d), s);
+}
+inline wchar_t *
+strappend (wchar_t *d, const wchar_t *s)
+{
+  return stpcpy (d + wcslen (d), s);
 }
 
 static inline int
@@ -73,6 +104,12 @@ dir_separator_p (int c)
 {
   return c == '/' || c == '\\';
 }
+
+//static inline int
+//dir_separator_p (wchar_t c)
+//{
+//  return c == L'/' || c == L'\\';
+//}
 
 void paint_button_off (HDC, const RECT &);
 void paint_button_on (HDC, const RECT &);

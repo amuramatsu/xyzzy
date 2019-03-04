@@ -25,16 +25,26 @@ void file_error (int, lisp);
 void file_error (int);
 int parse_namestring (Char *, const Char *, int, const Char *, int);
 char *pathname2cstr (lisp, char *);
+wchar_t *pathname2cstr (lisp, wchar_t *);
 int special_file_p (const char *);
+int special_file_p (const wchar_t *);
 int sub_directory_p (char *, const char *);
+int sub_directory_p (wchar_t *, const wchar_t *);
 lisp make_path (const char *s, int append_slash = 1);
+lisp make_path (const wchar_t *s, int append_slash = 1);
 void map_backsl_to_sl (Char *, int);
 int match_suffixes (const char *, lisp);
+int match_suffixes (const wchar_t *, lisp);
 int set_device_dir (const char *, int);
+int set_device_dir (const wchar_t *, int);
 const char *get_device_dir (int);
+const wchar_t *get_device_dir_w (int);
 int strict_get_file_data (const char *, WIN32_FIND_DATA &);
+int strict_get_file_data (const wchar_t *, WIN32_FIND_DATAW &);
 lisp make_file_info (const WIN32_FIND_DATA &);
+lisp make_file_info (const WIN32_FIND_DATAW &);
 char *root_path_name (char *, const char *);
+wchar_t *root_path_name (wchar_t *, const wchar_t *);
 
 /* lprint.cc */
 void print_stack_trace (lisp, lisp);
@@ -134,7 +144,9 @@ int lv_find_focused_item (HWND);
 
 /* fileio.cc */
 int same_file_p (const char *, const char *);
+int same_file_p (const wchar_t *, const wchar_t *);
 int make_temp_file_name (char *, const char * = 0, const char * = 0, HANDLE = 0, int = 0);
+int make_temp_file_name (wchar_t *, const wchar_t * = 0, const wchar_t * = 0, HANDLE = 0, int = 0);
 void do_auto_save (int, int);
 
 /* Buffer.cc */

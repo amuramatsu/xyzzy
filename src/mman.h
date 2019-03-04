@@ -19,6 +19,7 @@ public:
   mapf () {init ();}
   ~mapf () {close ();}
   void close ();
+  int open (const wchar_t *, int = FILE_FLAG_SEQUENTIAL_SCAN, int = 0);
   int open (const char *, int = FILE_FLAG_SEQUENTIAL_SCAN, int = 0);
   const void *base () const {return mf_base;}
   DWORD size () const {return mf_size;}

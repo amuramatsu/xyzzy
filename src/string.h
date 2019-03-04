@@ -108,11 +108,26 @@ void w2s_chunk (char *, char *, const Char *, size_t);
 ucs2_t *i2w (const Char *, int, ucs2_t *);
 int i2wl (const Char *, int);
 
+size_t u2wl (const wchar_t *);
+Char *u2w (Char *, size_t, const wchar_t **);
+Char *u2w (Char *, const wchar_t *);
+Char *u2w (const wchar_t *, size_t);
+size_t w2ul (const Char *s, size_t size);
+wchar_t *w2u (wchar_t *, const Char *, size_t);
+wchar_t *w2u (const Char *, size_t);
+wchar_t *w2u (wchar_t *, wchar_t *, const Char *, size_t);
+size_t u2wl (const wchar_t *string, const wchar_t *se, int zero_term);
+Char *u2w (Char *b, const char *string, const char *se, int zero_term);
+void w2u_chunk (char *b, char *be, const Char *s, size_t size);
+
+
 lisp coerce_to_string (lisp, int);
 
 lisp make_string (const char *);
+lisp make_string_w (const wchar_t *);
 lisp make_string (const u_char *);
 lisp make_string (const char *, size_t);
+lisp make_string_w (const wchar_t *, size_t);
 lisp make_string_simple (const char *, size_t);
 lisp make_string (const Char *, size_t);
 lisp make_string (Char, size_t);
@@ -194,6 +209,52 @@ inline int
 i2wl (lisp x)
 {
   return i2wl (xstring_contents (x), xstring_length (x));
+}
+
+inline size_t
+w2ul (lisp l)
+{
+  return w2ul (xstring_contents (l), xstring_length (l));
+}
+
+inline wchar_t *
+w2u (wchar_t *b, lisp l)
+{
+  return w2u (b, xstring_contents (l), xstring_length (l));
+}
+
+inline wchar_t *
+w2u (lisp l)
+{
+  return w2u (xstring_contents (l), xstring_length (l));
+}
+
+inline wchar_t *
+w2u (wchar_t *b, wchar_t *be, lisp l)
+{
+  return w2u (b, be, xstring_contents (l), xstring_length (l));
+}
+
+inline char *
+make_tmpstr(const wchar_t *wstr, size_t length = -1) {
+  size_t n = ::WideCharToMultiByte(CP_ACP, 0,
+                                   wstr, length, NULL, NULL,
+                                   NULL, NULL);
+  char *result = new char[n];
+  ::WideCharToMultiByte(CP_ACP, 0,
+                        wstr, length, result, n,
+                        NULL, NULL);
+  return result;
+}
+
+inline wchar_t *
+make_tmpwstr(const char *str, size_t length = -1) {
+  size_t n = ::MultiByteToWideChar(CP_ACP, 0,
+                                   str, length, NULL, NULL);
+  wchar_t *result = new wchar_t[n];
+  ::MultiByteToWideChar(CP_ACP, 0,
+                        str, length, result, n);
+  return result;
 }
 
 #endif
