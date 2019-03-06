@@ -400,7 +400,7 @@ make_string (const char *string)
 }
 
 lisp
-make_string (const wchar_t *string)
+make_string_w (const wchar_t *string)
 {
   lisp p = make_simple_string ();
   size_t size = u2wl (string);

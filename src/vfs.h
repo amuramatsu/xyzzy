@@ -10,6 +10,8 @@ protected:
 
   static DWORD WINAPI internal_GetFullPathName (LPCWSTR lpFileName, DWORD nBufferLength,
                                                 LPWSTR lpBuffer, LPWSTR *lpFilePart);
+  static DWORD WINAPI internal_GetFullPathName (LPCSTR lpFileName, DWORD nBufferLength,
+                                                LPSTR lpBuffer, LPSTR *lpFilePart);
   static DWORD WINAPI internal_GetFileAttributes (LPCWSTR lpFileName);
 public:
   static wchar_t wfs_share_cache[MAX_PATH * 2];

@@ -1068,9 +1068,13 @@ Archiver::get_creator (const char *path) const
 int
 Archiver::check_file_size (const char *path)
 {
-  WIN32_FIND_DATA fd;
-  return (strict_get_file_data (path, fd)
-          && (fd.nFileSizeHigh || fd.nFileSizeLow));
+  //XXX
+  wchar_t *p = make_tmpwstr(path);
+  WIN32_FIND_DATAW fd;
+  int s = (strict_get_file_data (p, fd)
+           && (fd.nFileSizeHigh || fd.nFileSizeLow));
+  delete [] p;
+  return s;
 }
 
 const ArchiverP *

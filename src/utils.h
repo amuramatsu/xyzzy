@@ -32,8 +32,11 @@ int check_integer_format (const char *, int *);
 int default_float_format ();
 
 int streq (const Char *, int, const char *);
+int streq (const Char *, int, const wchar_t *);
 int strequal (const char *, const Char *);
 int strequal (const char *, const Char *, int);
+int strequal (const wchar_t *, const Char *);
+int strequal (const wchar_t *, const Char *, int);
 int strcasecmp (const char *, const char *);
 int strcasecmp (const wchar_t *, const wchar_t *);
 static inline int

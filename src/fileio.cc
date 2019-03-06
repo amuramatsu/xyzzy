@@ -438,6 +438,18 @@ pathname_equal (const wchar_t *path1, const wchar_t *path2)
   return 0;
 }
 
+//XXX TEMPORARY FUNCTION
+int
+same_file_p (const char *path1, const char *path2)
+{
+  wchar_t *p1 = make_tmpwstr(path1);
+  wchar_t *p2 = make_tmpwstr(path2);
+  int s = same_file_p(p1, p2);
+  delete [] p1;
+  delete [] p2;
+  return s;
+}
+
 int
 same_file_p (const wchar_t *path1, const wchar_t *path2)
 {

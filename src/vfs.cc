@@ -392,6 +392,11 @@ NetPassDlg::do_modal ()
     return r; }
 
 #define WINFS_MAPSL(PATH) \
+  { char *__path = (char *)alloca (strlen (PATH) + 1); \
+    strcpy (__path, (PATH)); \
+    map_sl_to_backsl (__path); \
+    (PATH) = __path; }
+#define WINFS_MAPSL_W(PATH) \
   { wchar_t *__path = (wchar_t *)alloca ((wcslen (PATH) + 1)*sizeof(wchar_t)); \
     wcscpy (__path, (PATH)); \
     map_sl_to_backsl (__path); \
@@ -487,7 +492,22 @@ askpass1 (const wchar_t *path, int noshare_ok)
 }
 
 static inline int
+askpass1 (const char *path, int noshare_ok)
+{
+  wchar_t *p = make_tmpwstr(path);
+  int s = askpass1 (p, noshare_ok);
+  delete [] p;
+  return s;
+}
+
+static inline int
 askpass (const wchar_t *path)
+{
+  return askpass1 (path, 0);
+}
+
+static inline int
+askpass (const char *path)
 {
   return askpass1 (path, 0);
 }
@@ -499,7 +519,19 @@ askpass_noshare (const wchar_t *path)
 }
 
 static inline int
+askpass_noshare (const char *path)
+{
+  return askpass1 (path, 1);
+}
+
+static inline int
 askpass (const wchar_t *path1, const wchar_t *path2)
+{
+  return askpass1 (path1, 0) || askpass1 (path2, 0);
+}
+
+static inline int
+askpass (const char *path1, const char *path2)
 {
   return askpass1 (path1, 0) || askpass1 (path2, 0);
 }
@@ -515,6 +547,14 @@ WINFS::CreateDirectory (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttr
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (BOOL, FALSE, lpPathName, CreateDirectoryW (lpPathName, lpSecurityAttributes));
+}
+
+
+BOOL WINAPI
+WINFS::CreateDirectory (LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (BOOL, FALSE, lpPathName, CreateDirectoryA (lpPathName, lpSecurityAttributes));
 }
 
 HANDLE WINAPI
@@ -544,11 +584,31 @@ WINFS::CreateFile (LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
   return r;
 }
 
+HANDLE WINAPI
+WINFS::CreateFile (LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+                   LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
+                   DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+  wchar_t *p = make_tmpwstr(lpFileName);
+  HANDLE s = CreateFile (p, dwDesiredAccess, dwShareMode,
+                         lpSecurityAttributes, dwCreationDisposition,
+                         dwFlagsAndAttributes, hTemplateFile);
+  delete [] p;
+  return s;
+}
+
 BOOL WINAPI
 WINFS::DeleteFile (LPCWSTR lpFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (BOOL, FALSE, lpFileName, DeleteFileW (lpFileName));
+}
+
+BOOL WINAPI
+WINFS::DeleteFile (LPCSTR lpFileName)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (BOOL, FALSE, lpFileName, DeleteFileA (lpFileName));
 }
 
 HANDLE WINAPI
@@ -559,12 +619,30 @@ WINFS::FindFirstFile (LPCWSTR lpFileName, LPWIN32_FIND_DATAW lpFindFileData)
                FindFirstFileW (lpFileName, lpFindFileData));
 }
 
+HANDLE WINAPI
+WINFS::FindFirstFile (LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (HANDLE, INVALID_HANDLE_VALUE, lpFileName,
+               FindFirstFileA (lpFileName, lpFindFileData));
+}
+
 BOOL WINAPI
 WINFS::FindNextFile (HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   *lpFindFileData->cFileName = 0;
   return (::FindNextFileW (hFindFile, lpFindFileData)
+          || (GetLastError () == ERROR_MORE_DATA
+              && *lpFindFileData->cFileName));
+}
+
+BOOL WINAPI
+WINFS::FindNextFile (HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  *lpFindFileData->cFileName = 0;
+  return (::FindNextFileA (hFindFile, lpFindFileData)
           || (GetLastError () == ERROR_MORE_DATA
               && *lpFindFileData->cFileName));
 }
@@ -685,12 +763,29 @@ WINFS::GetFileAttributes (LPCWSTR lpFileName)
   return attr;
 }
 
+DWORD WINAPI
+WINFS::GetFileAttributes (LPCSTR lpFileName)
+{
+  wchar_t *p = make_tmpwstr(lpFileName);
+  DWORD s = GetFileAttributes(p);
+  delete [] p;
+  return s;
+}
+
 UINT WINAPI
 WINFS::GetTempFileName (LPCWSTR lpPathName, LPCWSTR lpPrefixString, UINT uUnique, LPWSTR lpTempFileName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (UINT, 0, lpPathName,
                GetTempFileNameW (lpPathName, lpPrefixString, uUnique, lpTempFileName));
+}
+
+UINT WINAPI
+WINFS::GetTempFileName (LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (UINT, 0, lpPathName,
+               GetTempFileNameA (lpPathName, lpPrefixString, uUnique, lpTempFileName));
 }
 
 BOOL WINAPI
@@ -706,10 +801,32 @@ WINFS::GetVolumeInformation (LPCWSTR lpRootPathName, LPWSTR lpVolumeNameBuffer,
                                       lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize));
 }
 
+BOOL WINAPI
+WINFS::GetVolumeInformation (LPCSTR lpRootPathName, LPSTR lpVolumeNameBuffer,
+                             DWORD nVolumeNameSize, LPDWORD lpVolumeSerialNumber,
+                             LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
+                             LPSTR lpFileSystemNameBuffer, DWORD nFileSystemNameSize)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (BOOL, FALSE, lpRootPathName,
+               GetVolumeInformationA (lpRootPathName, lpVolumeNameBuffer, nVolumeNameSize,
+                                      lpVolumeSerialNumber, lpMaximumComponentLength,
+                                      lpFileSystemFlags, lpFileSystemNameBuffer, nFileSystemNameSize));
+}
+
 HMODULE WINAPI
 WINFS::LoadLibrary (LPCWSTR lpLibFileName)
 {
   WINFS_CALL1 (HMODULE, NULL, lpLibFileName, LoadLibraryW (lpLibFileName));
+}
+
+HMODULE WINAPI
+WINFS::LoadLibrary (LPCSTR lpLibFileName)
+{
+  wchar_t *p = make_tmpwstr(lpLibFileName);
+  HMODULE s = LoadLibrary(p);
+  delete [] p;
+  return s;
 }
 
 static BOOL
@@ -733,11 +850,39 @@ WINFS::MoveFile (LPCWSTR lpExistingFileName, LPCWSTR lpNewFileName)
     }
 }
 
+static BOOL
+move_file (LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL2 (BOOL, FALSE, lpExistingFileName, lpNewFileName,
+               MoveFileA (lpExistingFileName, lpNewFileName));
+}
+
+BOOL WINAPI
+WINFS::MoveFile (LPCSTR lpExistingFileName, LPCSTR lpNewFileName)
+{
+  for (int retry = 0;; retry++)
+    {
+      if (move_file (lpExistingFileName, lpNewFileName))
+        return 1;
+      if (retry >= 3)
+        return 0;
+      Sleep (50);
+    }
+}
+
 BOOL WINAPI
 WINFS::RemoveDirectory (LPCWSTR lpPathName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
   WINFS_CALL1 (BOOL, FALSE, lpPathName, RemoveDirectoryW (lpPathName));
+}
+
+BOOL WINAPI
+WINFS::RemoveDirectory (LPCSTR lpPathName)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (BOOL, FALSE, lpPathName, RemoveDirectoryA (lpPathName));
 }
 
 BOOL WINAPI
@@ -748,22 +893,48 @@ WINFS::SetFileAttributes (LPCWSTR lpFileName, DWORD dwFileAttributes)
                SetFileAttributesW (lpFileName, dwFileAttributes));
 }
 
+BOOL WINAPI
+WINFS::SetFileAttributes (LPCSTR lpFileName, DWORD dwFileAttributes)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_CALL1 (BOOL, FALSE, lpFileName,
+               SetFileAttributesA (lpFileName, dwFileAttributes));
+}
+
 DWORD WINAPI
 WINFS::internal_GetFullPathName (LPCWSTR lpFileName, DWORD nBufferLength,
                                  LPWSTR lpBuffer, LPWSTR *lpFilePart)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  WINFS_MAPSL (lpFileName);
+  WINFS_MAPSL_W (lpFileName);
   WINFS_CALL1 (DWORD, 0, lpFileName,
                GetFullPathNameW (lpFileName, nBufferLength, lpBuffer, lpFilePart));
+}
+
+DWORD WINAPI
+WINFS::internal_GetFullPathName (LPCSTR lpFileName, DWORD nBufferLength,
+                                 LPSTR lpBuffer, LPSTR *lpFilePart)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_MAPSL (lpFileName);
+  WINFS_CALL1 (DWORD, 0, lpFileName,
+               GetFullPathNameA (lpFileName, nBufferLength, lpBuffer, lpFilePart));
 }
 
 BOOL WINAPI
 WINFS::SetCurrentDirectory (LPCWSTR lpPathName)
 {
   Wow64FsRedirectionSelector wow64FsRedirectionSelector;
-  WINFS_MAPSL (lpPathName);
+  WINFS_MAPSL_W (lpPathName);
   WINFS_CALL1 (BOOL, FALSE, lpPathName, SetCurrentDirectoryW (lpPathName));
+}
+
+BOOL WINAPI
+WINFS::SetCurrentDirectory (LPCSTR lpPathName)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  WINFS_MAPSL (lpPathName);
+  WINFS_CALL1 (BOOL, FALSE, lpPathName, SetCurrentDirectoryA (lpPathName));
 }
 
 DWORD WINAPI
@@ -779,6 +950,26 @@ WINFS::GetFullPathName (LPCWSTR path, DWORD size, LPWSTR buf, LPWSTR *name)
       && dir_separator_p (buf[2]) && dir_separator_p (buf[3]))
     {
       wcscpy (buf, buf + 2);
+      l -= 2;
+      if (name && *name >= buf + 2)
+        *name -= 2;
+    }
+  return l;
+}
+
+DWORD WINAPI
+WINFS::GetFullPathName (LPCSTR path, DWORD size, LPSTR buf, LPSTR *name)
+{
+  Wow64FsRedirectionSelector wow64FsRedirectionSelector;
+  DWORD l = internal_GetFullPathName (path, size, buf, name);
+  if (!l || l >= size)
+    return l;
+  if (!dir_separator_p (*path) || !dir_separator_p (path[1]))
+    return l;
+  if (alpha_char_p (*buf & 0xff) && buf[1] == ':'
+      && dir_separator_p (buf[2]) && dir_separator_p (buf[3]))
+    {
+      strcpy (buf, buf + 2);
       l -= 2;
       if (name && *name >= buf + 2)
         *name -= 2;

@@ -384,6 +384,16 @@ strequal (const char *cp, const Char *Cp)
 }
 
 int
+strequal (const wchar_t *cp, const Char *Cp)
+{
+  //XXXXX
+  char *p = make_tmpstr(cp);
+  int s = strequal(p, Cp);
+  delete [] p;
+  return s;
+}  
+
+int
 strequal (const char *cp, const Char *Cp, int l)
 {
   for (const Char *Ce = Cp + l; Cp < Ce; Cp++)
@@ -433,6 +443,24 @@ strcasecmp (const char *s1, const char *s2)
     }
 }
 
+int
+strcasecmp (const wchar_t *s1, const wchar_t *s2)
+{
+  const wchar_t *p1 = s1;
+  const wchar_t *p2 = s2;
+  while (1)
+    {
+      wchar_t c1 = *p1++;
+      wchar_t c2 = *p2++;
+      c1 = char_downcase (c1);
+      c2 = char_downcase (c2);
+      if (c1 != c2)
+        return c1 - c2;
+      if (!c1)
+        return 0;
+    }
+}
+
 void
 convert_backsl_with_sl (char *path, int f, int t)
 {
@@ -446,6 +474,17 @@ convert_backsl_with_sl (char *path, int f, int t)
             *s = t;
           s++;
         }
+    }
+}
+
+void
+convert_backsl_with_sl (wchar_t *path, int f, int t)
+{
+  for (wchar_t *s = (wchar_t *)path; *s;)
+    {
+      if (*s == (wchar_t)f)
+        *s = (wchar_t)t;
+      s++;
     }
 }
 

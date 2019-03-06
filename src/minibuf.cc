@@ -6,8 +6,8 @@ static int minibuffer_recursive_level;
 static Buffer *
 create_minibuffer ()
 {
-  char b[32];
-  sprintf (b, " *Minibuf%d*", minibuffer_recursive_level);
+  wchar_t b[32];
+  wsprintfW (b, L" *Minibuf%d*", minibuffer_recursive_level);
   return Buffer::make_internal_buffer (b);
 }
 

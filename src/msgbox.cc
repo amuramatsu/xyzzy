@@ -413,3 +413,15 @@ MsgBox (HWND hwnd, const char *msg, const char *title, UINT flags, int beep)
   return MsgBoxEx (hwnd, msg, title, flags & MB_TYPEMASK,
                    defbtn, flags & MB_ICONMASK, beep, 0, 0, 0, 0);
 }
+
+//XXXX
+int
+MsgBox (HWND hwnd, const wchar_t *msg, const wchar_t *title, UINT flags, int beep)
+{
+  char *cmsg = make_tmpstr(msg);
+  char *ctitle = make_tmpstr(title);
+  int s = MsgBox(hwnd, cmsg, ctitle, flags, beep);
+  delete [] cmsg;
+  delete [] ctitle;
+  return s;
+}

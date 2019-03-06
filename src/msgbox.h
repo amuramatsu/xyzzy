@@ -57,7 +57,10 @@ public:
 };
 
 int MsgBox (HWND, const char *, const char *, UINT, int);
+int MsgBox (HWND, const wchar_t *, const wchar_t *, UINT, int);
 int MsgBoxEx (HWND, const char *, const char *, int, int, int, int,
               const char **, int, int, int);
+int MsgBoxEx (HWND, const wchar_t *, const wchar_t *, int, int, int, int,
+              const wchar_t **, int, int, int);
 
 #endif
