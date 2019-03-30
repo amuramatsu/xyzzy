@@ -578,8 +578,8 @@ make_temp_file_name (wchar_t *dir, const wchar_t *prefix,
     serial = u_long (GetTickCount () * GetCurrentProcessId ()) % max_serial;
 
   wchar_t *d = dir + wcslen (dir);
-  wprintf (d, L"%sXXXX.%s",
-           prefix ? prefix : L"~xyz", suffix ? suffix : L"tmp");
+  wsprintfW (d, L"%sXXXX.%s",
+             prefix ? prefix : L"~xyz", suffix ? suffix : L"tmp");
   d += prefix ? wcslen (prefix) : 4;
 
   return make_temp_file_name (dir, d, dirp, tmpl, 4, serial, max_serial);
