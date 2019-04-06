@@ -675,8 +675,8 @@ filer_drop_target::process_drop (IDataObject *data_obj, const POINTL &pt,
   else
     {
       const wchar_t *w = (wchar_t *)((char *)df + df->pFiles);
-      int l = (wcslen (w) + 1) * sizeof(wchar_t);
-      base_path = (wchar_t *)alloca (l);
+      int l = wcslen (w) + 1;
+      base_path = (wchar_t *)alloca (l*sizeof(wchar_t));
       wcscpy (base_path, w);
     }
 

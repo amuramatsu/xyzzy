@@ -31,7 +31,7 @@ file_masks::build_masks (lisp lmasks)
       check_string (x);
       if (xstring_length (x))
         {
-          nbytes += w2ul (x) + 1;
+          nbytes += (w2ul (x) + 1)*sizeof(wchar_t);
           nfiles++;
         }
     }
@@ -66,9 +66,9 @@ file_masks::set_text (HWND hwnd) const
       int nbytes = 16;
       wchar_t **p;
       for (p = fm_masks; *p; p++)
-        nbytes += wcslen (*p) + 1;
+        nbytes += (wcslen (*p) + 1) * sizeof(wchar_t);
 
-      wchar_t *b0 = (wchar_t *)alloca (nbytes*sizeof(wchar_t));
+      wchar_t *b0 = (wchar_t *)alloca (nbytes);
       wchar_t *b = stpcpy (b0, L"Mask:");
       for (wchar_t **p = fm_masks; *p; p++)
         {

@@ -196,6 +196,7 @@ buffer_info::process_id (wchar_t *b, wchar_t *be) const
 {
   wchar_t tem[64];
   wnsprintfW (tem, 64, L"%d", sysdep.process_id);
+  tem[63] = 0;
   return stpncpy (b, tem, be - b);
 }
 
@@ -219,6 +220,7 @@ buffer_info::percent (wchar_t *b, wchar_t *be) const
     {
       wchar_t tem[64];
       wnsprintfW(tem, 64, L"%d", mode_line_percent_painter::calc_percent(b_bufp, b_wp->w_point.p_point));
+      tem[63] = 0;
       b = stpncpy (b, tem, be - b);
     }
   return b;
@@ -231,6 +233,7 @@ buffer_info::frame_index (wchar_t *b, wchar_t *be, const ApplicationFrame* app1)
     {
       wchar_t tem[64];
       wnsprintfW (tem, 64, L"%d", app1->frame_index);
+      tem[63] = 0;
       b = stpncpy (b, tem, be - b);
     }
   return b;
