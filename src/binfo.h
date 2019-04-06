@@ -8,36 +8,39 @@ class buffer_info
   const Window *const b_wp;
   const Buffer *const b_bufp;
   const ApplicationFrame *const b_app;
-  char **const b_posp;
-  char **const b_percentp;
+  wchar_t **const b_posp;
+  wchar_t **const b_percentp;
   int *const b_ime;
-  static const char *const b_eol_name[];
+  static const wchar_t *const b_eol_name[];
 
-  char *minor_mode (lisp, char *, char *, int &) const;
+  wchar_t *minor_mode (lisp, wchar_t *, wchar_t *, int &) const;
 public:
-  buffer_info (const ApplicationFrame *app, const Window *wp, const Buffer *bp, char **posp, int *ime, char **percentp)
+  buffer_info (const ApplicationFrame *app, const Window *wp, const Buffer *bp, wchar_t **posp, int *ime, wchar_t **percentp)
        : b_wp (wp), b_bufp (bp), b_app(app), b_posp (posp), b_ime (ime), b_percentp(percentp) {}
-  char *format (lisp, char *, char *) const;
-  char *modified (char *, int) const;
-  char *read_only (char *, int) const;
-  char *progname (char *b, char *be) const
-    {return stpncpy (b, ProgramName, be - b);}
-  char *version (char *, char *, int) const;
-  char *buffer_name (char *, char *) const;
-  char *file_name (char *, char *, int) const;
-  char *file_or_buffer_name (char *, char *, int) const;
-  char *mode_name (char *, char *, int) const;
-  char *encoding (char *b, char *be) const
-    {return w2s (b, be, xchar_encoding_name (b_bufp->lchar_encoding));}
-  char *eol_code (char *b, char *be) const
+  wchar_t *format (lisp, wchar_t *, wchar_t *) const;
+  wchar_t *modified (wchar_t *, int) const;
+  wchar_t *read_only (wchar_t *, int) const;
+  wchar_t *progname (wchar_t *b, wchar_t *be) const
+    {wchar_t *p = make_tmpwstr(ProgramName);
+     wchar_t *s = stpncpy (b, p, be - b);
+     delete [] p;
+     return s;}
+  wchar_t *version (wchar_t *, wchar_t *, int) const;
+  wchar_t *buffer_name (wchar_t *, wchar_t *) const;
+  wchar_t *file_name (wchar_t *, wchar_t *, int) const;
+  wchar_t *file_or_buffer_name (wchar_t *, wchar_t *, int) const;
+  wchar_t *mode_name (wchar_t *, wchar_t *, int) const;
+  wchar_t *encoding (wchar_t *b, wchar_t *be) const
+    {return w2u (b, be, xchar_encoding_name (b_bufp->lchar_encoding));}
+  wchar_t *eol_code (wchar_t *b, wchar_t *be) const
     {return stpncpy (b, b_eol_name[b_bufp->b_eol_code], be - b);}
-  char *ime_mode (char *, char *) const;
-  char *position (char *, char *) const;
-  char *host_name (char *, char *, int) const;
-  char *process_id (char *, char *) const;
-  char *admin_user (char *, char *) const;
-  char *percent(char *, char *) const;
-  char *frame_index(char *, char *, const ApplicationFrame* app1) const;
+  wchar_t *ime_mode (wchar_t *, wchar_t *) const;
+  wchar_t *position (wchar_t *, wchar_t *) const;
+  wchar_t *host_name (wchar_t *, wchar_t *, int) const;
+  wchar_t *process_id (wchar_t *, wchar_t *) const;
+  wchar_t *admin_user (wchar_t *, wchar_t *) const;
+  wchar_t *percent(wchar_t *, wchar_t *) const;
+  wchar_t *frame_index(wchar_t *, wchar_t *, const ApplicationFrame* app1) const;
 };
 
 #endif

@@ -802,6 +802,7 @@ struct Buffer
   point_t coerce_to_restricted_point (lisp) const;
   static Buffer *coerce_to_buffer (lisp);
   char *buffer_name (char *, char *) const;
+  wchar_t *buffer_name (wchar_t *, wchar_t *) const;
   char *quoted_buffer_name (char *, char *, int, int) const;
   void modify_mode_line () const;
   void modify_buffer_bar ()

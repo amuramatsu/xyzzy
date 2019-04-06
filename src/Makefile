@@ -179,7 +179,7 @@ EDITBIN_OPTS=/LARGEADDRESSAWARE
 SUBSYS_WINDOWS=/SUBSYSTEM:WINDOWS,5.0
 SUBSYS_CONSOLE=/SUBSYSTEM:CONSOLE,5.0
 LD=link -nologo
-LIBS=kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib \
+LIBS=kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib shlwapi.lib \
 comctl32.lib imm32.lib setargv.obj comdlg32.lib mpr.lib ole32.lib \
 oleaut32.lib winspool.lib rpcrt4.lib wsock32.lib crypt32.lib secur32.lib
 INC=-I$(PRIVCTRLDIR) -I$(GENDIR)

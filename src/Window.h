@@ -269,11 +269,11 @@ public:
   virtual void update_paint(HDC hdc) = 0;
   virtual bool need_repaint_all() = 0;
 
-  char* get_posp() { return posp; }
-  void set_posp(char* p) { posp = p; }
+  wchar_t* get_posp() { return posp; }
+  void set_posp(wchar_t* p) { posp = p; }
 
 private:
-  char* posp;
+  wchar_t* posp;
 };
 
 class mode_line_percent_painter: public mode_line_painter

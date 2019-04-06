@@ -890,6 +890,17 @@ Buffer::buffer_name (char *b, char *be) const
   return stpncpy (b, t, be - b);
 }
 
+wchar_t *
+Buffer::buffer_name (wchar_t *b, wchar_t *be) const
+{
+  b = w2u (b, be, lbuffer_name);
+  if (b >= be - 1 || b_version == 1)
+    return b;
+  wchar_t t[64];
+  wsprintfW (t, L"<%d>", b_version);
+  return stpncpy (b, t, be - b);
+}
+
 char *
 Buffer::quoted_buffer_name (char *b, char *be, int qc, int qe) const
 {
@@ -1510,10 +1521,10 @@ Buffer::refresh_title_bar (ApplicationFrame *app) const
   lisp fmt = symbol_value (Vtitle_bar_format, this);
   if (stringp (fmt))
     {
-      char buf[512 + 10];
+      wchar_t buf[512 + 10];
       buffer_info binfo (app, 0, this, 0, 0, 0);
       *binfo.format (fmt, buf, buf + 512) = 0;
-      SetWindowText (app->toplev, buf);
+      SetWindowTextW (app->toplev, buf);
     }
   else
     {

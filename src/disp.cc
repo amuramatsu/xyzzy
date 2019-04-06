@@ -3404,18 +3404,18 @@ mode_line_point_painter::paint_point (HDC hdc)
 void
 Window::paint_mode_line (HDC hdc)
 {
-  char *b0, *b;
-  char *posp = 0;
-  char *percentp = 0;
+  wchar_t *b0, *b;
+  wchar_t *posp = 0;
+  wchar_t *percentp = 0;
 
   w_ime_mode_line = 0;
   lisp fmt = symbol_value (Vmode_line_format, w_bufp);
   if (stringp (fmt))
     {
       int l = max (int (w_ch_max.cx), 512);
-      b0 = (char *)alloca (l + 10);
+      b0 = (wchar_t *)alloca ((l + 10)*sizeof(wchar_t));
       b = b0;
-      *b++ = ' ';
+      *b++ = L' ';
 
       buffer_info binfo (w_owner, this, w_bufp, &posp, &w_ime_mode_line, &percentp);
       b = binfo.format (fmt, b, b0 + l);
@@ -3478,12 +3478,12 @@ Window::paint_mode_line (HDC hdc)
 
   if (painters.size() == 0)
     {
-      ExtTextOut (hdc, 1, 1 + w_owner->modeline_param.m_exlead,
-                  ETO_OPAQUE | ETO_CLIPPED, &r, b0, b - b0, 0);
+      ExtTextOutW (hdc, 1, 1 + w_owner->modeline_param.m_exlead,
+                   ETO_OPAQUE | ETO_CLIPPED, &r, b0, b - b0, 0);
     }
   else
     {
-	  char *b1 = b0;
+	  wchar_t *b1 = b0;
 	  for(std::list<mode_line_painter*>::iterator it = painters.begin(); it != painters.end(); it++)
 	  {
 		  mode_line_painter * painter = *it;
@@ -3497,12 +3497,12 @@ Window::paint_mode_line (HDC hdc)
 		  else
 		  {
 			  SIZE size;
-			  GetTextExtentPoint32 (hdc, b1, painter->get_posp() - b1, &size);
+			  GetTextExtentPoint32W (hdc, b1, painter->get_posp() - b1, &size);
 
 			  point_start_px = r.left + size.cx;
 
 			  r.right = min (point_start_px, int (w_ml_size.cx - 1));
-			  ExtTextOut (hdc, r.left, 1 + w_owner->modeline_param.m_exlead,
+			  ExtTextOutW (hdc, r.left, 1 + w_owner->modeline_param.m_exlead,
 						  ETO_OPAQUE | ETO_CLIPPED, &r, b1, painter->get_posp() - b1, 0);
 		  }
 
@@ -3511,8 +3511,8 @@ Window::paint_mode_line (HDC hdc)
 	  }
 
       r.right = w_ml_size.cx - 1;
-      ExtTextOut (hdc, r.left, 1 + w_owner->modeline_param.m_exlead,
-                  ETO_OPAQUE | ETO_CLIPPED, &r, b1, b - b1, 0);
+      ExtTextOutW (hdc, r.left, 1 + w_owner->modeline_param.m_exlead,
+                   ETO_OPAQUE | ETO_CLIPPED, &r, b1, b - b1, 0);
     }
 
 
