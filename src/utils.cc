@@ -386,11 +386,14 @@ strequal (const char *cp, const Char *Cp)
 int
 strequal (const wchar_t *cp, const Char *Cp)
 {
-  //XXXXX
-  char *p = make_tmpstr(cp);
-  int s = strequal(p, Cp);
-  delete [] p;
-  return s;
+  int l = u2wl(cp);
+  Char *cpi = u2w(cp, l);
+  for (int i = 0; i < l; i++)
+    {
+      if (char_downcase (*cpi++) != char_downcase (*Cp++))
+	return 0;
+    }
+  return 1;
 }  
 
 int

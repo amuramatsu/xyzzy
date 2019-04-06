@@ -585,12 +585,8 @@ filer_drop_target::check_self (const POINTL &pt)
   if (!df->fWide)
     {
       for (const char *p = (char *)df + df->pFiles; *p; p += strlen (p) + 1) {
-        wchar_t *p2 = make_tmpwstr(p);
-        if (!check_self (p2, base_path, wcscpy (tbuf, target))) {
-          delete [] p2;
+        if (!check_self (tmpwstr(p), base_path, wcscpy (tbuf, target)))
           return 0;
-        }
-        delete [] p2;
       }
     }
   else
@@ -609,10 +605,7 @@ lisp
 filer_drop_target::make_drop_file (const char *path, const wchar_t *base_path,
                                    wchar_t *target, int link)
 {
-  wchar_t *p = make_tmpwstr(path);
-  lisp s = make_drop_file (p, base_path, target, link);
-  delete [] p;
-  return s;
+  return make_drop_file (tmpwstr(path), base_path, target, link);
 }
 
 lisp

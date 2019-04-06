@@ -171,10 +171,7 @@ buffer_info::position (wchar_t *b, wchar_t *be) const
 wchar_t *
 buffer_info::version (wchar_t *b, wchar_t *be, int pound) const
 {
-  wchar_t *p = make_tmpwstr(pound ? DisplayVersionString : VersionString);
-  wchar_t *s = stpncpy (b, p, be - b);
-  delete [] p;
-  return s;
+  return stpncpy (b, tmpwstr(pound ? DisplayVersionString : VersionString), be - b);
 }
 
 wchar_t *
@@ -184,9 +181,7 @@ buffer_info::host_name (wchar_t *b, wchar_t *be, int pound) const
     {
       if (pound)
         *b++ = L'@';
-      wchar_t *p = make_tmpwstr(sysdep.host_name);
-      b = stpncpy (b, p, be - b);
-      delete [] p;
+      b = stpncpy (b, tmpwstr(sysdep.host_name), be - b);
     }
   return b;
 }

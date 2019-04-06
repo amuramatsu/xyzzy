@@ -777,7 +777,7 @@ Ftruename (lisp pathname)
     }
   map_backsl_to_sl (truename);
 
-  Char w[PATH_MAX + 1];
+  Char w[PATH_MAX*2 + 1];
   int l = u2w (w, truename) - w;
   //if (stringp (pathname) && l == xstring_length (pathname)
   //    && !bcmp (w, xstring_contents (pathname), l))
@@ -872,18 +872,13 @@ sub_dirp_by_name (const wchar_t *dir, const wchar_t *parent)
 
 //XXX TEMPORARY FUNCTION
 int
-sub_directory_p (char *dir, const char *parent)
+sub_directory_p (const char *dir, const char *parent)
 {
-  wchar_t *d = make_tmpwstr(dir);
-  wchar_t *p = make_tmpwstr(parent);
-  int s = sub_directory_p(d, p);
-  delete [] d;
-  delete [] p;
-  return s;
+  return sub_directory_p(tmpwstr(dir), tmpwstr(parent));
 }
 
 int
-sub_directory_p (wchar_t *dir, const wchar_t *parent)
+sub_directory_p (const wchar_t *dir, const wchar_t *parent)
 {
   if (sub_dirp_by_name (dir, parent))
     {
@@ -1300,14 +1295,10 @@ rename_short_name (const wchar_t *fpath, const wchar_t *tname, const wchar_t *lo
 
   wchar_t buf[PATH_MAX * 3];
   map_backsl_to_sl (tempname);
-  wchar_t *msg = make_tmpwstr(get_message_string (Erename_failed));
-  wsprintfW (buf, msg, tempname, realpath);
-  delete [] msg;
-  wchar_t *title = make_tmpwstr(TitleBarString);
-  MsgBox (get_active_window (), buf, title,
+  wsprintfW (buf, tmpwstr(get_message_string (Erename_failed)), tempname, realpath);
+  MsgBox (get_active_window (), buf, tmpwstr(TitleBarString),
           MB_OK | MB_ICONEXCLAMATION,
           xsymbol_value (Vbeep_on_error) != Qnil);
-  delete [] title;
 }
 
 static void
@@ -2355,11 +2346,8 @@ list_servers::list (NETRESOURCEW *r0)
           case RESOURCEDISPLAYTYPE_SERVER:
             if (r->lpRemoteName) {
               //XXX for change
-              char *p1 = make_tmpstr(r->lpRemoteName + 2);
-              char *p2 = make_tmpstr((m_pair && r->lpComment) ? r->lpComment : L"");
-              m_list.add (p1, p2);
-              delete[] p1;
-              delete[] p2;
+              m_list.add (tmpstr(r->lpRemoteName + 2),
+                          tmpstr((m_pair && r->lpComment) ? r->lpComment : L""));
             }
             break;
           }
@@ -2437,11 +2425,8 @@ list_server_resources::doit ()
           case RESOURCEDISPLAYTYPE_SHARE:
             if (r->lpRemoteName) {
               //XXX
-              char *p1 = make_tmpstr(r->lpRemoteName + l);
-              char *p2 = make_tmpstr((m_pair && r->lpComment) ? r->lpComment : L"");
-              m_list.add (p1, p2);
-              delete[] p1;
-              delete[] p2;
+              m_list.add (tmpstr(r->lpRemoteName + l),
+                          tmpstr((m_pair && r->lpComment) ? r->lpComment : L""));
             }
             break;
           }

@@ -21,10 +21,7 @@ public:
   wchar_t *modified (wchar_t *, int) const;
   wchar_t *read_only (wchar_t *, int) const;
   wchar_t *progname (wchar_t *b, wchar_t *be) const
-    {wchar_t *p = make_tmpwstr(ProgramName);
-     wchar_t *s = stpncpy (b, p, be - b);
-     delete [] p;
-     return s;}
+    {return stpncpy (b, tmpwstr(ProgramName), be - b);}
   wchar_t *version (wchar_t *, wchar_t *, int) const;
   wchar_t *buffer_name (wchar_t *, wchar_t *) const;
   wchar_t *file_name (wchar_t *, wchar_t *, int) const;

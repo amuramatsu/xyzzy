@@ -248,7 +248,7 @@ Fsi_wow64_reinterpret_path (lisp string, lisp flag)
 
       if (isNativePath && WINWOW64::GetFilePathMode () == WINWOW64::wow64)
         {
-		  if (! WINWOW64::IsSpecialRedirectionFilename (srcPath))
+          if (! WINWOW64::IsSpecialRedirectionFilename (srcPath))
             {
               replaceFromExp = L"%windir%\\System32";
               replaceToExp = L"%windir%\\Sysnative";
@@ -256,7 +256,7 @@ Fsi_wow64_reinterpret_path (lisp string, lisp flag)
         }
       else if (!isNativePath && WINWOW64::GetFilePathMode () == WINWOW64::native)
         {
-		  if (! WINWOW64::IsSpecialRedirectionFilename (srcPath))
+          if (! WINWOW64::IsSpecialRedirectionFilename (srcPath))
             {
               replaceFromExp = L"%windir%\\System32";
               replaceToExp = L"%windir%\\SysWOW64";
@@ -494,10 +494,7 @@ askpass1 (const wchar_t *path, int noshare_ok)
 static inline int
 askpass1 (const char *path, int noshare_ok)
 {
-  wchar_t *p = make_tmpwstr(path);
-  int s = askpass1 (p, noshare_ok);
-  delete [] p;
-  return s;
+  return askpass1 (tmpwstr(path), noshare_ok);
 }
 
 static inline int
@@ -589,12 +586,9 @@ WINFS::CreateFile (LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-  wchar_t *p = make_tmpwstr(lpFileName);
-  HANDLE s = CreateFile (p, dwDesiredAccess, dwShareMode,
-                         lpSecurityAttributes, dwCreationDisposition,
-                         dwFlagsAndAttributes, hTemplateFile);
-  delete [] p;
-  return s;
+  return CreateFile (tmpwstr(lpFileName), dwDesiredAccess, dwShareMode,
+                     lpSecurityAttributes, dwCreationDisposition,
+                     dwFlagsAndAttributes, hTemplateFile);
 }
 
 BOOL WINAPI
@@ -766,10 +760,7 @@ WINFS::GetFileAttributes (LPCWSTR lpFileName)
 DWORD WINAPI
 WINFS::GetFileAttributes (LPCSTR lpFileName)
 {
-  wchar_t *p = make_tmpwstr(lpFileName);
-  DWORD s = GetFileAttributes(p);
-  delete [] p;
-  return s;
+  return GetFileAttributes(tmpwstr(lpFileName));
 }
 
 UINT WINAPI
@@ -823,10 +814,7 @@ WINFS::LoadLibrary (LPCWSTR lpLibFileName)
 HMODULE WINAPI
 WINFS::LoadLibrary (LPCSTR lpLibFileName)
 {
-  wchar_t *p = make_tmpwstr(lpLibFileName);
-  HMODULE s = LoadLibrary(p);
-  delete [] p;
-  return s;
+  return LoadLibrary(tmpwstr(lpLibFileName));
 }
 
 static BOOL

@@ -152,7 +152,7 @@ static fixup_nl_code (ReadFileContext &rfc)
                 nlines++;
               }
           cp->c_nlines = nlines;
-		  cp->invalidate_fold_info();
+                  cp->invalidate_fold_info();
           rfc.r_nlines += nlines;
         }
     }
@@ -442,12 +442,7 @@ pathname_equal (const wchar_t *path1, const wchar_t *path2)
 int
 same_file_p (const char *path1, const char *path2)
 {
-  wchar_t *p1 = make_tmpwstr(path1);
-  wchar_t *p2 = make_tmpwstr(path2);
-  int s = same_file_p(p1, p2);
-  delete [] p1;
-  delete [] p2;
-  return s;
+  return same_file_p(tmpwstr(path1), tmpwstr(path2));
 }
 
 int
@@ -1389,7 +1384,7 @@ do_auto_save (int not_all, int unnamed)
   if (f)
     format_message (Mauto_saving_done);
   for(ApplicationFrame *app1 = first_app_frame(); app1; app1 = app1->a_next)
-	  app1->auto_save_count = 0;
+          app1->auto_save_count = 0;
 }
 
 lisp

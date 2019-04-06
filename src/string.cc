@@ -291,9 +291,19 @@ w2s_chunk (char *b, char *be, const Char *s, size_t size)
 }
 
 size_t
-u2wl (const wchar_t *string)
+u2wl (const wchar_t *s)
 {
-  return wcslen(string);
+  size_t l;
+  while (*s)
+    {
+      ucs2_t wc = (ucs2_t)*s++;
+      Char cc = w2i(wc);
+      if (cc != Char (-1))
+	l++;
+      else
+	l += 2;
+    }
+  return l;
 }
 
 Char *
@@ -303,19 +313,34 @@ u2w (Char *b, size_t size, const wchar_t **string)
   const ucs2_t *s = (const ucs2_t *)*string;
   while (b < be && *s)
     {
-      *b++ = w2i(*s++);
+      ucs2_t wc = *s++;
+      Char cc = w2i(wc);
+      if (cc != Char (-1))
+	*b++ = cc;
+      else if (b < be - 1) {
+	*b++ = utf16_ucs2_to_undef_pair_high(wc);
+	*b++ = utf16_ucs2_to_undef_pair_low(wc);
+      }
+      else
+	break;
     }
   *string = (const wchar_t *)s;
   return b;
 }
 
 Char *
-u2w (Char *b, const wchar_t *string)
+u2w (Char *b, const wchar_t *s)
 {
-  const ucs2_t *s = (const ucs2_t *)string;
   while (*s)
     {
-      *b++ = w2i(*s++);
+      ucs2_t wc = (ucs2_t)*s++;
+      Char cc = w2i(wc);
+      if (cc != Char (-1))
+	*b++ = cc;
+      else {
+	*b++ = utf16_ucs2_to_undef_pair_high(wc);
+	*b++ = utf16_ucs2_to_undef_pair_low(wc);
+      }
     }
   return b;
 }
@@ -328,27 +353,10 @@ u2w (const wchar_t *string, size_t size)
   return b;
 }
 
-size_t
-w2ul (const Char *s, size_t size)
-{
-  return size;
-}
-
-wchar_t *
-w2u (wchar_t *b, const Char *s, size_t size)
-{
-  for (const Char *se = s + size; s < se; s++)
-    {
-	*b++ = (wchar_t)i2w(*s);
-    }
-  *b = 0;
-  return b;
-}
-
 wchar_t *
 w2u (const Char *s, size_t size)
 {
-  wchar_t *b = (wchar_t *)xmalloc (sizeof(wchar_t) * (w2ul (s, size) + 1));
+  wchar_t *b = (wchar_t *)xmalloc (sizeof (wchar_t) * (w2ul (s, size) + 1));
   w2u (b, s, size);
   return b;
 }
@@ -359,29 +367,23 @@ w2u (wchar_t *b, wchar_t *be, const Char *s, size_t size)
   be--;
   for (const Char *se = s + size; s < se && b < be; s++)
     {
-      *b++ = i2w (*s);
+      ucs2_t c = i2w (*s);
+      if (c == ucs2_t (-1))
+        {
+          if (utf16_undef_char_high_p (*s) && s < se - 1
+              && utf16_undef_char_low_p (s[1]))
+            {
+	      c = (wchar_t)utf16_undef_pair_to_ucs2 (*s, s[1]);
+              s++;
+            }
+          else
+            c = DEFCHAR;
+        }
+      *b++ = (wchar_t)c;
     }
   *b = 0;
   return b;
 }
-
-//size_t
-//u2wl (const wchar_t *string, const wchar_t *se, int zero_term)
-//{
-//  /*XXX*/
-//}
-//
-//Char *
-//u2w (Char *b, const char *string, const char *se, int zero_term)
-//{
-//  /*XXX*/
-//}
-//
-//void
-//w2u_chunk (char *b, char *be, const Char *s, size_t size)
-//{
-//  /*XXX*/
-//}
 
 lisp
 make_string (const u_char *string)
@@ -417,17 +419,6 @@ make_string (const char *string, size_t size)
   xstring_contents (p) = b;
   xstring_length (p) = size;
   s2w (b, size, &string);
-  return p;
-}
-
-lisp
-make_string_u (const wchar_t *string, size_t size)
-{
-  lisp p = make_simple_string ();
-  Char *b = (Char *)xmalloc (size * sizeof (Char));
-  xstring_contents (p) = b;
-  xstring_length (p) = size;
-  u2w (b, size, &string);
   return p;
 }
 
@@ -1029,7 +1020,7 @@ Fsplit_string (lisp string, lisp lsep, lisp ignore_empty, lisp char_bag)
           if (char_bag)
             trim (p0, pe, char_bag);
           if (p0 != pe || empty_ok)
-            result = xcons (make_string_u (p0, pe - p0), result);
+            result = xcons (make_string_w (p0, pe - p0), result);
         }
       while (++p < pe);
     }
@@ -1046,7 +1037,7 @@ Fsplit_string (lisp string, lisp lsep, lisp ignore_empty, lisp char_bag)
           if (char_bag)
             trim (p0, pe, char_bag);
           if (p0 != pe || empty_ok)
-            result = xcons (make_string_u (p0, pe - p0), result);
+            result = xcons (make_string_w (p0, pe - p0), result);
         }
       while (++p < pe);
     }
@@ -1289,7 +1280,7 @@ Fabbreviate_string_column (lisp string, lisp column)
       if (c > n)
         break;
     }
-  return p == pe ? string : make_string_u (p0, p - p0);
+  return p == pe ? string : make_string_w (p0, p - p0);
 }
 
 static int
@@ -1406,7 +1397,7 @@ Fsi_octet_length (lisp string, lisp keys)
     FEtype_error (encoding, Qchar_encoding);
 
   if (start != 0 || end != xstring_length (string))
-    string = make_string_u (xstring_contents (string) + start, end - start);
+    string = make_string_w (xstring_contents (string) + start, end - start);
   xstream_iChar_helper is (string);
   encoding_output_stream_helper s (encoding, is, eol_noconv);
 

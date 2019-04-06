@@ -418,10 +418,5 @@ MsgBox (HWND hwnd, const char *msg, const char *title, UINT flags, int beep)
 int
 MsgBox (HWND hwnd, const wchar_t *msg, const wchar_t *title, UINT flags, int beep)
 {
-  char *cmsg = make_tmpstr(msg);
-  char *ctitle = make_tmpstr(title);
-  int s = MsgBox(hwnd, cmsg, ctitle, flags, beep);
-  delete [] cmsg;
-  delete [] ctitle;
-  return s;
+  return MsgBox(hwnd, tmpstr(msg), tmpstr(title), flags, beep);
 }
