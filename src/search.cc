@@ -643,7 +643,7 @@ Fmatch_string (lisp regno)
     {
       int start = min ((int)re_regs.start[r], xstring_length (string));
       int end = max (start, min ((int)re_regs.end[r], xstring_length (string)));
-      return make_string (xstring_contents (string) + start, end - start);
+      return make_string_w (xstring_contents (string) + start, end - start);
     }
   return selected_buffer ()->substring (re_regs.start[r], re_regs.end[r]);
 }

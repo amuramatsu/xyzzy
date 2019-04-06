@@ -1109,7 +1109,7 @@ make_temp_file (wchar_t *tmpname, const wchar_t *filename)
       if (e == ERROR_PATH_NOT_FOUND)
         {
           p[1] = 0;
-          file_error (e, make_string_w (tmpname));
+          file_error (e, make_string_u (tmpname));
         }
       file_error (Ecannot_make_temp_file_name);
     }
@@ -1247,7 +1247,7 @@ Buffer::save_buffer (lisp encoding, lisp eol)
       if (nlines < 0)
         {
           if (!wr_param.error_open && *backup)
-            FEfile_lost_error (lfile_name, make_string_w (backup));
+            FEfile_lost_error (lfile_name, make_string_u (backup));
           if (wr_param.error)
             file_error (wr_param.error, lfile_name);
           file_error (Ewrite_error, lfile_name);
@@ -1318,7 +1318,7 @@ Buffer::save_buffer (lisp encoding, lisp eol)
       if (!WINFS::MoveFile (tmpname, filename))
         {
           if (file_lost)
-            FEfile_lost_error (lfile_name, make_string_w (tmpname));
+            FEfile_lost_error (lfile_name, make_string_u (tmpname));
           error = GetLastError ();
           WINFS::DeleteFile (tmpname);
           file_error (error, lfile_name);
@@ -1343,7 +1343,7 @@ Buffer::save_buffer (lisp encoding, lisp eol)
   format_message (MFwrote_n_lines, nlines);
 
   if (backup_result)
-    warn_msgbox (message_code (backup_result), make_string_w (backup));
+    warn_msgbox (message_code (backup_result), make_string_u (backup));
 
   run_hook (Vafter_save_buffer_hook);
   return Qt;

@@ -1911,7 +1911,7 @@ writec_stream (lisp stream, Char cc)
 
         case st_general_output:
           funcall_1 (xgeneral_stream_io_callback (stream),
-                     make_string (&cc, 1));
+                     make_string_w (&cc, 1));
           xstream_column (stream) = update_column (xstream_column (stream), cc);
           return;
 
@@ -2022,7 +2022,7 @@ write_stream (lisp stream, const Char *b, size_t size)
 
         case st_general_output:
           funcall_1 (xgeneral_stream_io_callback (stream),
-                     make_string (b, size));
+                     make_string_w (b, size));
           xstream_column (stream) = update_column (xstream_column (stream), b, size);
           return;
 

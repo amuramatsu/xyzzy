@@ -345,7 +345,7 @@ directory (wchar_t *path, const wchar_t *pat, wchar_t *name, file_masks &masks, 
                   wcscpy (stpcpy (pe, fd.cFileName), L"/");
                   if (test != Qnil)
                     {
-                      lisp lpath = make_string_w ((flags & DF_ABSOLUTE) ? path : name);
+                      lisp lpath = make_string_u ((flags & DF_ABSOLUTE) ? path : name);
                       if (flags & DF_FILE_INFO)
                         lpath = xcons (lpath, make_file_info (fd));
                       test_called = true;
@@ -387,7 +387,7 @@ directory (wchar_t *path, const wchar_t *pat, wchar_t *name, file_masks &masks, 
               else
                 wcscpy (ne, fd.cFileName);
             }
-          lisp lpath = make_string_w ((flags & DF_ABSOLUTE) ? path : name);
+          lisp lpath = make_string_u ((flags & DF_ABSOLUTE) ? path : name);
           if (flags & DF_FILE_INFO)
             lpath = xcons (lpath, make_file_info (fd));
           if (test != Qnil && !test_called)

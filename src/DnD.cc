@@ -636,7 +636,7 @@ filer_drop_target::make_drop_file (const wchar_t *path, const wchar_t *base_path
 
   if (!link && _memicmp (base_path, name, wcslen (base_path)*sizeof(wchar_t))) //XXX
     return 0;
-  return make_string_w (name);
+  return make_string_u (name);
 }
 
 int
@@ -646,7 +646,7 @@ filer_drop_target::process_drop (IDataObject *data_obj, const POINTL &pt,
   wchar_t *target = (wchar_t *)alloca (target_path_length ()*sizeof(wchar_t));
   target_path (target, pt);
   wchar_t *tbuf = (wchar_t *)alloca ((wcslen (target) + 1)*sizeof(wchar_t));
-  lisp ltarget = make_string_w (target);
+  lisp ltarget = make_string_u (target);
 
   FORMATETC etc;
   etc.cfFormat = CF_HDROP;
@@ -691,7 +691,7 @@ filer_drop_target::process_drop (IDataObject *data_obj, const POINTL &pt,
   if (effect != DROPEFFECT_LINK && same_file_p (target, base_path))
     return 0;
 
-  lisp lsrc = make_string_w (base_path);
+  lisp lsrc = make_string_u (base_path);
 
   lisp lfiles = Qnil;
 

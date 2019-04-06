@@ -4136,7 +4136,7 @@ Fsi_condition_string (lisp cc)
   int l = stream.length ();
   Char *b = (Char *)alloca (sizeof (Char) * l);
   stream.copy (b);
-  return make_string (b, l);
+  return make_string_w (b, l);
 }
 
 lisp

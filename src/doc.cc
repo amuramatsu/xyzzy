@@ -37,9 +37,9 @@ snarf_doc (FILE *fp, lisp vec, lisp symlist)
 lisp
 Fsi_snarf_documentation (lisp lpath, lisp symlist)
 {
-  char path[MAX_PATH + 1];
+  wchar_t path[MAX_PATH + 1];
   pathname2cstr (lpath, path);
-  FILE *fp = fopen (path, "wb");
+  FILE *fp = _wfopen (path, L"wb");
   if (!fp)
     FEsimple_crtl_error (errno, lpath);
 
@@ -63,7 +63,7 @@ apropos_doc (const Char *p, int l)
   const Char *p0, *pe;
   for (p0 = p, pe = p + l; p < pe && *p != '\n'; p++)
     ;
-  return make_string (p0, p - p0);
+  return make_string_w (p0, p - p0);
 }
 
 lisp
@@ -102,7 +102,7 @@ Fsi_get_documentation_string (lisp symbol, lisp indicator, lisp apropos, lisp lp
             FEsimple_error (Einvalid_doc_file, lpath);
           base += sizeof (long);
           if (apropos == Qnil)
-            return make_string ((const Char *)base, l);
+            return make_string_w ((const Char *)base, l);
           return apropos_doc ((const Char *)base, l);
         }
       catch (Win32Exception &e)

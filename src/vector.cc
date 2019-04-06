@@ -110,7 +110,7 @@ Fsi_make_vector (lisp dimension, lisp element_type, lisp initial_element,
   if (adjustable == Qnil && fill_pointer == Qnil && displaced_to == Qnil)
     {
       if (element_type == Qcharacter)
-        return make_string (initial_char_elem (initial_element), dims);
+        return make_string_w (initial_char_elem (initial_element), dims);
       else
         return make_vector (dims, initial_element);
     }

@@ -1001,7 +1001,7 @@ Fmap_to_half_width_string (lisp string, lisp keys)
     }
 
   if (!(thp.flags & (HIRA | KATA)))
-    return make_string (s0, xstring_length (string));
+    return make_string_w (s0, xstring_length (string));
 
   Char *de = s0 + xstring_length (string) * 2;
   Char *d = de;
@@ -1022,7 +1022,7 @@ Fmap_to_half_width_string (lisp string, lisp keys)
               break;
             }
     }
-  return make_string (d, de - d);
+  return make_string_w (d, de - d);
 }
 
 lisp
@@ -1056,7 +1056,7 @@ Fmap_to_full_width_string (lisp string, lisp keys)
     }
 
   if (!(flags & (HIRA | KATA)))
-    return make_string (s0, xstring_length (string));
+    return make_string_w (s0, xstring_length (string));
 
 #define PAD 0xa1
   int npad = 0;
@@ -1125,7 +1125,7 @@ Fmap_to_full_width_string (lisp string, lisp keys)
 done:
 
   if (!npad)
-    return make_string (s0, xstring_length (string));
+    return make_string_w (s0, xstring_length (string));
 
   Char *p, *q, *pe;
   for (p = s0, q = p, pe = p + xstring_length (string); p < pe;)
@@ -1134,5 +1134,5 @@ done:
       if (c != PAD)
         *q++ = c;
     }
-  return make_string (s0, q - s0);
+  return make_string_w (s0, q - s0);
 }

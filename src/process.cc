@@ -497,7 +497,7 @@ Process::insert_process_output (ApplicationFrame *app1, void *p)
       if (p_filter != Qnil)
         {
           dynamic_bind d (Vinhibit_quit, Qt);
-          lisp s = lstring ? lstring : make_string (data, size);
+          lisp s = lstring ? lstring : make_string_w (data, size);
           lstring = 0;
           funcall_2 (p_filter, p_proc, s);
         }

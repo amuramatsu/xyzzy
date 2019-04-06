@@ -712,7 +712,7 @@ Buffer::coerce_to_buffer (lisp object)
 Buffer *
 Buffer::make_internal_buffer (const wchar_t *bufname)
 {
-  lisp name = make_string_w (bufname);
+  lisp name = make_string_u (bufname);
   Buffer *bp = Buffer::find_buffer (name, 1, 0);
   if (bp)
     bp->erase ();
@@ -1117,7 +1117,7 @@ Fbuffer_name (lisp buffer)
   char v[64];
   sprintf (v, "<%d>", bp->b_version);
   Char *be = s2w (buf + xstring_length (bp->lbuffer_name), v);
-  return make_string (buf, be - buf);
+  return make_string_w (buf, be - buf);
 }
 
 lisp
@@ -2026,7 +2026,7 @@ check_kinsoku_chars (lisp string)
   for (; p < pe; p++)
     if (*p != d[-1])
       *d++ = *p;
-  return make_string (p0, d - p0);
+  return make_string_w (p0, d - p0);
 }
 
 lisp

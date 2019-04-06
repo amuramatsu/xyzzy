@@ -400,7 +400,7 @@ make_string (const char *string)
 }
 
 lisp
-make_string_w (const wchar_t *string)
+make_string_u (const wchar_t *string)
 {
   lisp p = make_simple_string ();
   size_t size = u2wl (string);
@@ -421,7 +421,7 @@ make_string (const char *string, size_t size)
 }
 
 lisp
-make_string_w (const wchar_t *string, size_t size)
+make_string_u (const wchar_t *string, size_t size)
 {
   lisp p = make_simple_string ();
   Char *b = (Char *)xmalloc (size * sizeof (Char));
@@ -441,7 +441,7 @@ make_string_simple (const char *string, size_t size)
 }
 
 lisp
-make_string (const Char *string, size_t size)
+make_string_w (const Char *string, size_t size)
 {
   lisp p = make_simple_string ();
   xstring_contents (p) = (Char *)xmemdup (string, size * sizeof (Char));
@@ -453,11 +453,11 @@ lisp
 copy_string (lisp p)
 {
   assert (stringp (p));
-  return make_string (xstring_contents (p), xstring_length (p));
+  return make_string_w (xstring_contents (p), xstring_length (p));
 }
 
 lisp
-make_string (Char c, size_t size)
+make_string_w (Char c, size_t size)
 {
   lisp p = make_simple_string ();
   Char *d = (Char *)xmalloc (size * sizeof (Char));
@@ -557,7 +557,7 @@ coerce_to_string (lisp x, int copy)
       if (charp (x))
         {
           Char c = xchar_code (x);
-          return make_string (&c, 1);
+          return make_string_w (&c, 1);
         }
     }
   else
@@ -809,7 +809,7 @@ subseq_string (lisp string, lisp lstart, lisp lend)
 {
   int start, end;
   string_start_end (string, start, end, lstart, lend);
-  return make_string (xstring_contents (string) + start, end - start);
+  return make_string_w (xstring_contents (string) + start, end - start);
 }
 
 lisp
@@ -827,7 +827,7 @@ Fsubstring (lisp string, lisp lstart, lisp lend)
     FErange_error (lstart);
   if (end > len)
     FErange_error (lend);
-  return make_string (xstring_contents (string) + start, end - start);
+  return make_string_w (xstring_contents (string) + start, end - start);
 }
 
 static inline int
@@ -1029,7 +1029,7 @@ Fsplit_string (lisp string, lisp lsep, lisp ignore_empty, lisp char_bag)
           if (char_bag)
             trim (p0, pe, char_bag);
           if (p0 != pe || empty_ok)
-            result = xcons (make_string (p0, pe - p0), result);
+            result = xcons (make_string_u (p0, pe - p0), result);
         }
       while (++p < pe);
     }
@@ -1046,7 +1046,7 @@ Fsplit_string (lisp string, lisp lsep, lisp ignore_empty, lisp char_bag)
           if (char_bag)
             trim (p0, pe, char_bag);
           if (p0 != pe || empty_ok)
-            result = xcons (make_string (p0, pe - p0), result);
+            result = xcons (make_string_u (p0, pe - p0), result);
         }
       while (++p < pe);
     }
@@ -1289,7 +1289,7 @@ Fabbreviate_string_column (lisp string, lisp column)
       if (c > n)
         break;
     }
-  return p == pe ? string : make_string (p0, p - p0);
+  return p == pe ? string : make_string_u (p0, p - p0);
 }
 
 static int
@@ -1406,7 +1406,7 @@ Fsi_octet_length (lisp string, lisp keys)
     FEtype_error (encoding, Qchar_encoding);
 
   if (start != 0 || end != xstring_length (string))
-    string = make_string (xstring_contents (string) + start, end - start);
+    string = make_string_u (xstring_contents (string) + start, end - start);
   xstream_iChar_helper is (string);
   encoding_output_stream_helper s (encoding, is, eol_noconv);
 

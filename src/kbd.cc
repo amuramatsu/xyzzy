@@ -308,7 +308,7 @@ kbd_queue::end_macro ()
 {
   assert (save_p ());
   stop_macro ();
-  return make_string (saved, min (nsaved, last_command_key_index));
+  return make_string_w (saved, min (nsaved, last_command_key_index));
 }
 
 void
@@ -1327,7 +1327,7 @@ Fget_recent_keys ()
 {
   Char b[128];
   int n = active_app_frame().kbdq.copy_queue (b, numberof (b));
-  return make_string (b, n);
+  return make_string_w (b, n);
 }
 
 lisp
@@ -1342,8 +1342,8 @@ Fget_ime_composition_string ()
   const ime_comp_queue::pair *p = active_app_frame().ime_compq.fetch ();
   if (!p)
     return Qnil;
-  return xcons (make_string (p->comp, p->compl),
-                make_string (p->read, p->readl));
+  return xcons (make_string_w (p->comp, p->compl),
+                make_string_w (p->read, p->readl));
 }
 
 lisp
@@ -1352,8 +1352,8 @@ Fpop_ime_composition_string ()
   const ime_comp_queue::pair *p = active_app_frame().ime_compq.pop ();
   if (!p)
     return Qnil;
-  return xcons (make_string (p->comp, p->compl),
-                make_string (p->read, p->readl));
+  return xcons (make_string_w (p->comp, p->compl),
+                make_string_w (p->read, p->readl));
 }
 
 lisp

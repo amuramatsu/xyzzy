@@ -347,7 +347,7 @@ make_path (const char *s, int append_slash)
   map_backsl_to_sl (b, be - b);
   if (append_slash && be != b && be[-1] != '/')
     *be++ = '/';
-  return make_string (b, be - b);
+  return make_string_w (b, be - b);
 }
 
 void
@@ -425,7 +425,7 @@ Fmerge_pathnames (lisp pathname, lisp defaults)
       && !bcmp (b, xstring_contents (pathname), l))
     return pathname;
 
-  return make_string (b, l);
+  return make_string_w (b, l);
 }
 
 lisp
@@ -468,7 +468,7 @@ Fremove_trail_slash (lisp pathname)
   check_string (pathname);
   if (!has_trail_slash_p (pathname, 0))
     return pathname;
-  return make_string (xstring_contents (pathname), xstring_length (pathname) - 1);
+  return make_string_w (xstring_contents (pathname), xstring_length (pathname) - 1);
 }
 
 lisp
@@ -482,7 +482,7 @@ Ffile_namestring (lisp pathname)
   pathname = coerce_to_pathname (pathname, buf, p0, pe);
   for (const Char *p = pe; p > p0; p--)
     if (p[-1] == SEPCHAR)
-      return make_string (p, pe - p);
+      return make_string_w (p, pe - p);
   return pathname;
 }
 
@@ -504,11 +504,11 @@ Fdirectory_namestring (lisp pathname)
           && be - buf == xstring_length (pathname)
           && !bcmp (buf, xstring_contents (pathname), xstring_length (pathname)))
         return pathname;
-      return make_string (buf, be - buf);
+      return make_string_w (buf, be - buf);
     }
   for (const Char *p = pe; p > p0; p--)
     if (p[-1] == SEPCHAR)
-      return make_string (p0, p - p0);
+      return make_string_w (p0, p - p0);
   return make_string ("");
 }
 
@@ -528,7 +528,7 @@ Fpathname_host (lisp pathname)
     ;
   if (p == p0)
     return Qnil;
-  return make_string (p0, p - p0);
+  return make_string_w (p0, p - p0);
 }
 
 lisp
@@ -540,7 +540,7 @@ Fpathname_device (lisp pathname)
   if (pe - p < 2)
     return Qnil;
   if (alpha_char_p (*p) && p[1] == ':')
-    return make_string (*p, 1);
+    return make_string_w (*p, 1);
   return Qnil;
 }
 
@@ -565,7 +565,7 @@ Fpathname_directory (lisp pathname)
       if (p == pe)
         break;
       if (p != p0)
-        dirs = xcons (make_string (p0, p - p0), dirs);
+        dirs = xcons (make_string_w (p0, p - p0), dirs);
       p++;
     }
   return Fnreverse (dirs);
@@ -602,7 +602,7 @@ Fpathname_name (lisp pathname)
   pathbuf_t buf;
   const Char *name, *name_e, *type, *type_e;
   pathname_name_type (pathname, buf, name, name_e, type, type_e);
-  return name == name_e ? Qnil : make_string (name, name_e - name);
+  return name == name_e ? Qnil : make_string_w (name, name_e - name);
 }
 
 lisp
@@ -611,7 +611,7 @@ Fpathname_type (lisp pathname)
   pathbuf_t buf;
   const Char *name, *name_e, *type, *type_e;
   pathname_name_type (pathname, buf, name, name_e, type, type_e);
-  return type == type_e ? Qnil : make_string (type, type_e - type);
+  return type == type_e ? Qnil : make_string_w (type, type_e - type);
 }
 
 char *
@@ -975,36 +975,36 @@ Fcompile_file_pathname (lisp pathname)
       *b++ = 'l';
       *b++ = 'c';
     }
-  return make_string (buf, b - buf);
+  return make_string_w (buf, b - buf);
 }
 
 lisp
 Ffind_load_path (lisp filename)
 {
-  static const char *const ext[] = {".lc", ".l", ".lisp", "", 0};
+  static const wchar_t *const ext[] = {L".lc", L".l", L".lisp", L"", 0};
 
   check_string (filename);
   if (xstring_length (filename) >= WPATH_MAX)
     FEsimple_error (Epath_name_too_long, filename);
 
-  char file[PATH_MAX + 1];
-  w2s (file, filename);
+  wchar_t file[PATH_MAX + 1];
+  w2u (file, filename);
 
-  for (const char *const *e = ext; *e; e++)
+  for (const wchar_t *const *e = ext; *e; e++)
     for (lisp p = xsymbol_value (Vload_path); consp (p); p = xcdr (p))
       {
         lisp x = xcar (p);
         if (stringp (x) && xstring_length (x) < WPATH_MAX)
           {
-            char path[PATH_MAX * 2 + 1];
+            wchar_t path[PATH_MAX * 2 + 1];
             pathname2cstr (x, path);
-            int l = strlen (path);
+            int l = wcslen (path);
             if (l && path[l - 1] != SEPCHAR)
               path[l++] = SEPCHAR;
-            strcpy (stpcpy (path + l, file), *e);
+            wcscpy (stpcpy (path + l, file), *e);
             DWORD a = WINFS::GetFileAttributes (path);
             if (a != DWORD (-1) && !(a & FILE_ATTRIBUTE_DIRECTORY))
-              return make_string (path);
+              return make_string_u (path);
           }
       }
   return Qnil;
@@ -1098,7 +1098,7 @@ Fmake_temp_file_name (lisp lprefix, lisp lsuffix, lisp dir, lisp dirp)
                             0, dirp && dirp != Qnil))
     file_error (Ecannot_make_temp_file_name);
   map_backsl_to_sl (temp);
-  return make_string_w (temp);
+  return make_string_u (temp);
 }
 
 lisp
@@ -1727,7 +1727,7 @@ map_sl (lisp path, Char from, Char to)
         *p = to;
         f = 1;
       }
-  return f ? make_string (p0, xstring_length (path)) : path;
+  return f ? make_string_w (p0, xstring_length (path)) : path;
 }
 
 lisp
@@ -2470,20 +2470,20 @@ Fset_per_device_directory (lisp lpath)
 lisp
 Fget_short_path_name (lisp lpath)
 {
-  char path[PATH_MAX + 1], spath[PATH_MAX + 1];
+  wchar_t path[PATH_MAX + 1], spath[PATH_MAX + 1];
   pathname2cstr (lpath, path);
   map_sl_to_backsl (path);
-  if (!GetShortPathName (path, spath, PATH_MAX))
+  if (!GetShortPathNameW (path, spath, PATH_MAX))
     file_error (GetLastError (), lpath);
   map_backsl_to_sl (spath);
   if (stringp (lpath) && xstring_length (lpath)
       && dir_separator_p (xstring_contents (lpath)[xstring_length (lpath) - 1]))
     {
-      char *sl = find_last_slash (spath);
+      wchar_t *sl = find_last_slash (spath);
       if (sl && sl[1])
-        strcat (sl, "/");
+        wcscat (sl, L"/");
     }
-  return make_string (spath);
+  return make_string_u (spath);
 }
 
 lisp
@@ -2513,7 +2513,7 @@ make_file_info (const WIN32_FIND_DATAW &fd)
                     file_time_to_universal_time (fd.ftLastWriteTime),
                     make_integer (sz),
                     (*fd.cAlternateFileName
-                     ? make_string_w (fd.cAlternateFileName)
+                     ? make_string_u (fd.cAlternateFileName)
                      : Qnil),
                     0);
 }

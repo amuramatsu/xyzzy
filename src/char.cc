@@ -438,7 +438,7 @@ Funicode_char (lisp code)
       b[0] = utf16_ucs4_to_pair_high (wc);
       b[1] = utf16_ucs4_to_pair_low (wc);
     }
-  return make_string (b, 2);
+  return make_string_w (b, 2);
 }
 
 lisp

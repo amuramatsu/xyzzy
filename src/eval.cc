@@ -1858,7 +1858,7 @@ process_interactive_string (lisp fmt, lisp args)
                   xsymbol_value (Vprefix_value) = prefix_val;
                   xsymbol_value (Vprefix_args) = prefix_args;
                   iargs = Fnreconc (Fnreverse (funcall_4 (xcdr (x),
-                                                          make_string (p0, p - p0),
+                                                          make_string_w (p0, p - p0),
                                                           load_default (args, nargs),
                                                           load_history (args, nargs),
                                                           load_title (args, nargs))),
@@ -2019,7 +2019,7 @@ process_interactive_string (lisp fmt, lisp args)
 
             case 'c':
               if (p != p0)
-                Fsi_minibuffer_message (make_string (p0, p - p0), Qt);
+                Fsi_minibuffer_message (make_string_w (p0, p - p0), Qt);
               v1 = Fread_char (xsymbol_value (Qkeyboard), Qnil, Qnil, Qnil);
               if (p != p0)
                 Fsi_minibuffer_message (Qnil, Qnil);

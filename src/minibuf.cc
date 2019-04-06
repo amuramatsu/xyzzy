@@ -270,7 +270,7 @@ complete_read (const Char *prompt, long prompt_length, lisp def,
       if (!mss.pkg_end ())
         return Fintern (string, 0);
 
-      return Fintern (make_string (b, (xstring_contents (string)
+      return Fintern (make_string_w (b, (xstring_contents (string)
                                        + xstring_length (string) - b)),
                       package);
     }
@@ -362,7 +362,7 @@ class completion
   void set_target (lisp);
   void set_prefix (lisp);
   void adjust_prefix (lisp);
-  int complete_filename (const char *, lisp, lisp);
+  int complete_filename (const wchar_t *, lisp, lisp);
   lisp split_pathname ();
   int complete_UNC (lisp &);
 public:
@@ -483,7 +483,7 @@ completion::adjust_prefix (lisp prefix)
   if (l == xstring_length (c_string) && !bcmp (b, xstring_contents (c_string), l))
     c_result = c_string;
   else
-    c_result = make_string (b, l);
+    c_result = make_string_w (b, l);
 }
 
 void
@@ -541,9 +541,9 @@ completion::complete_symbol ()
 
   if (mss.pkg_end ())
     {
-      set_prefix (make_string (xstring_contents (c_target),
+      set_prefix (make_string_w (xstring_contents (c_target),
                                b - xstring_contents (c_target)));
-      set_target (make_string (b, (xstring_contents (c_target)
+      set_target (make_string_w (b, (xstring_contents (c_target)
                                    + xstring_length (c_target) - b)));
     }
 
@@ -593,11 +593,11 @@ completion::complete_buffer_name ()
 }
 
 int
-completion::complete_filename (const char *path, lisp show_dots, lisp ignores)
+completion::complete_filename (const wchar_t *path, lisp show_dots, lisp ignores)
 {
   int ignored = 0;
 
-  WIN32_FIND_DATA *fd = (WIN32_FIND_DATA *)alloca (sizeof *fd + 2);
+  WIN32_FIND_DATAW *fd = (WIN32_FIND_DATAW *)alloca (sizeof *fd + 2);
   HANDLE h = WINFS::FindFirstFile (path, fd);
   if (h == INVALID_HANDLE_VALUE)
     {
@@ -611,17 +611,17 @@ completion::complete_filename (const char *path, lisp show_dots, lisp ignores)
   do
     {
 #ifndef PATHNAME_ESCAPE_TILDE
-      if (*fd->cFileName == '~' && !fd->cFileName[1])
+      if (*fd->cFileName == L'~' && !fd->cFileName[1])
         continue;
 #endif
-      if (show_dots == Qnil && *fd->cFileName == '.')
+      if (show_dots == Qnil && *fd->cFileName == L'.')
         continue;
       if (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        strcat (fd->cFileName, "/");
+        wcscat (fd->cFileName, L"/");
       else if (c_type == Kdirectory_name)
         continue;
 
-      lisp name = make_string (fd->cFileName);
+      lisp name = make_string_u (fd->cFileName);
       for (lisp p = ignores; consp (p); p = xcdr (p))
         {
           lisp ext = xcar (p);
@@ -654,7 +654,7 @@ completion::split_pathname ()
        p > p0 && p[-1] != ':' && p[-1] != '/' && p[-1] != '\\';
        p--)
     ;
-  set_target (make_string (p, pe - p));
+  set_target (make_string_w (p, pe - p));
 
   pe = p;
   if (pe - p0 >= 2)
@@ -668,13 +668,13 @@ completion::split_pathname ()
             if ((*p == '/' || *p == '\\') && ++n == 2)
               break;
           if (n < 2)
-            return make_string (p0, pe - p0);
+            return make_string_w (p0, pe - p0);
         }
     }
 
   if (!c_target_len)
     {
-      lisp x = Fnamestring (make_string (p0, pe - p0));
+      lisp x = Fnamestring (make_string_w (p0, pe - p0));
       if (xstring_length (x)
           && xstring_contents (x)[xstring_length (x) - 1] != '/')
         {
@@ -687,7 +687,7 @@ completion::split_pathname ()
       return x;
     }
 
-  return Fdirectory_namestring (make_string (p0, pe - p0));
+  return Fdirectory_namestring (make_string_w (p0, pe - p0));
 }
 
 int
@@ -708,15 +708,15 @@ completion::complete_UNC (lisp &directory)
   suppress_gc sgc;
   if (p == p0 + 2)
     {
-      directory = make_string (p0, 2);
+      directory = make_string_w (p0, 2);
       for (lisp r = Flist_servers (Qnil); consp (r); r = xcdr (r))
         complete_with_slash (xcar (r), 1);
     }
   else
     {
-      directory = make_string (p0, pe - p0 + 1);
+      directory = make_string_w (p0, pe - p0 + 1);
       p0 += 2;
-      for (lisp r = Flist_server_resources (make_string (p0, pe - p0), Qnil);
+      for (lisp r = Flist_server_resources (make_string_w (p0, pe - p0), Qnil);
            consp (r); r = xcdr (r))
         complete_with_slash (xcar (r), 1);
     }
@@ -745,10 +745,10 @@ completion::complete_filename ()
 
   if (!complete_UNC (directory))
     {
-      char *path = (char *)alloca (2 * xstring_length (directory) + 10);
-      w2s (path, directory);
+      wchar_t *path = (wchar_t *)alloca ((2 * xstring_length (directory) + 10)*sizeof(wchar_t));
+      w2u (path, directory);
       map_sl_to_backsl (path);
-      strcat (path, "*");
+      wcscat (path, L"*");
 
       if (complete_filename (path, show_dots, ignores) && c_item == Qnil)
         complete_filename (path, show_dots, Qnil);
@@ -819,7 +819,7 @@ completion::result () const
   if (c_match_len == c_target_len)
     return c_string;
 
-  return make_string (xstring_contents (c_item), c_match_len);
+  return make_string_w (xstring_contents (c_item), c_match_len);
 }
 
 lisp

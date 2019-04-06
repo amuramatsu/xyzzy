@@ -124,13 +124,13 @@ void w2u_chunk (char *b, char *be, const Char *s, size_t size);
 lisp coerce_to_string (lisp, int);
 
 lisp make_string (const char *);
-lisp make_string_w (const wchar_t *);
+lisp make_string_u (const wchar_t *);
 lisp make_string (const u_char *);
 lisp make_string (const char *, size_t);
-lisp make_string_w (const wchar_t *, size_t);
+lisp make_string_u (const wchar_t *, size_t);
 lisp make_string_simple (const char *, size_t);
-lisp make_string (const Char *, size_t);
-lisp make_string (Char, size_t);
+lisp make_string_w (const Char *, size_t);
+lisp make_string_w (Char, size_t);
 lisp make_complex_string (Char, int, int, int);
 lisp make_string_from_list (lisp);
 lisp make_string_from_vector (lisp);
