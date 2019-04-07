@@ -350,6 +350,17 @@ make_path (const char *s, int append_slash)
   return make_string_w (b, be - b);
 }
 
+lisp
+make_path (const wchar_t *s, int append_slash)
+{
+  Char *b = (Char *)alloca ((u2wl (s) + 1) * sizeof (Char));
+  Char *be = u2w (b, s);
+  map_backsl_to_sl (b, be - b);
+  if (append_slash && be != b && be[-1] != L'/')
+    *be++ = L'/';
+  return make_string_w (b, be - b);
+}
+
 void
 map_backsl_to_sl (Char *p, int l)
 {

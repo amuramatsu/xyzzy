@@ -3996,9 +3996,9 @@ putmsg (wStream &stream, int msgboxp, int style, int beep)
 
   if (msgboxp)
     {
-      w2s ((char *)b, b + 1, l);
+      w2u ((wchar_t *)b, b + 1, l);
       active_app_frame().status_window.clear ();
-      return MsgBox (get_active_window (), (char *)b, TitleBarString, style, beep);
+      return MsgBox (get_active_window (), (wchar_t *)b, tmpwstr(TitleBarString), style, beep);
     }
   else
     {

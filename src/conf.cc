@@ -8,122 +8,192 @@
 #include "conf.h"
 
 void
+write_conf (const wchar_t *section, const wchar_t *name, const wchar_t *str)
+{
+  WritePrivateProfileStringW (section, name, str, g_app.ini_file_path);
+}
+
+void
 write_conf (const char *section, const char *name, const char *str)
 {
-  WritePrivateProfileString (section, name, str, g_app.ini_file_path);
+  write_conf (tmpwstr(section), tmpwstr(name), tmpwstr(str));
+}
+
+void
+write_conf (const wchar_t *section, const wchar_t *name, long value, int hex)
+{
+  wchar_t buf[32];
+  wsprintfW (buf, hex ? L"#%lx" : L"%ld", value);
+  WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
 void
 write_conf (const char *section, const char *name, long value, int hex)
 {
-  char buf[32];
-  sprintf (buf, hex ? "#%lx" : "%ld", value);
-  WritePrivateProfileString (section, name, buf, g_app.ini_file_path);
+  write_conf (tmpwstr(section), tmpwstr(name), value, hex);
+}
+
+void
+write_conf (const wchar_t *section, const wchar_t *name, const int *value, int n, int hex)
+{
+  wchar_t *buf = (wchar_t *)alloca ((16 * n) * sizeof(wchar_t));
+  wchar_t *b = buf;
+  for (int i = 0; i < n; i++)
+    b += wsprintfW (b, hex ? L",#%x" : L",%d", *value++);
+  WritePrivateProfileStringW (section, name, buf + 1, g_app.ini_file_path);
 }
 
 void
 write_conf (const char *section, const char *name, const int *value, int n, int hex)
 {
-  char *buf = (char *)alloca (16 * n), *b = buf;
-  for (int i = 0; i < n; i++)
-    b += sprintf (b, hex ? ",#%x" : ",%d", *value++);
-  WritePrivateProfileString (section, name, buf + 1, g_app.ini_file_path);
+  write_conf(tmpwstr(section), tmpwstr(name), value, n, hex);
+}
+
+void
+write_conf (const wchar_t *section, const wchar_t *name, const RECT &r)
+{
+  wchar_t buf[128];
+  wsprintfW (buf, L"(%d,%d)-(%d,%d)", r.left, r.top, r.right, r.bottom);
+  WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
 void
 write_conf (const char *section, const char *name, const RECT &r)
 {
-  char buf[128];
-  sprintf (buf, "(%d,%d)-(%d,%d)", r.left, r.top, r.right, r.bottom);
-  WritePrivateProfileString (section, name, buf, g_app.ini_file_path);
+  write_conf(tmpwstr(section), tmpwstr(name), r);
+}
+
+void
+write_conf (const wchar_t *section, const wchar_t *name, const LOGFONT &lf)
+{
+  wchar_t buf[128];
+  wsprintfW (buf, L"%d,\"%s\",%d", lf.lfHeight, lf.lfFaceName, lf.lfCharSet);
+  WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
 void
 write_conf (const char *section, const char *name, const LOGFONT &lf)
 {
-  char buf[128];
-  sprintf (buf, "%d,\"%s\",%d", lf.lfHeight, lf.lfFaceName, lf.lfCharSet);
-  WritePrivateProfileString (section, name, buf, g_app.ini_file_path);
+  write_conf(tmpwstr(section), tmpwstr(name), lf);
+}
+
+void
+write_conf (const wchar_t *section, const wchar_t *name, const PRLOGFONT &lf)
+{
+  wchar_t buf[128];
+  wsprintfW (buf, L"%d,\"%s\",%d,%d,%d", lf.point, lf.face, lf.charset, lf.bold, lf.italic);
+  WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
 void
 write_conf (const char *section, const char *name, const PRLOGFONT &lf)
 {
-  char buf[128];
-  sprintf (buf, "%d,\"%s\",%d,%d,%d", lf.point, lf.face, lf.charset, lf.bold, lf.italic);
-  WritePrivateProfileString (section, name, buf, g_app.ini_file_path);
+  write_conf(tmpwstr(section), tmpwstr(name), lf);
+}
+
+void
+write_conf (const wchar_t *section, const wchar_t *name, const WINDOWPLACEMENT &w)
+{
+  wchar_t buf[128];
+  wsprintfW (buf, L"(%d,%d)-(%d,%d),%d",
+	     w.rcNormalPosition.left,
+	     w.rcNormalPosition.top,
+	     w.rcNormalPosition.right,
+	     w.rcNormalPosition.bottom,
+	     w.showCmd);
+  WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
 void
 write_conf (const char *section, const char *name, const WINDOWPLACEMENT &w)
 {
-  char buf[128];
-  sprintf (buf, "(%d,%d)-(%d,%d),%d",
-           w.rcNormalPosition.left,
-           w.rcNormalPosition.top,
-           w.rcNormalPosition.right,
-           w.rcNormalPosition.bottom,
-           w.showCmd);
-  WritePrivateProfileString (section, name, buf, g_app.ini_file_path);
+  write_conf(tmpwstr(section), tmpwstr(name), w);
 }
 
 void
 flush_conf ()
 {
-  WritePrivateProfileString (0, 0, 0, g_app.ini_file_path);
+  WritePrivateProfileStringW (0, 0, 0, g_app.ini_file_path);
+}
+
+int
+read_conf (const wchar_t *section, const wchar_t *name, wchar_t *buf, int size)
+{
+  return GetPrivateProfileStringW (section, name, L"", buf, size, g_app.ini_file_path);
 }
 
 int
 read_conf (const char *section, const char *name, char *buf, int size)
 {
-  return GetPrivateProfileString (section, name, "", buf, size, g_app.ini_file_path);
+  wchar_t *wbuf = (wchar_t *)alloca(size * sizeof(wchar_t));
+  int s = read_conf (tmpwstr(section), tmpwstr(name), wbuf, size);
+  stpncpy(buf, tmpstr(wbuf), size);
+  return s;
+}
+
+void
+delete_conf (const wchar_t *section)
+{
+  WritePrivateProfileStringW (section, 0, 0, g_app.ini_file_path);
 }
 
 void
 delete_conf (const char *section)
 {
-  WritePrivateProfileString (section, 0, 0, g_app.ini_file_path);
+  delete_conf(tmpwstr(section));
 }
 
 static int
-parse_int (const char *s, int &v)
+parse_int (const wchar_t *s, int &v)
 {
-  return sscanf (s, *s == '#' ? "#%x" : "%d", &v) == 1;
+  return swscanf (s, *s == L'#' ? L"#%x" : L"%d", &v) == 1;
 }
 
 int
-read_conf (const char *section, const char *name, int &value)
+read_conf (const wchar_t *section, const wchar_t *name, int &value)
 {
-  char buf[32];
-  int l = read_conf (section, name, buf, sizeof buf);
+  wchar_t buf[32];
+  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
   if (!l || l >= sizeof buf - 1)
     return 0;
   return parse_int (buf, value);
 }
 
+int
+read_conf (const char *section, const char *name, int &value)
+{
+  return read_conf(tmpwstr(section), tmpwstr(name), value);
+}
+
 #if INT_MAX != LONG_MAX
 static int
-parse_long (const char *s, u_long &v)
+parse_long (const wchar_t *s, u_long &v)
 {
-  return sscanf (s, *s == '#' ? "#%lx" : "%ld", &v) == 1;
+  return swscanf (s, *s == L'#' ? L"#%lx" : L"%ld", &v) == 1;
+}
+
+int
+read_conf (const wchar_t *section, const wchar_t *name, u_long &value)
+{
+  wchar_t buf[32];
+  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
+  if (!l || l >= sizeof buf - 1)
+    return 0;
+  return parse_long (buf, value);
 }
 
 int
 read_conf (const char *section, const char *name, u_long &value)
 {
-  char buf[32];
-  int l = read_conf (section, name, buf, sizeof buf);
-  if (!l || l >= sizeof buf - 1)
-    return 0;
-  return parse_long (buf, value);
+  return read_conf(tmpwstr(section), tmpwstr(name));
 }
 #endif /* INT_MAX != LONG_MAX */
 
 int
-read_conf (const char *section, const char *name, int *value, int n)
+read_conf (const wchar_t *section, const wchar_t *name, int *value, int n)
 {
   int size = 16 * n;
-  char *buf = (char *)alloca (size);
+  wchar_t *buf = (wchar_t *)alloca (size * sizeof(wchar_t));
   int l = read_conf (section, name, buf, size);
   if (!l || l >= size - 1)
     return 0;
@@ -131,7 +201,7 @@ read_conf (const char *section, const char *name, int *value, int n)
     {
       if (!parse_int (buf, *value))
         return 0;
-      buf = strchr (buf, ',');
+      buf = wcschr (buf, L',');
       if (!buf)
         return 0;
     }
@@ -139,14 +209,20 @@ read_conf (const char *section, const char *name, int *value, int n)
 }
 
 int
-read_conf (const char *section, const char *name, RECT &rr)
+read_conf (const char *section, const char *name, int *value, int n)
 {
-  char buf[128];
-  int l = read_conf (section, name, buf, sizeof buf);
+  return read_conf(tmpwstr(section), tmpwstr(name), value, n);
+}
+
+int
+read_conf (const wchar_t *section, const wchar_t *name, RECT &rr)
+{
+  wchar_t buf[128];
+  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
   if (!l || l >= sizeof buf - 1)
     return 0;
   int t, r, b;
-  if (sscanf (buf, "(%d,%d)-(%d,%d)", &l, &t, &r, &b) != 4)
+  if (swscanf (buf, L"(%d,%d)-(%d,%d)", &l, &t, &r, &b) != 4)
     return 0;
   rr.left = l;
   rr.top = t;
@@ -156,15 +232,21 @@ read_conf (const char *section, const char *name, RECT &rr)
 }
 
 int
-read_conf (const char *section, const char *name, LOGFONT &lf)
+read_conf (const char *section, const char *name, RECT &rr)
 {
-  char buf[128];
-  int l = read_conf (section, name, buf, sizeof buf);
+  return read_conf(tmpwstr(section), tmpwstr(name), rr);
+}
+
+int
+read_conf (const wchar_t *section, const wchar_t *name, LOGFONT &lf)
+{
+  wchar_t buf[128];
+  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
   if (!l || l >= sizeof buf - 1)
     return 0;
   memset (&lf, 0, sizeof lf);
   int h, cs;
-  if (sscanf (buf, "%d,\"%31[^\"]\",%d", &h, lf.lfFaceName, &cs) != 3)
+  if (swscanf (buf, L"%d,\"%31[^\"]\",%d", &h, lf.lfFaceName, &cs) != 3)
     return 0;
   lf.lfHeight = h;
   lf.lfCharSet = cs;
@@ -172,15 +254,21 @@ read_conf (const char *section, const char *name, LOGFONT &lf)
 }
 
 int
-read_conf (const char *section, const char *name, PRLOGFONT &lf)
+read_conf (const char *section, const char *name, LOGFONT &lf)
 {
-  char buf[128];
-  int l = read_conf (section, name, buf, sizeof buf);
+  return read_conf(tmpwstr(section), tmpwstr(name), lf);
+}
+
+int
+read_conf (const wchar_t *section, const wchar_t *name, PRLOGFONT &lf)
+{
+  wchar_t buf[128];
+  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
   if (!l || l >= sizeof buf - 1)
     return 0;
   int point, cs, bold, italic;
-  if (sscanf (buf, "%d,\"%31[^\"]\",%d,%d,%d",
-              &point, lf.face, &cs, &bold, &italic) != 5)
+  if (swscanf (buf, L"%d,\"%31[^\"]\",%d,%d,%d",
+		&point, lf.face, &cs, &bold, &italic) != 5)
     return 0;
   lf.point = point;
   lf.charset = cs;
@@ -190,14 +278,20 @@ read_conf (const char *section, const char *name, PRLOGFONT &lf)
 }
 
 int
-read_conf (const char *section, const char *name, WINDOWPLACEMENT &w)
+read_conf (const char *section, const char *name, PRLOGFONT &lf)
 {
-  char buf[128];
-  int l = read_conf (section, name, buf, sizeof buf);
+  return read_conf(tmpwstr(section), tmpwstr(name), lf);
+}
+
+int
+read_conf (const wchar_t *section, const wchar_t *name, WINDOWPLACEMENT &w)
+{
+  wchar_t buf[128];
+  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
   if (!l || l >= sizeof buf - 1)
     return 0;
   int t, r, b, s;
-  if (sscanf (buf, "(%d,%d)-(%d,%d),%d", &l, &t, &r, &b, &s) != 5)
+  if (swscanf (buf, L"(%d,%d)-(%d,%d),%d", &l, &t, &r, &b, &s) != 5)
     return 0;
   w.rcNormalPosition.left = l;
   w.rcNormalPosition.top = t;
@@ -207,16 +301,28 @@ read_conf (const char *section, const char *name, WINDOWPLACEMENT &w)
   return 1;
 }
 
+int
+read_conf (const char *section, const char *name, WINDOWPLACEMENT &w)
+{
+  return read_conf(tmpwstr(section), tmpwstr(name), w);
+}
+
+void
+conf_write_string (const wchar_t *section, const wchar_t *name, const wchar_t *string)
+{
+  int l = wcslen (string);
+  wchar_t *b = (wchar_t *)alloca ((l + 3) * sizeof(wchar_t));
+  *b = L'"';
+  memcpy (b + 1, string, l*sizeof(wchar_t));
+  b[l + 1] = L'"';
+  b[l + 2] = 0;
+  write_conf (section, name, b);
+}
+
 void
 conf_write_string (const char *section, const char *name, const char *string)
 {
-  int l = strlen (string);
-  char *b = (char *)alloca (l + 3);
-  *b = '"';
-  memcpy (b + 1, string, l);
-  b[l + 1] = '"';
-  b[l + 2] = 0;
-  write_conf (section, name, b);
+  conf_write_string(tmpwstr(section), tmpwstr(name), tmpwstr(string));
 }
 
 static void

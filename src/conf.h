@@ -100,13 +100,28 @@ void write_conf (const char *, const char *, const RECT &);
 void write_conf (const char *, const char *, const LOGFONT &);
 void write_conf (const char *, const char *, const PRLOGFONT &);
 void write_conf (const char *, const char *, const WINDOWPLACEMENT &);
+void write_conf (const wchar_t *, const wchar_t *, const wchar_t *);
+void write_conf (const wchar_t *, const wchar_t *, long, int = 0);
+void write_conf (const wchar_t *, const wchar_t *, const int *, int, int = 0);
+void write_conf (const wchar_t *, const wchar_t *, const RECT &);
+void write_conf (const wchar_t *, const wchar_t *, const LOGFONT &);
+void write_conf (const wchar_t *, const wchar_t *, const PRLOGFONT &);
+void write_conf (const wchar_t *, const wchar_t *, const WINDOWPLACEMENT &);
 int read_conf (const char *, const char *, char *, int);
 int read_conf (const char *, const char *, int &);
+int read_conf (const wchar_t *, const wchar_t *, wchar_t *, int);
+int read_conf (const wchar_t *, const wchar_t *, int &);
 #if INT_MAX != LONG_MAX
 int read_conf (const char *, const char *, u_long &);
+int read_conf (const wchar_t *, const wchar_t *, u_long &);
 #else
 static inline int
 read_conf (const char *section, const char *name, u_long &value)
+{
+  return read_conf (section, name, *(int *)&value);
+}
+static inline int
+read_conf (const wchar_t *section, const wchar_t *name, u_long &value)
 {
   return read_conf (section, name, *(int *)&value);
 }
@@ -116,6 +131,11 @@ int read_conf (const char *, const char *, RECT &);
 int read_conf (const char *, const char *, LOGFONT &);
 int read_conf (const char *, const char *, PRLOGFONT &);
 int read_conf (const char *, const char *, WINDOWPLACEMENT &);
+int read_conf (const wchar_t *, const wchar_t *, int *, int);
+int read_conf (const wchar_t *, const wchar_t *, RECT &);
+int read_conf (const wchar_t *, const wchar_t *, LOGFONT &);
+int read_conf (const wchar_t *, const wchar_t *, PRLOGFONT &);
+int read_conf (const wchar_t *, const wchar_t *, WINDOWPLACEMENT &);
 void flush_conf ();
 int conf_load_geometry (HWND, const char *, const char * = 0, int = 1, int = 1);
 void conf_save_geometry (HWND, const char *, const char * = 0, int = 1, int = 1);
@@ -123,7 +143,9 @@ void adjust_snap_window_size (HWND, WINDOWPLACEMENT &);
 void make_geometry_key (char* buf, size_t bufsize, const char *prefix);
 
 void conf_write_string (const char *, const char *, const char *);
+void conf_write_string (const wchar_t *, const wchar_t *, const wchar_t *);
 void delete_conf (const char *);
+void delete_conf (const wchar_t *);
 
 int reg2ini ();
 void reg_delete_tree ();

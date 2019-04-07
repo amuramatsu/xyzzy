@@ -993,7 +993,7 @@ Fuser_config_path ()
 lisp
 Fxyzzy_ini_path ()
 {
-  return make_string (g_app.ini_file_path);
+  return make_string_u (g_app.ini_file_path);
 }
 
 lisp

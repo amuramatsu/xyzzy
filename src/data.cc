@@ -2529,10 +2529,10 @@ dump_object (FILE *fp, const ldll_module *d, int n,
 static void
 load_dyn_library (ldll_module *p)
 {
-  char *s = (char *)alloca (xstring_length (p->name) * 2 + 1);
-  w2s (s, p->name);
+  wchar_t *s = (wchar_t *)alloca ((xstring_length (p->name) * 2 + 1) * sizeof (wchar_t));
+  w2u (s, p->name);
   p->loaded = 0;
-  HMODULE h = GetModuleHandle (s);
+  HMODULE h = GetModuleHandleW (s);
   if (!h)
     {
       h = WINFS::LoadLibrary (s);
@@ -2727,12 +2727,12 @@ extern int dump_version;
 lisp
 Fdump_xyzzy (lisp filename)
 {
-  char path_buf[PATH_MAX + 1];
-  const char *path;
+  wchar_t path_buf[PATH_MAX + 1];
+  const wchar_t *path;
   if (!filename || filename == Qnil)
     {
       filename = xsymbol_value (Qdump_image_path);
-	  path = g_app.dump_image;
+      path = g_app.dump_image;
     }
   else
     {
@@ -2769,7 +2769,7 @@ Fdump_xyzzy (lisp filename)
     }
   qsort (addr_orderp, nreps, sizeof *addr_orderp, compare_addr);
 
-  FILE *fp = fopen (path, "wb");
+  FILE *fp = _wfopen (path, L"wb");
   if (!fp)
     FEsimple_crtl_error (errno, filename);
 
@@ -2849,7 +2849,7 @@ static int dump_flag = 0;
 int
 rdump_xyzzy ()
 {
-  FILE *fp = _fsopen (g_app.dump_image, "rb", _SH_DENYWR);
+  FILE *fp = _wfsopen (g_app.dump_image, L"rb", _SH_DENYWR);
   if (!fp)
     return 0;
 

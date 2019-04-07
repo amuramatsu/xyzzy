@@ -487,8 +487,8 @@ public:
 
   itimer gc_itimer;
 
-  char dump_image[PATH_MAX + 8];
-  char *ini_file_path;
+  wchar_t dump_image[PATH_MAX + 8];
+  wchar_t *ini_file_path;
   int toplevel_is_active;
   u_int quit_thread_id;
   int default_tab_columns;
@@ -501,9 +501,9 @@ public:
 
 // does not take care parent (ex. ..\).
 // similar to Fmerge_pathnames, but does not require any initialization.
-errno_t ResolveModuleRelativeDir(char *dest, int destSize, const char* relative);
+errno_t ResolveModuleRelativeDir(wchar_t *dest, int destSize, const wchar_t* relative);
 // relativeDir can be null.
-errno_t ResolveModuleRelativePath(char *dest, int destSize, const char* relativeDir, const char* file);
+errno_t ResolveModuleRelativePath(wchar_t *dest, int destSize, const wchar_t* relativeDir, const wchar_t* file);
 
 extern ApplicationFrame& active_app_frame();
 extern ApplicationFrame* first_app_frame();

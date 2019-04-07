@@ -293,7 +293,7 @@ w2s_chunk (char *b, char *be, const Char *s, size_t size)
 size_t
 u2wl (const wchar_t *s)
 {
-  size_t l;
+  size_t l = 0;
   while (*s)
     {
       ucs2_t wc = (ucs2_t)*s++;

@@ -54,56 +54,56 @@ Application::~Application ()
 }
 
 errno_t
-ResolveModuleRelativePath(char *dest, int destSize, const char* relativeDir, const char *file)
+ResolveModuleRelativePath(wchar_t *dest, int destSize, const wchar_t* relativeDir, const wchar_t *file)
 {
-	assert(relativeDir == 0 || relativeDir[strlen(relativeDir)-1] == '\\');
-    char path_name[_MAX_PATH];
-    char drive[_MAX_DRIVE];
-    char dir[_MAX_DIR];
-	char tmp_fname[_MAX_FNAME];
-	char tmp_ext[_MAX_EXT];
+    assert(relativeDir == 0 || relativeDir[wcslen(relativeDir)-1] == L'\\');
+    wchar_t path_name[_MAX_PATH];
+    wchar_t drive[_MAX_DRIVE];
+    wchar_t dir[_MAX_DIR];
+    wchar_t tmp_fname[_MAX_FNAME];
+    wchar_t tmp_ext[_MAX_EXT];
 
-	errno_t err = ResolveModuleRelativeDir(path_name, _MAX_PATH, relativeDir);
-	if(err != 0) return err;
-	err = _splitpath_s(path_name, drive,  _MAX_DRIVE, dir, _MAX_DIR,  NULL, 0,  NULL, 0);
-	if(err != 0) return err; // ??
+    errno_t err = ResolveModuleRelativeDir(path_name, _MAX_PATH, relativeDir);
+    if(err != 0) return err;
+    err = _wsplitpath_s(path_name, drive, _MAX_DRIVE, dir, _MAX_DIR,  NULL, 0,  NULL, 0);
+    if(err != 0) return err; // ??
 
-	err = _splitpath_s(file, NULL, 0, NULL, 0, tmp_fname, _MAX_FNAME, tmp_ext, _MAX_EXT);
-	if(err != 0) return err;
+    err = _wsplitpath_s(file, NULL, 0, NULL, 0, tmp_fname, _MAX_FNAME, tmp_ext, _MAX_EXT);
+    if(err != 0) return err;
 
-	err = _makepath_s(dest, destSize, drive, dir, tmp_fname, tmp_ext);
-	return err;	
+    err = _wmakepath_s(dest, destSize, drive, dir, tmp_fname, tmp_ext);
+    return err;	
 }
 
 
 errno_t
-ResolveModuleRelativeDir(char *dest, int destSize, const char* relativeDir)
+ResolveModuleRelativeDir(wchar_t *dest, int destSize, const wchar_t* relativeDir)
 {
-    char module_path_name[_MAX_PATH];
-    char drive[_MAX_DRIVE];
-    char dir[_MAX_DIR];
+    wchar_t module_path_name[_MAX_PATH];
+    wchar_t drive[_MAX_DRIVE];
+    wchar_t dir[_MAX_DIR];
 
-	GetModuleFileName (0, module_path_name, sizeof module_path_name);
-	_splitpath_s(module_path_name, drive,  _MAX_DRIVE, dir, _MAX_DIR,  NULL, 0,  NULL, 0);
-	errno_t err;
-	if(relativeDir != 0)
-	{
-		err = strcat_s(dir, _MAX_DIR, relativeDir);
-		if(err != 0) {
-			return err;
-		}
-	}
-	err = _makepath_s(dest, destSize, drive, dir, NULL, NULL);
+    GetModuleFileNameW (0, module_path_name, _MAX_PATH);
+    _wsplitpath_s(module_path_name, drive,  _MAX_DRIVE, dir, _MAX_DIR,  NULL, 0,  NULL, 0);
+    errno_t err;
+    if(relativeDir != 0)
+    {
+      err = wcscat_s(dir, _MAX_DIR, relativeDir);
+      if(err != 0) {
 	return err;
+      }
+    }
+    err = _wmakepath_s(dest, destSize, drive, dir, NULL, NULL);
+    return err;
 }
 
 
 static void
 init_module_dir ()
 {
-  char path[PATH_MAX];
-  GetModuleFileName (0, path, sizeof path);
-  char *p = jrindex (path, '\\');
+  wchar_t path[PATH_MAX];
+  GetModuleFileNameW (0, path, sizeof path / sizeof *path);
+  wchar_t *p = jrindex (path, L'\\');
   if (p)
     p[1] = 0;
   xsymbol_value (Qmodule_dir) = make_path (path);
@@ -127,11 +127,11 @@ init_windows_dir ()
 }
 
 static int
-init_home_dir (const char *path)
+init_home_dir (const wchar_t *path)
 {
-  char home[PATH_MAX], *tem;
-  int l = WINFS::GetFullPathName (path, sizeof home, home, &tem);
-  if (!l || l >= sizeof home)
+  wchar_t home[PATH_MAX], *tem;
+  int l = WINFS::GetFullPathName (path, PATH_MAX, home, &tem);
+  if (!l || l >= PATH_MAX)
     return 0;
   DWORD f = WINFS::GetFileAttributes (home);
   if (f == -1 || !(f & FILE_ATTRIBUTE_DIRECTORY))
@@ -140,43 +140,49 @@ init_home_dir (const char *path)
   return 1;
 }
 
+static int
+init_home_dir (const char *path)
+{
+  return init_home_dir (tmpwstr(path));
+}
+
 static void
 init_home_dir ()
 {
-  char path[PATH_MAX];
-  static const char xyzzyhome[] = "XYZZYHOME";
-  static const char cfgInit[] = "init";
+  wchar_t path[PATH_MAX];
+  static const wchar_t xyzzyhome[] = L"XYZZYHOME";
+  static const wchar_t cfgInit[] = L"init";
 
   // top priority is USBInit.
-  if (read_conf (cfgUsbInit, cfgUsbHomeDir, path, sizeof path))
+  if (read_conf (tmpwstr(cfgUsbInit), tmpwstr(cfgUsbHomeDir), path, sizeof path / sizeof *path))
   {
-	  char absPath[PATH_MAX];
-	  errno_t err = ResolveModuleRelativeDir(absPath, PATH_MAX, path);
-	  if(!err && init_home_dir (absPath))
-		  return;
+    wchar_t absPath[PATH_MAX];
+    errno_t err = ResolveModuleRelativeDir(absPath, PATH_MAX, path);
+    if(!err && init_home_dir (absPath))
+	return;
   }
 
-  if (read_conf (cfgInit, "homeDir", path, sizeof path)
+  if (read_conf (cfgInit, L"homeDir", path, sizeof path / sizeof *path)
       && init_home_dir (path))
     return;
 
   for (int i = 0; i <= 5; i += 5)
     {
-      char *e = getenv (xyzzyhome + i);
+      wchar_t *e = _wgetenv (xyzzyhome + i);
       if (e && init_home_dir (e))
         return;
     }
 
-  char *drive = getenv ("HOMEDRIVE");
-  char *dir = getenv ("HOMEPATH");
-  if (drive && dir && strlen (drive) + strlen (dir) < sizeof path - 1)
+  wchar_t *drive = _wgetenv (L"HOMEDRIVE");
+  wchar_t *dir = _wgetenv (L"HOMEPATH");
+  if (drive && dir && wcslen (drive) + wcslen (dir) < (sizeof path / sizeof *path) - 1)
     {
-      strcpy (stpcpy (path, drive), dir);
+      wcscpy (stpcpy (path, drive), dir);
       if (init_home_dir (path))
         return;
     }
 
-  if (read_conf (cfgInit, "logDir", path, sizeof path)
+  if (read_conf (cfgInit, L"logDir", path, sizeof path / sizeof *path)
       && init_home_dir (path))
     return;
 
@@ -205,62 +211,62 @@ init_load_path ()
 }
 
 static bool
-try_assign_config_path(char *path)
+try_assign_config_path(const wchar_t *path)
 {
-    DWORD a = WINFS::GetFileAttributes (path);
-    if (a != DWORD (-1) && a & FILE_ATTRIBUTE_DIRECTORY)
-    {
-        xsymbol_value (Quser_config_path) = make_path (path);
-		return true;
-	}
-	return false;
+  DWORD a = WINFS::GetFileAttributes (path);
+  if (a != DWORD (-1) && a & FILE_ATTRIBUTE_DIRECTORY)
+  {
+    xsymbol_value (Quser_config_path) = make_path (path);
+    return true;
+  }
+  return false;
 }
 
 static void
-init_user_config_path (const char *config_path)
+init_user_config_path (const wchar_t *config_path)
 {
   if (!config_path)
-    config_path = getenv ("XYZZYCONFIGPATH");
+    config_path = _wgetenv (L"XYZZYCONFIGPATH");
   if (config_path)
     {
-      char path[PATH_MAX], *tem;
-      int l = WINFS::GetFullPathName (config_path, sizeof path, path, &tem);
+      wchar_t path[PATH_MAX], *tem;
+      int l = WINFS::GetFullPathName (config_path, PATH_MAX, path, &tem);
       if (l && l < sizeof path)
         {
-		  if(try_assign_config_path(path))
-			  return;
+	  if(try_assign_config_path(path))
+	    return;
         }
     }
 
   if(g_app.ini_file_path)
   {
-	  char path[_MAX_PATH];
-	  if(read_conf(cfgUsbInit, cfgUsbConfigDir, path, _MAX_PATH))
-	  {
-		  char absPath[_MAX_PATH];
-		  errno_t err = ResolveModuleRelativeDir(absPath, _MAX_PATH, path);
-		  if(!err && try_assign_config_path(absPath))
-			  return;
-	  }
+      wchar_t path[_MAX_PATH];
+      if(read_conf(tmpwstr(cfgUsbInit), tmpwstr(cfgUsbConfigDir), path, _MAX_PATH))
+      {
+	  wchar_t absPath[_MAX_PATH];
+	  errno_t err = ResolveModuleRelativeDir(absPath, _MAX_PATH, path);
+	  if(!err && try_assign_config_path(absPath))
+	      return;
+      }
   }
 
-  char *path = (char *)alloca (w2sl (xsymbol_value (Qmodule_dir))
-                               + w2sl (xsymbol_value (Vuser_name))
-                               + 32);
-  char *p = stpcpy (w2s (path, xsymbol_value (Qmodule_dir)), "usr");
+  wchar_t *path = (wchar_t *)alloca ((w2ul (xsymbol_value (Qmodule_dir))
+				      + w2ul (xsymbol_value (Vuser_name))
+				      + 32) * sizeof(wchar_t));
+  wchar_t *p = stpcpy (w2u (path, xsymbol_value (Qmodule_dir)), L"usr");
   WINFS::CreateDirectory (path, 0);
-  *p++ = '/';
-  p = w2s (p, xsymbol_value (Vuser_name));
+  *p++ = L'/';
+  p = w2u (p, xsymbol_value (Vuser_name));
   WINFS::CreateDirectory (path, 0);
-  *p++ = '/';
-  strcpy (p, sysdep.windows_short_name);
+  *p++ = L'/';
+  wcscpy (p, tmpwstr(sysdep.windows_short_name));
   WINFS::CreateDirectory (path, 0);
   if(!try_assign_config_path(path))
     xsymbol_value (Quser_config_path) = xsymbol_value (Qmodule_dir); //fail all, use module dir. 
 }
 
 static bool
-FileExists (const char* path) {
+FileExists (const wchar_t* path) {
   HANDLE h = WINFS::CreateFile (path, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
   if (h == INVALID_HANDLE_VALUE)
 	  return false;
@@ -271,8 +277,8 @@ FileExists (const char* path) {
 static void
 try_load_inifile_of_modulepath()
 {
-   char path[_MAX_PATH];
-   errno_t err = ResolveModuleRelativePath(path, _MAX_PATH, 0, "xyzzy.ini");
+   wchar_t path[_MAX_PATH];
+   errno_t err = ResolveModuleRelativePath(path, _MAX_PATH, 0, L"xyzzy.ini");
    if(err != 0)
       return;
    if(FileExists(path))
@@ -282,7 +288,7 @@ try_load_inifile_of_modulepath()
 }
 
 static void
-init_user_inifile_path_1st_phase (const char *ini_file)
+init_user_inifile_path_1st_phase (const wchar_t *ini_file)
 {
   // if there is no ini file specification, use the same place as xyzzy.exe if exist.
   if(!ini_file)
@@ -290,21 +296,22 @@ init_user_inifile_path_1st_phase (const char *ini_file)
 }
 
 static void
-init_user_inifile_path_2nd_phase (const char *ini_file)
+init_user_inifile_path_2nd_phase (const wchar_t *ini_file)
 {
   if(g_app.ini_file_path)
 	  return;
 
   if (!ini_file)
-    ini_file = getenv ("XYZZYINIFILE");
+    ini_file = _wgetenv (L"XYZZYINIFILE");
+
   if (ini_file && find_slash (ini_file))
     {
-      char path[PATH_MAX], *tem;
-      int l = WINFS::GetFullPathName (ini_file, sizeof path, path, &tem);
-      if (l && l < sizeof path)
+      wchar_t path[PATH_MAX], *tem;
+      int l = WINFS::GetFullPathName (ini_file, PATH_MAX, path, &tem);
+      if (l && l < PATH_MAX)
         {
-          HANDLE h = CreateFile (path, GENERIC_READ, 0, 0, OPEN_ALWAYS,
-                                 FILE_ATTRIBUTE_ARCHIVE, 0);
+          HANDLE h = CreateFileW (path, GENERIC_READ, 0, 0, OPEN_ALWAYS,
+                                  FILE_ATTRIBUTE_ARCHIVE, 0);
           if (h != INVALID_HANDLE_VALUE)
             {
               CloseHandle (h);
@@ -315,11 +322,11 @@ init_user_inifile_path_2nd_phase (const char *ini_file)
     }
 
   if (!ini_file)
-    ini_file = "xyzzy.ini";
+    ini_file = L"xyzzy.ini";
 
-  char *path = (char *)alloca (w2sl (xsymbol_value (Quser_config_path))
-                               + strlen (ini_file) + 32);
-  strcpy (w2s (path, xsymbol_value (Quser_config_path)), ini_file);
+  wchar_t *path = (wchar_t *)alloca ((w2ul (xsymbol_value (Quser_config_path))
+				      + wcslen (ini_file) + 32) * sizeof(wchar_t));
+  wcscpy (w2u (path, xsymbol_value (Quser_config_path)), ini_file);
   g_app.ini_file_path = xstrdup (path);
 }
 
@@ -328,18 +335,18 @@ init_dump_path ()
 {
   if (!*g_app.dump_image)
     {
-      int l = GetModuleFileName (0, g_app.dump_image, PATH_MAX);
-      char *e = g_app.dump_image + l;
-      if (l > 4 && !_stricmp (e - 4, ".exe"))
+      int l = GetModuleFileNameW (0, g_app.dump_image, PATH_MAX);
+      wchar_t *e = g_app.dump_image + l;
+      if (l > 4 && !_wcsicmp (e - 4, L".exe"))
         e -= 3;
       else
-        *e++ = '.';
-      strcpy (e, sysdep.windows_short_name);
+        *e++ = L'.';
+      wcscpy (e, tmpwstr(sysdep.windows_short_name));
     }
 }
 
 static void
-init_env_symbols (const char *config_path, const char *ini_file)
+init_env_symbols (const wchar_t *config_path, const wchar_t *ini_file)
 {
   xsymbol_value (Vfeatures) = xcons(Kmultiple_frames, xcons (Kxyzzy, xcons (Kieee_floating_point, Qnil)));
   xsymbol_value (Qdump_image_path) = make_path (g_app.dump_image, 0);
@@ -694,7 +701,7 @@ check_dump_key ()
 static int
 init_lisp_objects ()
 {
-  const char *config_path = 0, *ini_file = 0;
+  const wchar_t *config_path = 0, *ini_file = 0;
   *g_app.dump_image = 0;
 
   bool redump = false;
@@ -703,16 +710,17 @@ init_lisp_objects ()
   for (ac = 1; ac < __argc - 1; ac += 2)
     if (!strcmp (__argv[ac], "-image"))
       {
-        char *tem;
-        int l = WINFS::GetFullPathName (__argv[ac + 1], sizeof g_app.dump_image,
+	wchar_t *tem;
+        int l = WINFS::GetFullPathName (__wargv[ac + 1],
+					sizeof g_app.dump_image/sizeof g_app.dump_image[0],
                                         g_app.dump_image, &tem);
         if (!l || l >= sizeof g_app.dump_image)
           *g_app.dump_image = 0;
       }
     else if (!strcmp (__argv[ac], "-config"))
-      config_path = __argv[ac + 1];
+      config_path = __wargv[ac + 1];
     else if (!strcmp (__argv[ac], "-ini"))
-      ini_file = __argv[ac + 1];
+      ini_file = __wargv[ac + 1];
     else if (!strcmp (__argv[ac], "-redump"))
       redump  =true;
     else
@@ -721,7 +729,7 @@ init_lisp_objects ()
   try
     {
       if (!ini_file)
-        ini_file = getenv ("XYZZYINIFILE");
+        ini_file = _wgetenv (L"XYZZYINIFILE");
       init_user_inifile_path_1st_phase(ini_file);
 
       init_dump_path ();
@@ -1143,52 +1151,53 @@ init_app(HINSTANCE hinst, ApplicationFrame* app1, ApplicationFrame* parent)
 }
 
 static bool
-DirExists(LPCTSTR fullPath)
+DirExists(LPCWSTR fullPath)
 {
-	DWORD res = GetFileAttributes(fullPath);
-	return res != -1 && (res & FILE_ATTRIBUTE_DIRECTORY);
+  DWORD res = GetFileAttributesW(fullPath);
+  return res != -1 && (res & FILE_ATTRIBUTE_DIRECTORY);
 }
 
 
 static bool
 ExistsNewFolder()
 {
-	TCHAR path[MAX_PATH];
-	ResolveModuleRelativeDir(path, MAX_PATH, "xyzzy_new");
-	return DirExists(path);
+  wchar_t path[MAX_PATH];
+  ResolveModuleRelativeDir(path, MAX_PATH, L"xyzzy_new");
+  return DirExists(path);
 }
 
 #include <string>
-using std::string;
+using std::wstring;
 
 bool
 LaunchUpdater()
 {
-	DWORD pid = GetCurrentProcessId();
-	char exepath[MAX_PATH];
-	ResolveModuleRelativePath(exepath, MAX_PATH, NULL, "updater.exe");
-	string cmdline(exepath);
-	cmdline += " ";
-	char buf[256];
-	_itoa_s(pid, buf, 10);
-	cmdline += buf;
+  DWORD pid = GetCurrentProcessId();
+  wchar_t exepath[MAX_PATH];
+  ResolveModuleRelativePath(exepath, MAX_PATH, NULL, L"updater.exe");
+  wstring cmdline(exepath);
+  cmdline += L" ";
+  wchar_t buf[256];
+  _itow_s(pid, buf, 10);
+  cmdline += buf;
+  
+  PROCESS_INFORMATION pi;
+  STARTUPINFOW si;
+  memset (&si, 0, sizeof si);
+  si.cb = sizeof si;
+  if (!CreateProcessW (0, (LPWSTR)cmdline.c_str(), 0, 0, 0, CREATE_NEW_PROCESS_GROUP, 0, 0, &si, &pi))
+      return false;
+  CloseHandle (pi.hProcess);
+  CloseHandle (pi.hThread);
 
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	memset (&si, 0, sizeof si);
-	si.cb = sizeof si;
-	if (!CreateProcess (0, (LPSTR)cmdline.c_str(), 0, 0, 0, CREATE_NEW_PROCESS_GROUP, 0, 0, &si, &pi))
-		return false;
-	CloseHandle (pi.hProcess);
-	CloseHandle (pi.hThread);
-
-	return true;
+  return true;
 }
 
 
 int PASCAL
 WinMain (HINSTANCE hinst, HINSTANCE, LPSTR, int cmdshow)
 {
+  setlocale(LC_ALL, "");
   if (ExistsNewFolder())
   {
 	  if(LaunchUpdater())

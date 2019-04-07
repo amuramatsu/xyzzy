@@ -198,6 +198,7 @@ pointerp (lisp x)
 inline int
 object_typeof (lisp x)
 {
+  if (x == 0) DebugBreak();
   assert (x);
   assert (pointerp (x));
   assert (bitisset (used_place (x), bit_index (x)));

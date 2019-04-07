@@ -45,19 +45,23 @@ ArchiverInterface::getfn (int i) const
   return ai_fns[i];
 }
 
-extern errno_t ResolveModuleRelativePath(char *dest, int destSize, const char* relativeDir, const char* file);
+extern errno_t ResolveModuleRelativePath(wchar_t *dest, int destSize, const wchar_t* relativeDir, const wchar_t* file);
 
 void
 ArchiverInterface::lock::load_module()
 {
   l_ai.ai_hmodule = WINFS::LoadLibrary (l_ai.ai_module_name);
   if (! l_ai.ai_hmodule) {
-    char module_path_name[_MAX_PATH];
-	errno_t err = ResolveModuleRelativePath(module_path_name, _MAX_PATH, "lib\\", l_ai.ai_module_name);
-	if(err != 0) {
+    wchar_t module_path_name[_MAX_PATH];
+    wchar_t ai_module_name[_MAX_PATH];
+    ::MultiByteToWideChar(CP_ACP, 0,
+			  l_ai.ai_module_name, -1,
+			  ai_module_name, _MAX_PATH);
+    errno_t err = ResolveModuleRelativePath(module_path_name, _MAX_PATH, L"lib\\", ai_module_name);
+    if(err != 0) {
       MessageBox (0, "Too long path of archive dir!", "xyzzy error", MB_OK | MB_ICONHAND);
 	  return;
-	}
+    }
     l_ai.ai_hmodule = WINFS::LoadLibrary (module_path_name);
   }
 }

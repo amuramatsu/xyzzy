@@ -250,12 +250,19 @@ class tmpstr {
 private:
   char *ptr;
   void init(const wchar_t *wstr, size_t length) {
-    size_t n = ::WideCharToMultiByte(CP_ACP, 0,
-                                     wstr, length, NULL, NULL,
+    if (!wstr) {
+      ptr = 0;
+      return;
+    }
+    if (*wstr == 0) {
+      ptr = (char *)xmalloc(1);
+      *ptr = 0;
+      return;
+    }
+    size_t n = ::WideCharToMultiByte(CP_ACP, 0, wstr, length, NULL, NULL,
                                      NULL, NULL);
     ptr = (char *)xmalloc(n+1);
-    ::WideCharToMultiByte(CP_ACP, 0,
-                          wstr, length, ptr, n,
+    ::WideCharToMultiByte(CP_ACP, 0, wstr, length, ptr, n,
                           NULL, NULL);
     ptr[n] = 0;
   };
@@ -267,7 +274,8 @@ public:
     init(wstr, length);
   }
   ~tmpstr() {
-    xfree(ptr);
+    if (ptr)
+      xfree(ptr);
   }
   const char* get() {
     return ptr;
@@ -281,11 +289,18 @@ class tmpwstr {
 private:
   wchar_t *ptr;
   void init(const char *str, size_t length) {
-    size_t n = ::MultiByteToWideChar(CP_ACP, 0,
-                                     str, length, NULL, NULL);
+    if (!str) {
+      ptr = 0;
+      return;
+    }
+    if (*str == 0) {
+      ptr = (wchar_t *)xmalloc(sizeof(wchar_t));
+      *ptr = 0;
+      return;
+    }
+    size_t n = ::MultiByteToWideChar(CP_ACP, 0, str, length, NULL, NULL);
     ptr = (wchar_t *)xmalloc((n+1)*sizeof(wchar_t));
-    ::MultiByteToWideChar(CP_ACP, 0,
-                          str, length, ptr, n);
+    ::MultiByteToWideChar(CP_ACP, 0, str, length, ptr, n);
     ptr[n] = 0;
   }
 public:
@@ -296,7 +311,8 @@ public:
     init(str, length);
   }
   ~tmpwstr() {
-    xfree(ptr);
+    if (ptr)
+      xfree(ptr);
   }
   const wchar_t* get() {
     return ptr;
