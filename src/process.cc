@@ -78,8 +78,8 @@ EnvStrings::setup (lisp lenv)
 
   for (int d = 0; d < 26; d++)
     {
-      const char *dir = get_device_dir (d);
-      int x = strlen (dir);
+      const wchar_t *dir = get_device_dir (d);
+      int x = wcslen (dir);
       if (x > 3)
         {
           l += x + sizeof "=X:=X:";
@@ -106,12 +106,12 @@ EnvStrings::setup (lisp lenv)
 
   for (int d = 0; d < 26; d++)
     {
-      const char *dir = get_device_dir (d);
-      int x = strlen (dir);
+      const wchar_t *dir = get_device_dir (d);
+      int x = wcslen (dir);
       if (x > 3)
         {
           char *b0 = b;
-          b += sprintf (b, "=%c:=%c:%s", 'A' + d, 'A' + d, dir) + 1;
+          b += sprintf (b, "=%c:=%c:%s", 'A' + d, 'A' + d, tmpstr(dir)) + 1;
           set (nb, ne, b0);
         }
     }

@@ -63,7 +63,7 @@ ResolveModuleRelativePath(wchar_t *dest, int destSize, const wchar_t* relativeDi
     wchar_t tmp_fname[_MAX_FNAME];
     wchar_t tmp_ext[_MAX_EXT];
 
-    errno_t err = ResolveModuleRelativeDir(path_name, _MAX_PATH, relativeDir);
+    errno_t err = ResolveModuleRelativeDir(path_name, ARRAYLEN_OF(path_name), relativeDir);
     if(err != 0) return err;
     err = _wsplitpath_s(path_name, drive, _MAX_DRIVE, dir, _MAX_DIR,  NULL, 0,  NULL, 0);
     if(err != 0) return err; // ??
@@ -83,7 +83,7 @@ ResolveModuleRelativeDir(wchar_t *dest, int destSize, const wchar_t* relativeDir
     wchar_t drive[_MAX_DRIVE];
     wchar_t dir[_MAX_DIR];
 
-    GetModuleFileNameW (0, module_path_name, _MAX_PATH);
+    GetModuleFileNameW (0, module_path_name, ARRAYLEN_OF(module_path_name));
     _wsplitpath_s(module_path_name, drive,  _MAX_DRIVE, dir, _MAX_DIR,  NULL, 0,  NULL, 0);
     errno_t err;
     if(relativeDir != 0)
@@ -102,7 +102,7 @@ static void
 init_module_dir ()
 {
   wchar_t path[PATH_MAX];
-  GetModuleFileNameW (0, path, sizeof path / sizeof *path);
+  GetModuleFileNameW (0, path, ARRAYLEN_OF(path));
   wchar_t *p = jrindex (path, L'\\');
   if (p)
     p[1] = 0;
@@ -118,11 +118,11 @@ init_current_dir ()
 static void
 init_windows_dir ()
 {
-  char path[PATH_MAX];
-  GetWindowsDirectory (path, sizeof path);
+  wchar_t path[PATH_MAX];
+  GetWindowsDirectoryW (path, ARRAYLEN_OF(path));
   xsymbol_value (Qwindows_dir) = make_path (path);
 
-  GetSystemDirectory (path, sizeof path);
+  GetSystemDirectoryW (path, ARRAYLEN_OF(path));
   xsymbol_value (Qsystem_dir) = make_path (path);
 }
 
@@ -154,15 +154,15 @@ init_home_dir ()
   static const wchar_t cfgInit[] = L"init";
 
   // top priority is USBInit.
-  if (read_conf (tmpwstr(cfgUsbInit), tmpwstr(cfgUsbHomeDir), path, sizeof path / sizeof *path))
+  if (read_conf (tmpwstr(cfgUsbInit), tmpwstr(cfgUsbHomeDir), path, ARRAYLEN_OF(path)))
   {
     wchar_t absPath[PATH_MAX];
-    errno_t err = ResolveModuleRelativeDir(absPath, PATH_MAX, path);
+    errno_t err = ResolveModuleRelativeDir(absPath, ARRAYLEN_OF(absPath), path);
     if(!err && init_home_dir (absPath))
 	return;
   }
 
-  if (read_conf (cfgInit, L"homeDir", path, sizeof path / sizeof *path)
+  if (read_conf (cfgInit, L"homeDir", path, ARRAYLEN_OF(path))
       && init_home_dir (path))
     return;
 
@@ -175,14 +175,14 @@ init_home_dir ()
 
   wchar_t *drive = _wgetenv (L"HOMEDRIVE");
   wchar_t *dir = _wgetenv (L"HOMEPATH");
-  if (drive && dir && wcslen (drive) + wcslen (dir) < (sizeof path / sizeof *path) - 1)
+  if (drive && dir && wcslen (drive) + wcslen (dir) < ARRAYLEN_OF(path) - 1)
     {
       wcscpy (stpcpy (path, drive), dir);
       if (init_home_dir (path))
         return;
     }
 
-  if (read_conf (cfgInit, L"logDir", path, sizeof path / sizeof *path)
+  if (read_conf (cfgInit, L"logDir", path, ARRAYLEN_OF(path))
       && init_home_dir (path))
     return;
 
@@ -231,7 +231,7 @@ init_user_config_path (const wchar_t *config_path)
     {
       wchar_t path[PATH_MAX], *tem;
       int l = WINFS::GetFullPathName (config_path, PATH_MAX, path, &tem);
-      if (l && l < sizeof path)
+      if (l && l < ARRAYLEN_OF(path))
         {
 	  if(try_assign_config_path(path))
 	    return;
@@ -712,9 +712,9 @@ init_lisp_objects ()
       {
 	wchar_t *tem;
         int l = WINFS::GetFullPathName (__wargv[ac + 1],
-					sizeof g_app.dump_image/sizeof g_app.dump_image[0],
+					ARRAYLEN_OF(g_app.dump_image),
                                         g_app.dump_image, &tem);
-        if (!l || l >= sizeof g_app.dump_image)
+        if (!l || l >= ARRAYLEN_OF(g_app.dump_image))
           *g_app.dump_image = 0;
       }
     else if (!strcmp (__argv[ac], "-config"))
@@ -1174,7 +1174,7 @@ LaunchUpdater()
 {
   DWORD pid = GetCurrentProcessId();
   wchar_t exepath[MAX_PATH];
-  ResolveModuleRelativePath(exepath, MAX_PATH, NULL, L"updater.exe");
+  ResolveModuleRelativePath(exepath, ARRAYLEN_OF(exepath), NULL, L"updater.exe");
   wstring cmdline(exepath);
   cmdline += L" ";
   wchar_t buf[256];

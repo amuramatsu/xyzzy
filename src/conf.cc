@@ -153,8 +153,8 @@ int
 read_conf (const wchar_t *section, const wchar_t *name, int &value)
 {
   wchar_t buf[32];
-  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
-  if (!l || l >= sizeof buf - 1)
+  int l = read_conf (section, name, buf, ARRAYLEN_OF(buf));
+  if (!l || l >= ARRAYLEN_OF(buf) - 1)
     return 0;
   return parse_int (buf, value);
 }
@@ -176,8 +176,8 @@ int
 read_conf (const wchar_t *section, const wchar_t *name, u_long &value)
 {
   wchar_t buf[32];
-  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
-  if (!l || l >= sizeof buf - 1)
+  int l = read_conf (section, name, buf, ARRAYLEN_OF(buf));
+  if (!l || l >= ARRAYLEN_OF(buf) - 1)
     return 0;
   return parse_long (buf, value);
 }
@@ -218,8 +218,8 @@ int
 read_conf (const wchar_t *section, const wchar_t *name, RECT &rr)
 {
   wchar_t buf[128];
-  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
-  if (!l || l >= sizeof buf - 1)
+  int l = read_conf (section, name, buf, ARRAYLEN_OF(buf));
+  if (!l || l >= ARRAYLEN_OF(buf) - 1)
     return 0;
   int t, r, b;
   if (swscanf (buf, L"(%d,%d)-(%d,%d)", &l, &t, &r, &b) != 4)
@@ -241,8 +241,8 @@ int
 read_conf (const wchar_t *section, const wchar_t *name, LOGFONT &lf)
 {
   wchar_t buf[128];
-  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
-  if (!l || l >= sizeof buf - 1)
+  int l = read_conf (section, name, buf, ARRAYLEN_OF(buf));
+  if (!l || l >= ARRAYLEN_OF(buf) - 1)
     return 0;
   memset (&lf, 0, sizeof lf);
   int h, cs;
@@ -263,8 +263,8 @@ int
 read_conf (const wchar_t *section, const wchar_t *name, PRLOGFONT &lf)
 {
   wchar_t buf[128];
-  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
-  if (!l || l >= sizeof buf - 1)
+  int l = read_conf (section, name, buf, ARRAYLEN_OF(buf));
+  if (!l || l >= ARRAYLEN_OF(buf) - 1)
     return 0;
   int point, cs, bold, italic;
   if (swscanf (buf, L"%d,\"%31[^\"]\",%d,%d,%d",
@@ -287,8 +287,8 @@ int
 read_conf (const wchar_t *section, const wchar_t *name, WINDOWPLACEMENT &w)
 {
   wchar_t buf[128];
-  int l = read_conf (section, name, buf, sizeof buf / sizeof *buf);
-  if (!l || l >= sizeof buf - 1)
+  int l = read_conf (section, name, buf, ARRAYLEN_OF(buf));
+  if (!l || l >= ARRAYLEN_OF(buf) - 1)
     return 0;
   int t, r, b, s;
   if (swscanf (buf, L"(%d,%d)-(%d,%d),%d", &l, &t, &r, &b, &s) != 5)

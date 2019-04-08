@@ -320,8 +320,8 @@ NetPassDlg::do_command (int id, int code)
   switch (id)
     {
     case IDOK:
-      GetDlgItemTextW (hwnd, IDC_USERNAME, username, sizeof username);
-      GetDlgItemTextW (hwnd, IDC_PASSWD, passwd, sizeof passwd);
+      GetDlgItemTextW (hwnd, IDC_USERNAME, username, ARRAYLEN_OF(username));
+      GetDlgItemTextW (hwnd, IDC_PASSWD, passwd, ARRAYLEN_OF(passwd));
       /* fall thru... */
     case IDCANCEL:
       EndDialog (hwnd, id);
@@ -650,7 +650,7 @@ GetDiskFreeSpaceFAT32 (LPCWSTR lpRootPathName, LPDWORD lpSectorsPerCluster,
   wchar_t buf[PATH_MAX + 1];
   if (!lpRootPathName)
     {
-      if (!GetCurrentDirectoryW (sizeof buf, buf))
+      if (!GetCurrentDirectoryW (ARRAYLEN_OF(buf), buf))
         return 0;
       lpRootPathName = root_path_name (buf, buf);
     }

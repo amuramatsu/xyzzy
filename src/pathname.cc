@@ -128,24 +128,24 @@ copy_Chars (Char *b, const Char *p, const Char *pe)
   return b + l;
 }
 
-static char devdirs[26][PATH_MAX];
+static wchar_t devdirs[26][PATH_MAX];
 
 int
-set_device_dir (const char *path, int f)
+set_device_dir (const wchar_t *path, int f)
 {
   if (!WINFS::SetCurrentDirectory (path))
     return 0;
   if (f || xsymbol_value (Vauto_update_per_device_directory) != Qnil)
     {
-      char curdir[PATH_MAX];
-      if (GetCurrentDirectory (sizeof curdir, curdir)
-          && alpha_char_p (*curdir & 255) && curdir[1] == ':')
-        strcpy (devdirs[_char_downcase (*curdir) - 'a'], curdir + 2);
+      wchar_t curdir[PATH_MAX];
+      if (GetCurrentDirectoryW (ARRAYLEN_OF(curdir), curdir)
+          && alpha_char_p (*curdir & 255) && curdir[1] == L':')
+        wcscpy (devdirs[_char_downcase (*curdir) - 'a'], curdir + 2);
     }
   return 1;
 }
 
-const char *
+const wchar_t *
 get_device_dir (int c)
 {
   return devdirs[c];
@@ -156,13 +156,13 @@ get_device_dir (Char *b, const Char *p, int l)
 {
   if (l == 2 && alpha_char_p (*p) && p[1] == ':'
       && *devdirs[_char_downcase (*p) - 'a'])
-    return s2w (b, devdirs[_char_downcase (*p) - 'a']);
+    return u2w (b, devdirs[_char_downcase (*p) - 'a']);
 
-  char buf[PATH_MAX + 1], path[PATH_MAX + 1], *tem;
-  w2s (buf, p, l);
-  if (WINFS::GetFullPathName (buf, sizeof path, path, &tem))
+  wchar_t buf[PATH_MAX + 1], path[PATH_MAX + 1], *tem;
+  w2u (buf, p, l);
+  if (WINFS::GetFullPathName (buf, ARRAYLEN_OF(path), path, &tem))
     {
-      Char *be = s2w (b, path);
+      Char *be = u2w (b, path);
       return copy_Chars (b, skip_device_or_host (b, be), be);
     }
   return b;
@@ -1051,7 +1051,7 @@ Fchdir (lisp dirname)
   pathname2cstr (dir, path);
   if (!WINFS::SetCurrentDirectory (path))
     file_error (GetLastError (), dir);
-  if (!GetCurrentDirectoryW (sizeof path / sizeof path[0], path))
+  if (!GetCurrentDirectoryW (ARRAYLEN_OF(path), path))
     file_error (GetLastError (), dir);
 
   if (wcscmp (sysdep.curdir, path) == 0)
@@ -1093,7 +1093,7 @@ Fmake_temp_file_name (lisp lprefix, lisp lsuffix, lisp dir, lisp dirp)
         file_error (Enot_a_directory, dir);
       pathname2cstr (dir, temp);
     }
-  else if (!GetTempPathW (sizeof temp, temp))
+  else if (!GetTempPathW (ARRAYLEN_OF(temp), temp))
     file_error (Ecannot_make_temp_file_name);
   wchar_t *sl = find_last_slash (temp);
   if (!sl)
@@ -1126,7 +1126,7 @@ Ffile_write_time (lisp file)
 lisp
 Fset_file_write_time (lisp lpath, lisp lutc)
 {
-  char path[PATH_MAX + 1];
+  wchar_t path[PATH_MAX + 1];
   pathname2cstr (lpath, path);
   decoded_time dt;
   dt.timezone = dt.daylight = 0;
@@ -2455,7 +2455,7 @@ Flist_server_resources (lisp lserver, lisp comment_p)
 lisp
 Fset_per_device_directory (lisp lpath)
 {
-  char path[PATH_MAX + 1];
+  wchar_t path[PATH_MAX + 1];
   pathname2cstr (lpath, path);
   if (!set_device_dir (path, 1))
     file_error (GetLastError (), lpath);

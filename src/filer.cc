@@ -115,16 +115,16 @@ FilerView::set_colors () const
 int
 FilerView::chdir (lisp dir)
 {
-  char *b = (char *)alloca (xstring_length (dir) * 2 + 1);
-  w2s (b, dir);
+  wchar_t *b = (wchar_t *)alloca ((xstring_length (dir) * 2 + 1) * sizeof(wchar_t));
+  w2u (b, dir);
   return WINFS::SetCurrentDirectory (b);
 }
 
 int
 FilerView::chdevdir (lisp dir)
 {
-  char *b = (char *)alloca (xstring_length (dir) * 2 + 1);
-  w2s (b, dir);
+  wchar_t *b = (wchar_t *)alloca ((xstring_length (dir) * 2 + 1) * sizeof(wchar_t));
+  w2u (b, dir);
   return set_device_dir (b, 0);
 }
 
@@ -876,10 +876,10 @@ FilerView::set_directory (lisp dir)
   if (!chdevdir (dir))
     file_error (GetLastError (), dir);
 
-  char cur[PATH_MAX];
-  GetCurrentDirectory (sizeof cur, cur);
+  wchar_t cur[PATH_MAX];
+  GetCurrentDirectoryW (ARRAYLEN_OF(cur), cur);
   fv_parent->restore_dir ();
-  lisp lcur = make_string (cur);
+  lisp lcur = make_string_u (cur);
   map_backsl_to_sl (xstring_contents (lcur),
                     xstring_length (lcur));
   lcur = Fappend_trail_slash (lcur);
