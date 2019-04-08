@@ -193,10 +193,14 @@ StatusWindow::text (const char *s)
 int
 StatusWindow::text (const wchar_t *s)
 {
+#if 0
   SendMessageW (sw_hwnd, SB_SETTEXT, 0, LPARAM (s));
   UpdateWindow (sw_hwnd);
   sw_last.textf = 1;
   return sw_last.l;
+#else
+  return text(tmpstr(s));
+#endif
 }
 
 void

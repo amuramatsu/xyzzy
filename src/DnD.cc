@@ -247,7 +247,8 @@ make_idl (HWND hwnd, lisp ldir, void *param,
       lvi.stateMask = LVIS_FOCUSED;
       if (ListView_GetItem (hwnd, &lvi))
         {
-          wcscpy(w, ((filer_data *)lvi.lParam)->name);
+          const filer_data *f = (const filer_data *)lvi.lParam;
+          wcscpy(w, *f->name ? f->name : L"..");
           ole_error (sf->ParseDisplayName (hwnd, 0, w, &eaten,
                                            &idls[nstored], 0));
           if (lvi.state & LVIS_FOCUSED)
@@ -584,10 +585,9 @@ filer_drop_target::check_self (const POINTL &pt)
 
   if (!df->fWide)
     {
-      for (const char *p = (char *)df + df->pFiles; *p; p += strlen (p) + 1) {
+      for (const char *p = (char *)df + df->pFiles; *p; p += strlen (p) + 1)
         if (!check_self (tmpwstr(p), base_path, wcscpy (tbuf, target)))
           return 0;
-      }
     }
   else
     {

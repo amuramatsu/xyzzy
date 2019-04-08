@@ -2,6 +2,7 @@
 #include "sysdep.h"
 #include "vfs.h"
 #include "resource.h"
+#include "utils.h"
 
 Sysdep sysdep;
 
@@ -14,10 +15,10 @@ Sysdep::Sysdep ()
   init_machine_type ();
   init_process_type ();
 
-  GetCurrentDirectoryW (sizeof curdir / sizeof curdir[0], curdir);
+  GetCurrentDirectoryW (ARRAYLEN_OF(curdir), curdir);
   if (*curdir == L'\\')
     {
-      GetWindowsDirectoryW (curdir, sizeof curdir / sizeof curdir[0]);
+      GetWindowsDirectoryW (curdir, ARRAYLEN_OF(curdir));
       WINFS::SetCurrentDirectory (curdir);
     }
 

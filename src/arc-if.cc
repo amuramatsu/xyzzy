@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "arc-if.h"
 #include "vfs.h"
+#include "tutils.h"
 
 const char *ArchiverInterface::ai_names[] =
 {
@@ -53,11 +54,7 @@ ArchiverInterface::lock::load_module()
   l_ai.ai_hmodule = WINFS::LoadLibrary (l_ai.ai_module_name);
   if (! l_ai.ai_hmodule) {
     wchar_t module_path_name[_MAX_PATH];
-    wchar_t ai_module_name[_MAX_PATH];
-    ::MultiByteToWideChar(CP_ACP, 0,
-			  l_ai.ai_module_name, -1,
-			  ai_module_name, _MAX_PATH);
-    errno_t err = ResolveModuleRelativePath(module_path_name, _MAX_PATH, L"lib\\", ai_module_name);
+    errno_t err = ResolveModuleRelativePath(module_path_name, ARRAYLEN_OF(module_path_name), L"lib\\", tmpwstr(l_ai.ai_module_name));
     if(err != 0) {
       MessageBox (0, "Too long path of archive dir!", "xyzzy error", MB_OK | MB_ICONHAND);
 	  return;

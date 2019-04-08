@@ -388,13 +388,18 @@ strequal (const wchar_t *cp, const Char *Cp)
 {
   int l = u2wl(cp);
   Char *cpi = u2w(cp, l);
+  Char *p = cpi;
   for (int i = 0; i < l; i++)
     {
-      if (char_downcase (*cpi++) != char_downcase (*Cp++))
-	return 0;
+      if (char_downcase (*p++) != char_downcase (*Cp++))
+        {
+	  xfree(cpi);
+	  return 0;
+	}
     }
+  xfree(cpi);
   return 1;
-}  
+}
 
 int
 strequal (const char *cp, const Char *Cp, int l)
@@ -449,19 +454,7 @@ strcasecmp (const char *s1, const char *s2)
 int
 strcasecmp (const wchar_t *s1, const wchar_t *s2)
 {
-  const wchar_t *p1 = s1;
-  const wchar_t *p2 = s2;
-  while (1)
-    {
-      wchar_t c1 = *p1++;
-      wchar_t c2 = *p2++;
-      c1 = char_downcase (c1);
-      c2 = char_downcase (c2);
-      if (c1 != c2)
-        return c1 - c2;
-      if (!c1)
-        return 0;
-    }
+  return wcsicmp(s1, s2);
 }
 
 void

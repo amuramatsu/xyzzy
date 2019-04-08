@@ -299,9 +299,9 @@ u2wl (const wchar_t *s)
       ucs2_t wc = (ucs2_t)*s++;
       Char cc = w2i(wc);
       if (cc != Char (-1))
-	l++;
+        l++;
       else
-	l += 2;
+        l += 2;
     }
   return l;
 }
@@ -316,13 +316,13 @@ u2w (Char *b, size_t size, const wchar_t **string)
       ucs2_t wc = *s++;
       Char cc = w2i(wc);
       if (cc != Char (-1))
-	*b++ = cc;
+        *b++ = cc;
       else if (b < be - 1) {
-	*b++ = utf16_ucs2_to_undef_pair_high(wc);
-	*b++ = utf16_ucs2_to_undef_pair_low(wc);
+        *b++ = utf16_ucs2_to_undef_pair_high(wc);
+        *b++ = utf16_ucs2_to_undef_pair_low(wc);
       }
       else
-	break;
+        break;
     }
   *string = (const wchar_t *)s;
   return b;
@@ -336,10 +336,10 @@ u2w (Char *b, const wchar_t *s)
       ucs2_t wc = (ucs2_t)*s++;
       Char cc = w2i(wc);
       if (cc != Char (-1))
-	*b++ = cc;
+        *b++ = cc;
       else {
-	*b++ = utf16_ucs2_to_undef_pair_high(wc);
-	*b++ = utf16_ucs2_to_undef_pair_low(wc);
+        *b++ = utf16_ucs2_to_undef_pair_high(wc);
+        *b++ = utf16_ucs2_to_undef_pair_low(wc);
       }
     }
   return b;
@@ -348,7 +348,7 @@ u2w (Char *b, const wchar_t *s)
 Char *
 u2w (const wchar_t *string, size_t size)
 {
-  Char *b = (Char *)xmalloc (sizeof (Char) * size);
+    Char *b = (Char *)xmalloc (sizeof (Char) * size * 2); //XXX
   u2w (b, string);
   return b;
 }
@@ -373,7 +373,7 @@ w2u (wchar_t *b, wchar_t *be, const Char *s, size_t size)
           if (utf16_undef_char_high_p (*s) && s < se - 1
               && utf16_undef_char_low_p (s[1]))
             {
-	      c = (wchar_t)utf16_undef_pair_to_ucs2 (*s, s[1]);
+              c = (wchar_t)utf16_undef_pair_to_ucs2 (*s, s[1]);
               s++;
             }
           else

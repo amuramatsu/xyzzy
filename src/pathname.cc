@@ -689,17 +689,6 @@ Ffile_directory_p (lisp file)
 }
 
 int
-special_file_p (const char *path)
-{
-  HANDLE h = WINFS::CreateFile (path, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
-  if (h == INVALID_HANDLE_VALUE)
-    return 0;
-  int dev = GetFileType (h) != FILE_TYPE_DISK;
-  CloseHandle (h);
-  return dev;
-}
-
-int
 special_file_p (const wchar_t *path)
 {
   HANDLE h = WINFS::CreateFile (path, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0);
@@ -710,10 +699,16 @@ special_file_p (const wchar_t *path)
   return dev;
 }
 
+int
+special_file_p (const char *path)
+{
+  return special_file_p(tmpwstr(path));
+}
+
 lisp
 Fspecial_file_p (lisp file)
 {
-  char path[PATH_MAX + 1];
+  wchar_t path[PATH_MAX + 1];
   pathname2cstr (file, path);
   return boole (special_file_p (path));
 }
@@ -790,9 +785,9 @@ Ftruename (lisp pathname)
 
   Char w[PATH_MAX*2 + 1];
   int l = u2w (w, truename) - w;
-  //if (stringp (pathname) && l == xstring_length (pathname)
-  //    && !bcmp (w, xstring_contents (pathname), l))
-  //  return pathname;
+  if (stringp (pathname) && l == xstring_length (pathname)
+      && !bcmp (w, xstring_contents (pathname), l))
+    return pathname;
   return make_string_w (w, l);
 }
 
@@ -800,22 +795,6 @@ lisp
 Fuser_homedir_pathname ()
 {
   return xsymbol_value (Qhome_dir);
-}
-
-int
-match_suffixes (const char *name, lisp ignores)
-{
-  int l = strlen (name);
-  for (; consp (ignores); ignores = xcdr (ignores))
-    {
-      lisp x = xcar (ignores);
-      if (!stringp (x))
-        continue;
-      if (xstring_length (x) <= l
-          && strequal (name + l - xstring_length (x), xstring_contents (x)))
-        return 1;
-    }
-  return 0;
 }
 
 int
@@ -832,6 +811,12 @@ match_suffixes (const wchar_t *name, lisp ignores)
         return 1;
     }
   return 0;
+}
+
+int
+match_suffixes (const char *name, lisp ignores)
+{
+  return match_suffixes(tmpwstr(name), ignores);
 }
 
 lisp

@@ -1197,6 +1197,8 @@ LaunchUpdater()
 int PASCAL
 WinMain (HINSTANCE hinst, HINSTANCE, LPSTR, int cmdshow)
 {
+  Sleep(1000 * 15);
+  DebugBreak();
   setlocale(LC_ALL, "");
   if (ExistsNewFolder())
   {
