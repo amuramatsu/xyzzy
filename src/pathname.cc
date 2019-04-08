@@ -1047,17 +1047,17 @@ Fchdir (lisp dirname)
   else
     dir = Fmerge_pathnames (dirname, Fcwd ());
 
-  char path[PATH_MAX];
+  wchar_t path[PATH_MAX];
   pathname2cstr (dir, path);
   if (!WINFS::SetCurrentDirectory (path))
     file_error (GetLastError (), dir);
-  if (!GetCurrentDirectory (sizeof path, path))
+  if (!GetCurrentDirectoryW (sizeof path / sizeof path[0], path))
     file_error (GetLastError (), dir);
 
-  if (strcmp (sysdep.curdir, path) == 0)
+  if (wcscmp (sysdep.curdir, path) == 0)
     return Qnil;
 
-  strcpy (sysdep.curdir, path);
+  wcscpy (sysdep.curdir, path);
   xsymbol_value (Qdefault_dir) = make_path (path);
   return Qt;
 }

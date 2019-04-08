@@ -89,7 +89,7 @@ public:
   HFONT ui_font90 ();
   HFONT ui_font270 ();
 
-  char curdir[PATH_MAX];
+  wchar_t curdir[PATH_MAX];
   char host_name[MAX_COMPUTERNAME_LENGTH + 1];
   DWORD process_id;
 

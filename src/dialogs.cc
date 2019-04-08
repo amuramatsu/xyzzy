@@ -1241,7 +1241,7 @@ Fdirectory_name_dialog (lisp keys)
       odn.lpstrInitialDir = odn.odn_result;
     }
   else
-    strcpy (odn.odn_result, sysdep.curdir);
+    strcpy (odn.odn_result, tmpstr(sysdep.curdir));
 
   char *title = 0;
   if (stringp (ltitle))

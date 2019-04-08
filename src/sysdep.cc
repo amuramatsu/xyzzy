@@ -14,10 +14,10 @@ Sysdep::Sysdep ()
   init_machine_type ();
   init_process_type ();
 
-  GetCurrentDirectory (sizeof curdir, curdir);
-  if (*curdir == '\\')
+  GetCurrentDirectoryW (sizeof curdir / sizeof curdir[0], curdir);
+  if (*curdir == L'\\')
     {
-      GetWindowsDirectory (curdir, sizeof curdir);
+      GetWindowsDirectoryW (curdir, sizeof curdir / sizeof curdir[0]);
       WINFS::SetCurrentDirectory (curdir);
     }
 
