@@ -34,6 +34,8 @@ Application g_app;
 char enable_quit::q_enable;
 int defer_change_focus::s_count = 0;
 ApplicationFrame* defer_change_focus::s_focus_candidate = 0;
+static int i_argc;
+static wchar_t **i_wargv;
 
 Application::Application ()
 {
@@ -680,8 +682,8 @@ static void
 init_command_line (int ac)
 {
   lisp p = Qnil;
-  for (int i = __argc - 1; i >= ac; i--)
-    p = xcons (make_string (__argv[i]), p);
+  for (int i = i_argc - 1; i >= ac; i--)
+    p = xcons (make_string_u (i_wargv[i]), p);
   xsymbol_value (Vsi_command_line_args) = p;
 }
 
@@ -707,21 +709,21 @@ init_lisp_objects ()
   bool redump = false;
 
   int ac;
-  for (ac = 1; ac < __argc - 1; ac += 2)
-    if (!strcmp (__argv[ac], "-image"))
+  for (ac = 1; ac < i_argc - 1; ac += 2)
+    if (!wcscmp (i_wargv[ac], L"-image"))
       {
 	wchar_t *tem;
-        int l = WINFS::GetFullPathName (__wargv[ac + 1],
+        int l = WINFS::GetFullPathName (i_wargv[ac + 1],
 					ARRAYLEN_OF(g_app.dump_image),
                                         g_app.dump_image, &tem);
         if (!l || l >= ARRAYLEN_OF(g_app.dump_image))
           *g_app.dump_image = 0;
       }
-    else if (!strcmp (__argv[ac], "-config"))
-      config_path = __wargv[ac + 1];
-    else if (!strcmp (__argv[ac], "-ini"))
-      ini_file = __wargv[ac + 1];
-    else if (!strcmp (__argv[ac], "-redump"))
+    else if (!wcscmp (i_wargv[ac], L"-config"))
+      config_path = i_wargv[ac + 1];
+    else if (!wcscmp (i_wargv[ac], L"-ini"))
+      ini_file = i_wargv[ac + 1];
+    else if (!wcscmp (i_wargv[ac], L"-redump"))
       redump  =true;
     else
       break;
@@ -733,7 +735,7 @@ init_lisp_objects ()
       init_user_inifile_path_1st_phase(ini_file);
 
       init_dump_path ();
-      if ((!redump && (ac < __argc || !check_dump_key ()))
+      if ((!redump && (ac < i_argc || !check_dump_key ()))
           && rdump_xyzzy ())
         {
           combine_syms ();
@@ -1200,6 +1202,7 @@ WinMain (HINSTANCE hinst, HINSTANCE, LPSTR, int cmdshow)
   //Sleep(1000 * 15);
   //DebugBreak();
   setlocale(LC_ALL, "");
+  i_wargv = CommandLineToArgvW (GetCommandLineW (), &i_argc);
   if (ExistsNewFolder())
   {
 	  if(LaunchUpdater())
