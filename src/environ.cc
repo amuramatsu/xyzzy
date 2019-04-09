@@ -660,16 +660,16 @@ Fos_csd_version ()
 void
 init_environ ()
 {
-  char b[256];
-  DWORD n = sizeof b;
-  if (GetUserName (b, &n))
-    xsymbol_value (Vuser_name) = make_string (b);
+  wchar_t b[256];
+  DWORD n = ARRAYLEN_OF(b);
+  if (GetUserNameW (b, &n))
+    xsymbol_value (Vuser_name) = make_string_u (b);
   else
     xsymbol_value (Vuser_name) = make_string ("unknown");
 
-  n = sizeof b;
-  if (GetComputerName (b, &n))
-    xsymbol_value (Vmachine_name) = make_string (b);
+  n = ARRAYLEN_OF(b);
+  if (GetComputerNameW (b, &n))
+    xsymbol_value (Vmachine_name) = make_string_u (b);
   else
     xsymbol_value (Vmachine_name) = make_string ("unknown");
 

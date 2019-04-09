@@ -212,8 +212,7 @@ i2wl (lisp x)
 inline wchar_t *
 w2u (wchar_t *b, const Char *s, size_t size)
 {
-  i2w (s, size, (ucs2_t*)b);
-  return (wchar_t*)b;
+  return (wchar_t *)i2w (s, size, (ucs2_t *)b);
 }
 
 inline size_t
