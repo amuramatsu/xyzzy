@@ -276,7 +276,7 @@ Fsi_wow64_reinterpret_path (lisp string, lisp flag)
               wchar_t replaceTo[MAX_PATH+1];
               ExpandEnvironmentStringsW (replaceToExp, replaceTo, _countof (replaceTo));
               wchar_t replaceResult[MAX_PATH+1];
-              wsprintfW (replaceResult, L"%s%s", replaceTo, &srcPath[replaceFromLen]);
+              _swprintf (replaceResult, L"%s%s", replaceTo, &srcPath[replaceFromLen]);
               result = make_string_u (replaceResult);
             }
         }

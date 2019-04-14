@@ -1291,7 +1291,7 @@ rename_short_name (const wchar_t *fpath, const wchar_t *tname, const wchar_t *lo
 
   wchar_t buf[PATH_MAX * 3];
   map_backsl_to_sl (tempname);
-  wsprintfW (buf, tmpwstr(get_message_string (Erename_failed)), tempname, realpath);
+  _swprintf (buf, tmpwstr(get_message_string (Erename_failed)), tempname, realpath);
   MsgBox (get_active_window (), buf, tmpwstr(TitleBarString),
           MB_OK | MB_ICONEXCLAMATION,
           xsymbol_value (Vbeep_on_error) != Qnil);

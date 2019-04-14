@@ -897,7 +897,7 @@ Buffer::buffer_name (wchar_t *b, wchar_t *be) const
   if (b >= be - 1 || b_version == 1)
     return b;
   wchar_t t[64];
-  wsprintfW (t, L"<%d>", b_version);
+  _swprintf (t, L"<%d>", b_version);
   return stpncpy (b, t, be - b);
 }
 

@@ -280,7 +280,7 @@ insert_comma (wchar_t *b, int l)
 static inline void
 print_size (double d, wchar_t *b)
 {
-  insert_comma (b, wsprintfW (b, L"%.0f", d));
+  insert_comma (b, _swprintf (b, L"%.0f", d));
 }
 
 void
@@ -548,7 +548,7 @@ FilerView::dispinfo (LVITEMW *lv)
         FileTimeToLocalFileTime (&d->time, &ft);
         SYSTEMTIME st;
         FileTimeToSystemTime (&ft, &st);
-        wsprintfW (fv_buf, L"%04d/%02d/%02d %02d:%02d:%02d",
+        _swprintf (fv_buf, L"%04d/%02d/%02d %02d:%02d:%02d",
                    st.wYear, st.wMonth, st.wDay,
                    st.wHour, st.wMinute, st.wSecond);
         lv->pszText = fv_buf;
@@ -861,7 +861,7 @@ FilerView::show_marks (int force)
       disk_space (nbytes, nb, (charp (xsymbol_value (Vfiler_mark_file_size_unit))
                                ? xchar_code (xsymbol_value (Vfiler_mark_file_size_unit))
                                : -1));
-      wsprintfW (b, L"Marks: %d dirs, %d files, total: %sytes", ndirs, nfiles, nb);
+      _swprintf (b, L"Marks: %d dirs, %d files, total: %sytes", ndirs, nfiles, nb);
       SetWindowTextW (fv_hwnd_marks, b);
     }
   else
@@ -899,7 +899,7 @@ FilerView::disk_space (double nbytes, wchar_t *buf, int c)
   for (i = 0; i < numberof (u) - 1 && c != *u[i] && nbytes >= 1024.0;
        i++, nbytes /= 1024.0)
     ;
-  wsprintfW (buf, L"%.2f", nbytes);
+  _swprintf (buf, L"%.2f", nbytes);
   wchar_t *b;
   for (b = buf + wcslen (buf); b > buf && b[-1] == L'0'; b--)
     ;
@@ -925,7 +925,7 @@ FilerView::display_disk_info (HWND hwnd, int n) const
   disk_space (double (total_c) * s_per_c * b_per_s, total, -1);
   disk_space (double (free_c) * s_per_c * b_per_s, free, -1);
   wchar_t buf[256];
-  wsprintfW (buf, L"Free: %s, Total: %s", free, total);
+  _swprintf (buf, L"Free: %s, Total: %s", free, total);
   SendMessageW (hwnd, SB_SETTEXT, n, LPARAM (buf));
 }
 

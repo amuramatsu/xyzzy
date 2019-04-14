@@ -23,7 +23,7 @@ void
 write_conf (const wchar_t *section, const wchar_t *name, long value, int hex)
 {
   wchar_t buf[32];
-  wsprintfW (buf, hex ? L"#%lx" : L"%ld", value);
+  _swprintf (buf, hex ? L"#%lx" : L"%ld", value);
   WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
@@ -39,7 +39,7 @@ write_conf (const wchar_t *section, const wchar_t *name, const int *value, int n
   wchar_t *buf = (wchar_t *)alloca ((16 * n) * sizeof(wchar_t));
   wchar_t *b = buf;
   for (int i = 0; i < n; i++)
-    b += wsprintfW (b, hex ? L",#%x" : L",%d", *value++);
+    b += _swprintf (b, hex ? L",#%x" : L",%d", *value++);
   WritePrivateProfileStringW (section, name, buf + 1, g_app.ini_file_path);
 }
 
@@ -53,7 +53,7 @@ void
 write_conf (const wchar_t *section, const wchar_t *name, const RECT &r)
 {
   wchar_t buf[128];
-  wsprintfW (buf, L"(%d,%d)-(%d,%d)", r.left, r.top, r.right, r.bottom);
+  _swprintf (buf, L"(%d,%d)-(%d,%d)", r.left, r.top, r.right, r.bottom);
   WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
@@ -67,7 +67,7 @@ void
 write_conf (const wchar_t *section, const wchar_t *name, const LOGFONT &lf)
 {
   wchar_t buf[128];
-  wsprintfW (buf, L"%d,\"%s\",%d", lf.lfHeight, lf.lfFaceName, lf.lfCharSet);
+  _swprintf (buf, L"%d,\"%s\",%d", lf.lfHeight, lf.lfFaceName, lf.lfCharSet);
   WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
@@ -81,7 +81,7 @@ void
 write_conf (const wchar_t *section, const wchar_t *name, const PRLOGFONT &lf)
 {
   wchar_t buf[128];
-  wsprintfW (buf, L"%d,\"%s\",%d,%d,%d", lf.point, lf.face, lf.charset, lf.bold, lf.italic);
+  _swprintf (buf, L"%d,\"%s\",%d,%d,%d", lf.point, lf.face, lf.charset, lf.bold, lf.italic);
   WritePrivateProfileStringW (section, name, buf, g_app.ini_file_path);
 }
 
@@ -95,7 +95,7 @@ void
 write_conf (const wchar_t *section, const wchar_t *name, const WINDOWPLACEMENT &w)
 {
   wchar_t buf[128];
-  wsprintfW (buf, L"(%d,%d)-(%d,%d),%d",
+  _swprintf (buf, L"(%d,%d)-(%d,%d),%d",
 	     w.rcNormalPosition.left,
 	     w.rcNormalPosition.top,
 	     w.rcNormalPosition.right,

@@ -73,4 +73,77 @@ public:
     }
 };
 
+/* wstr */
+class xwstring_node: public xlist_node <xwstring_node>
+{
+public:
+  wchar_t data[1];
+  operator const wchar_t * () const {return data;}
+};
+
+class xwstring_list: public xlist <xwstring_node>
+{
+public:
+  ~xwstring_list ()
+    {
+      while (!empty_p ())
+        delete [] (wchar_t *)remove_head ();
+    }
+  static xwstring_node *alloc (const wchar_t *s)
+    {
+      xwstring_node *p = (xwstring_node *)new wchar_t [sizeof *p + wcslen (s) * sizeof(wchar_t)];
+      wcscpy (p->data, s);
+      return p;
+    }
+  void add (const wchar_t *s) {add_head (alloc (s));}
+  lisp make_list () const
+    {
+      lisp r = Qnil;
+      for (const xwstring_node *p = head (); p; p = p->next ())
+        r = xcons (make_string_u (*p), r);
+      return r;
+    }
+};
+
+class xwstring_pair_node: public xlist_node <xwstring_pair_node>
+{
+public:
+  wchar_t *str2;
+  wchar_t str1[2];
+};
+
+class xwstring_pair_list: public xlist <xwstring_pair_node>
+{
+public:
+  ~xwstring_pair_list ()
+    {
+      while (!empty_p ())
+        delete [] (wchar_t *)remove_head ();
+    }
+  static xwstring_pair_node *alloc (const wchar_t *s1, const wchar_t *s2)
+    {
+      int l1 = wcslen (s1);
+      xwstring_pair_node *p =
+	(xwstring_pair_node *)new wchar_t [sizeof *p + (l1 + wcslen (s2) + 2)*sizeof(wchar_t)];
+      p->str2 = p->str1 + l1 + 1;
+      wcscpy (p->str1, s1);
+      wcscpy (p->str2, s2);
+      return p;
+    }
+  void add (const wchar_t *s1, const wchar_t *s2) {add_head (alloc (s1, s2));}
+  lisp make_list (int pair) const
+    {
+      lisp r = Qnil;
+      if (pair)
+        for (const xwstring_pair_node *p = head (); p; p = p->next ())
+          r = xcons (xcons (make_string_u (p->str1),
+                            xcons (make_string_u (p->str2), Qnil)),
+                     r);
+      else
+        for (const xwstring_pair_node *p = head (); p; p = p->next ())
+          r = xcons (make_string_u (p->str1), r);
+      return r;
+    }
+};
+
 #endif /* _xstrlist_h_ */

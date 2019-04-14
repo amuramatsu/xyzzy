@@ -7,7 +7,7 @@ static Buffer *
 create_minibuffer ()
 {
   wchar_t b[32];
-  wsprintfW (b, L" *Minibuf%d*", minibuffer_recursive_level);
+  _swprintf (b, L" *Minibuf%d*", minibuffer_recursive_level);
   return Buffer::make_internal_buffer (b);
 }
 

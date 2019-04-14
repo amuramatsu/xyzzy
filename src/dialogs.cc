@@ -48,18 +48,26 @@ void
 init_list_column (HWND list, int ncolumns, const int *width, const int *fmts,
                   int id_start, const char *entry, const char *key)
 {
+    init_list_column(list, ncolumns, width, fmts, id_start,
+		     tmpwstr(entry), tmpwstr(key));
+}
+
+void
+init_list_column (HWND list, int ncolumns, const int *width, const int *fmts,
+                  int id_start, const wchar_t *entry, const wchar_t *key)
+{
   int *v = (int *)alloca (sizeof *v * ncolumns);
   if (read_conf (entry, key, v, ncolumns))
     width = v;
 
-  LV_COLUMN lvc;
+  LVCOLUMNW lvc;
   lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 
   for (int i = 0; i < ncolumns; i++)
     {
-      char buf[64];
+      wchar_t buf[64];
       lvc.cx = width[i];
-      LoadString (active_app_frame().hinst, id_start + i, buf, sizeof buf);
+      LoadStringW (active_app_frame().hinst, id_start + i, buf, ARRAYLEN_OF(buf));
       lvc.pszText = buf;
       lvc.iSubItem = i;
       lvc.fmt = fmts[i];
@@ -69,6 +77,12 @@ init_list_column (HWND list, int ncolumns, const int *width, const int *fmts,
 
 void
 save_list_column_width (HWND list, int ncolumns, const char *entry, const char *key)
+{
+  save_list_column_width(list, ncolumns, tmpwstr(entry), tmpwstr(key));
+}
+    
+void
+save_list_column_width (HWND list, int ncolumns, const wchar_t *entry, const wchar_t *key)
 {
   if (!IsWindow (list))
     return;
@@ -124,35 +138,35 @@ buffer_list_save_column (HWND list)
 }
 
 static int
-store_buffer_name (HWND list, const Buffer *bp, LV_ITEM *lvi)
+store_buffer_name (HWND list, const Buffer *bp, LVITEMW *lvi)
 {
-  int l = xstring_length (bp->lbuffer_name) * 2 + 32;
-  char *b = (char *)alloca (l + 1);
+  int l = (xstring_length (bp->lbuffer_name) * 2 + 32)*sizeof(wchar_t);
+  wchar_t *b = (wchar_t *)alloca (l + 1*sizeof(wchar_t));
   bp->buffer_name (b, b + l);
   lvi->pszText = b;
   return ListView_InsertItem (list, lvi);
 }
 
 static void
-store_buffer_size (HWND list, const Buffer *bp, LV_ITEM *lvi)
+store_buffer_size (HWND list, const Buffer *bp, LVITEMW *lvi)
 {
-  char b[32];
-  sprintf (b, "%d", bp->b_nchars);
+  wchar_t b[32];
+  _swprintf(b, L"%d", bp->b_nchars);
   lvi->pszText = b;
   ListView_SetItem (list, lvi);
 }
 
 static void
-store_string (HWND list, lisp string, LV_ITEM *lvi)
+store_string (HWND list, lisp string, LVITEMW *lvi)
 {
   if (stringp (string))
     {
-      char *b = (char *)alloca (xstring_length (string) * 2 + 1);
-      w2s (b, string);
+      wchar_t *b = (wchar_t *)alloca ((xstring_length (string) * 2 + 1)*sizeof(wchar_t));
+      w2u (b, string);
       lvi->pszText = b;
     }
   else
-    lvi->pszText = "";
+    lvi->pszText = L"";
   ListView_SetItem (list, lvi);
 }
 
@@ -173,7 +187,7 @@ buffer_list_init_item (HWND list)
       {
         if (bp == selected_buffer ())
           cur = i;
-        LV_ITEM lvi;
+        LVITEMW lvi;
         lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
         lvi.iItem = i++;
         lvi.iSubItem = 0;
@@ -223,7 +237,7 @@ get_selected_item (HWND list)
   int i = lv_find_selected_item (list);
   if (i >= 0)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
@@ -584,14 +598,14 @@ count_filter_size (lisp filters)
 }
 
 static void
-make_filter_string (char *b, lisp filters)
+make_filter_string (wchar_t *b, lisp filters)
 {
   for (; consp (filters); filters = xcdr (filters))
     {
       lisp f = xcar (filters);
       lisp a = xcar (f), d = xcdr (f);
-      b = w2s (b, a) + 1;
-      b = w2s (b, d) + 1;
+      b = w2u (b, a) + 1;
+      b = w2u (b, d) + 1;
     }
   *b = 0;
 }
@@ -599,7 +613,7 @@ make_filter_string (char *b, lisp filters)
 static const UINT MSGFILEOK = RegisterWindowMessage (FILEOKSTRING);
 static const UINT MSGLBSELCH = RegisterWindowMessage (LBSELCHSTRING);
 
-struct OFN: public tagOFN
+struct OFN: public tagOFNW
 {
   HWND ofn_hwnd;
   int ofn_save;
@@ -639,8 +653,8 @@ OFN::init_eol_list ()
   for (int i = 0; eol_list[i].id >= 0; i++)
     if (!ofn_save || eol_list[i].id != IDS_EOL_AUTO)
       {
-        char b[64];
-        LoadString (active_app_frame().hinst, eol_list[i].id, b, sizeof b);
+	wchar_t b[64];
+        LoadStringW (active_app_frame().hinst, eol_list[i].id, b, ARRAYLEN_OF(b));
         int j = SendDlgItemMessage (ofn_hwnd, IDC_EOL_CODE, CB_ADDSTRING, 0, LPARAM (b));
         if (j != CB_ERR)
           {
@@ -662,8 +676,8 @@ OFN::init_encoding_list ()
       if (char_encoding_p (encoding)
           && (!ofn_save || xchar_encoding_type (encoding) != encoding_auto_detect))
         {
-          char b[256];
-          w2s (b, b + sizeof b, xchar_encoding_display_name (encoding));
+	  wchar_t b[256];
+          w2u (b, b + ARRAYLEN_OF(b), xchar_encoding_display_name (encoding));
           int j = SendDlgItemMessage (ofn_hwnd, IDC_CHAR_ENCODING, CB_ADDSTRING, 0, LPARAM (b));
           if (j != CB_ERR)
             {
@@ -882,7 +896,7 @@ Ffile_name_dialog (lisp keys)
   if (!leol_code)
     leol_code = find_keyword (Knewline_code, keys);
 
-  char dir[PATH_MAX + 1];
+  wchar_t dir[PATH_MAX + 1];
   *dir = 0;
   lisp ldir = find_keyword (Kinitial_directory, keys);
   if (ldir != Qnil)
@@ -907,14 +921,14 @@ Ffile_name_dialog (lisp keys)
   ofn.hInstance = active_app_frame().hinst;
   ofn.lCustData = DWORD (&ofn);
 
-  char buf[1024 * 32];
-  if (stringp (ldefault) && xstring_length (ldefault) < sizeof buf / 2 - 1)
+  wchar_t buf[1024 * 32];
+  if (stringp (ldefault) && xstring_length (ldefault) < ARRAYLEN_OF(buf) - 1)
     {
-      w2s (buf, ldefault);
+      w2u (buf, ldefault);
       map_sl_to_backsl (buf);
     }
   else if (!filter_size)
-    strcpy (buf, "*.*");
+    wcscpy (buf, L"*.*");
   else
     *buf = 0;
   ofn.lpstrFile = buf;
@@ -939,38 +953,38 @@ Ffile_name_dialog (lisp keys)
   if (sysdep.Win5p ())
     ofn.Flags |= OFN_DONTADDTORECENT | OFN_FORCESHOWHIDDEN;
 
-  char *filter = 0;
+  wchar_t *filter = 0;
   if (filter_size)
     {
-      filter = (char *)alloca (filter_size);
+      filter = (wchar_t *)alloca (filter_size*sizeof(wchar_t));
       make_filter_string (filter, lfilters);
     }
   ofn.lpstrFilter = filter;
   ofn.nFilterIndex = filter_index;
 
   ofn.lpstrInitialDir = dir;
-  int l = strlen (dir);
-  if (!memicmp (dir, buf, l))
+  int l = wcslen (dir);
+  if (!wcsnicmp (dir, buf, l))
     {
-      if (buf[l] == '\\')
+      if (buf[l] == L'\\')
         l++;
-      strcpy (buf, buf + l);
+      wcscpy (buf, buf + l);
     }
 
-  char *title = 0;
+  wchar_t *title = 0;
   if (stringp (ltitle))
     {
       ofn.ofn_ok_button = 1;
-      title = (char *)alloca (xstring_length (ltitle) * 2 + 1);
-      w2s (title, ltitle);
+      title = (wchar_t *)alloca ((xstring_length (ltitle) * 2 + 1)*sizeof(wchar_t));
+      w2u (title, ltitle);
     }
   ofn.lpstrTitle = title;
 
-  char *ext = 0;
+  wchar_t *ext = 0;
   if (stringp (lext))
     {
-      ext = (char *)alloca (xstring_length (lext) * 2 + 1);
-      w2s (ext, lext);
+      ext = (wchar_t *)alloca ((xstring_length (lext) * 2 + 1)*sizeof(wchar_t));
+      w2u (ext, lext);
     }
   ofn.lpstrDefExt = ext;
 
@@ -1010,22 +1024,22 @@ Ffile_name_dialog (lisp keys)
     {
       ofn.Flags |= OFN_ENABLETEMPLATE;
       ofn.lpTemplateName = (multiple
-                            ? MAKEINTRESOURCE (MULTIFILEOPENORD)
-                            : MAKEINTRESOURCE (FILEOPENORD));
+                            ? (wchar_t *)MAKEINTRESOURCE (MULTIFILEOPENORD)
+                            : (wchar_t *)MAKEINTRESOURCE (FILEOPENORD));
       if (!ofn.lpstrTitle && save)
         {
-          title = (char *)alloca (256);
-          LoadString (active_app_frame().hinst, IDS_SAVE_AS, title, 256);
+	  title = (wchar_t *)alloca (256*sizeof(wchar_t));
+          LoadStringW (active_app_frame().hinst, IDS_SAVE_AS, title, 256);
           ofn.lpstrTitle = title;
         }
     }
   else if (ofn.ofn_eol_req || ofn.ofn_encoding_req)
     {
       ofn.Flags |= OFN_ENABLETEMPLATE;
-      ofn.lpTemplateName = MAKEINTRESOURCE (IDD_CUST_EXPLORER);
+      ofn.lpTemplateName = (wchar_t *)MAKEINTRESOURCE (IDD_CUST_EXPLORER);
     }
 
-  if (save ? !GetSaveFileName (&ofn) : !GetOpenFileName (&ofn))
+  if (save ? !GetSaveFileNameW (&ofn) : !GetOpenFileNameW (&ofn))
     return Qnil;
 
   multiple_value::count () = 4;
@@ -1040,49 +1054,49 @@ Ffile_name_dialog (lisp keys)
   if (!multiple)
     {
       map_backsl_to_sl (buf);
-      return make_string (buf);
+      return make_string_u (buf);
     }
 
   lisp result = Qnil;
   if (ofn.Flags & OFN_EXPLORER)
     {
-      char *b = buf + strlen (buf);
+      wchar_t *b = buf + wcslen (buf);
       map_backsl_to_sl (buf);
       if (!b[1])
-        return xcons (make_string (buf), Qnil);
-      char *e = b++;
-      if (jrindex (buf, '/') != e - 1)
-        *e++ = '/';
+        return xcons (make_string_u (buf), Qnil);
+      wchar_t *e = b++;
+      if (jrindex (buf, L'/') != e - 1)
+        *e++ = L'/';
       while (*b)
         {
-          char *p = stpcpy (e, b);
+	  wchar_t *p = stpcpy (e, b);
           b += p - e + 1;
-          result = xcons (make_string (buf), result);
+          result = xcons (make_string_u (buf), result);
         }
     }
   else
     {
-      char *b = jindex (buf, ' ');
+      wchar_t *b = jindex (buf, L' ');
       if (!b)
         {
           map_backsl_to_sl (buf);
-          return xcons (make_string (buf), Qnil);
+          return xcons (make_string_u (buf), Qnil);
         }
-      char *e = b++;
+      wchar_t *e = b++;
       *e = 0;
-      if (jrindex (buf, '/') != e - 1)
-        *e++ = '/';
+      if (jrindex (buf, L'/') != e - 1)
+        *e++ = L'/';
       while (1)
         {
-          char *b2 = jindex (b, ' ');
+	  wchar_t *b2 = jindex (b, L' ');
           if (b2)
             *b2 = 0;
-          strcpy (e, b);
-          char path[PATH_MAX], *name;
-          if (WINFS::GetFullPathName (buf, sizeof path, path, &name))
-            strcpy (e, name);
+          wcscpy (e, b);
+          wchar_t path[PATH_MAX], *name;
+          if (WINFS::GetFullPathName (buf, ARRAYLEN_OF(path), path, &name))
+	    wcscpy (e, name);
           map_backsl_to_sl (buf);
-          result = xcons (make_string (buf), result);
+          result = xcons (make_string_u (buf), result);
           if (!b2)
             break;
           b = b2 + 1;
@@ -1092,9 +1106,9 @@ Ffile_name_dialog (lisp keys)
   return result;
 }
 
-struct ODN: public tagOFNA
+struct ODN: public tagOFNW
 {
-  char odn_result[PATH_MAX + 1];
+  wchar_t odn_result[PATH_MAX + 1];
   void store_dirname (HWND);
   void selch (HWND, int);
   int ok (HWND);
@@ -1104,22 +1118,22 @@ struct ODN: public tagOFNA
 void
 ODN::store_dirname (HWND hwnd)
 {
-  SetDlgItemText (hwnd, IDC_PATH, odn_result);
+  SetDlgItemTextW (hwnd, IDC_PATH, odn_result);
 }
 
 void
 ODN::selch (HWND hwnd, int id)
 {
-  char path[PATH_MAX];
-  GetCurrentDirectory (sizeof path, path);
-  if (!strcmp (path, odn_result))
+  wchar_t path[PATH_MAX];
+  GetCurrentDirectoryW (ARRAYLEN_OF(path), path);
+  if (!wcscmp (path, odn_result))
     {
       if (id == lst2)
         PostMessage (hwnd, WM_COMMAND, IDOK, 0);
     }
   else
     {
-      strcpy (odn_result, path);
+      wcscpy (odn_result, path);
       store_dirname (hwnd);
     }
 }
@@ -1127,13 +1141,13 @@ ODN::selch (HWND hwnd, int id)
 int
 ODN::error (HWND hwnd, int e)
 {
-  char buf[1024];
-  FormatMessage ((FORMAT_MESSAGE_FROM_SYSTEM
+  wchar_t buf[1024];
+  FormatMessageW ((FORMAT_MESSAGE_FROM_SYSTEM
                   | FORMAT_MESSAGE_IGNORE_INSERTS
                   | FORMAT_MESSAGE_MAX_WIDTH_MASK),
-                 0, e, GetUserDefaultLangID (),
-                 buf, sizeof buf, 0);
-  MsgBox (hwnd, buf, TitleBarString, MB_OK | MB_ICONEXCLAMATION,
+		  0, e, GetUserDefaultLangID (),
+		  buf, ARRAYLEN_OF(buf), 0);
+  MsgBox (hwnd, buf, tmpwstr(TitleBarString), MB_OK | MB_ICONEXCLAMATION,
           xsymbol_value (Vbeep_on_error) != Qnil);
   return 1;
 }
@@ -1141,8 +1155,8 @@ ODN::error (HWND hwnd, int e)
 int
 ODN::ok (HWND hwnd)
 {
-  char path[PATH_MAX];
-  GetDlgItemText (hwnd, IDC_PATH, path, sizeof path);
+  wchar_t path[PATH_MAX];
+  GetDlgItemTextW (hwnd, IDC_PATH, path, ARRAYLEN_OF(path));
   if (!*path)
     return 1;
   DWORD atr = WINFS::GetFileAttributes (path);
@@ -1152,9 +1166,9 @@ ODN::ok (HWND hwnd)
     return error (hwnd, ERROR_DIRECTORY);
 
   HWND drive = GetDlgItem (hwnd, cmb2);
-  int l = strlen (path);
-  strcpy (path + l, " ");
-  int i = SendMessage (drive, CB_FINDSTRING, WPARAM (-1), LPARAM (path));
+  int l = wcslen (path);
+  wcscpy (path + l, L" ");
+  int i = SendMessageW (drive, CB_FINDSTRING, WPARAM (-1), LPARAM (path));
   path[l] = 0;
   if (i != CB_ERR)
     {
@@ -1166,8 +1180,8 @@ ODN::ok (HWND hwnd)
       return 1;
     }
 
-  char *tem;
-  WINFS::GetFullPathName (path, sizeof odn_result, odn_result, &tem);
+  wchar_t *tem;
+  WINFS::GetFullPathName (path, ARRAYLEN_OF(odn_result), odn_result, &tem);
   return 0;
 }
 
@@ -1221,8 +1235,8 @@ Fdirectory_name_dialog (lisp keys)
   odn.hwndOwner = get_active_window ();
   odn.hInstance = active_app_frame().hinst;
 
-  char buf[PATH_MAX];
-  strcpy (buf, "FOO");
+  wchar_t buf[PATH_MAX];
+  wcscpy (buf, L"FOO");
   odn.lpstrFile = buf;
   odn.nMaxFile = sizeof buf;
 
@@ -1232,31 +1246,31 @@ Fdirectory_name_dialog (lisp keys)
   if (sysdep.Win5p ())
     odn.Flags |= OFN_DONTADDTORECENT | OFN_FORCESHOWHIDDEN;
   odn.lpfnHook = directory_name_dialog_hook;
-  odn.lpTemplateName = MAKEINTRESOURCE (IDD_DIRECTORY);
+  odn.lpTemplateName = (wchar_t*)MAKEINTRESOURCE (IDD_DIRECTORY);
 
-  if (xstring_length (ldefault) < sizeof odn.odn_result / 2 - 1)
+  if (xstring_length (ldefault) < ARRAYLEN_OF(odn.odn_result) - 1)
     {
-      w2s (odn.odn_result, ldefault);
+      w2u (odn.odn_result, ldefault);
       map_sl_to_backsl (odn.odn_result);
       odn.lpstrInitialDir = odn.odn_result;
     }
   else
-    strcpy (odn.odn_result, tmpstr(sysdep.curdir));
+    wcscpy (odn.odn_result, sysdep.curdir);
 
-  char *title = 0;
+  wchar_t *title = 0;
   if (stringp (ltitle))
     {
-      title = (char *)alloca (xstring_length (ltitle) * 2 + 1);
-      w2s (title, ltitle);
+      title = (wchar_t *)alloca ((xstring_length (ltitle) * 2 + 1)*sizeof(wchar_t));
+      w2u (title, ltitle);
     }
   odn.lpstrTitle = title;
   odn.lCustData = DWORD (&odn);
 
-  if (!GetOpenFileName (&odn))
+  if (!GetOpenFileNameW (&odn))
     return Qnil;
 
   map_backsl_to_sl (odn.odn_result);
-  return make_string (odn.odn_result);
+  return make_string_u (odn.odn_result);
 }
 
 BOOL CALLBACK
@@ -1390,7 +1404,7 @@ class list_volume_name: public worker_thread
 protected:
   virtual void thread_main ();
 private:
-  xstring_list m_list;
+  xwstring_list m_list;
   HWND m_hwnd;
   DWORD m_drives;
 public:
@@ -1402,7 +1416,7 @@ public:
       m_hwnd = 0;
       worker_thread::interrupt ();
     }
-  const xstring_list &list () const {return m_list;}
+  const xwstring_list &list () const {return m_list;}
 };
 
 void
@@ -1413,13 +1427,13 @@ list_volume_name::thread_main ()
       for (int c = 'a'; c <= 'z' && m_hwnd; c++)
         if (m_drives & (1 << (c - 'a')))
           {
-            char name[5];
-            sprintf (name, "%c:\\", c);
-            int type = GetDriveType (name);
-            char volname[1024];
+            wchar_t name[5];
+            _swprintf (name, L"%c:\\", c);
+            int type = GetDriveTypeW (name);
+            wchar_t volname[1024];
             if (type != DRIVE_REMOVABLE
-                && GetVolumeInformation (name, volname + 1, sizeof volname - 1,
-                                         0, 0, 0, 0, 0)
+                && GetVolumeInformationW (name, volname + 1, sizeof volname - 1,
+                                          0, 0, 0, 0, 0)
                 && volname[1])
               {
                 *volname = c;
@@ -1498,11 +1512,11 @@ DriveDialog::insert_drives (HWND hwnd)
           if (c == dd_defalt)
             cur = item;
 
-          char name[5];
-          sprintf (name, "%c:\\", c);
-          int type = GetDriveType (name);
+          wchar_t name[5];
+          _swprintf (name, L"%c:\\", c);
+          int type = GetDriveTypeW (name);
 
-          LV_ITEM lvi;
+          LVITEMW lvi;
           lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
           lvi.iItem = item++;
           lvi.iSubItem = 0;
@@ -1517,7 +1531,7 @@ DriveDialog::insert_drives (HWND hwnd)
           ListView_InsertItem (hwnd, &lvi);
 
           SIZE sz;
-          GetTextExtentPoint32 (hdc, name, 2, &sz);
+          GetTextExtentPoint32W (hdc, name, 2, &sz);
           dd_maxw = max (dd_maxw, sz.cx);
         }
       else
@@ -1541,18 +1555,18 @@ DriveDialog::insert_volnames ()
   HGDIOBJ of = SelectObject (hdc, HFONT (SendMessage (hwnd, WM_GETFONT, 0, 0)));
 
   LONG maxw = 0;
-  for (const xstring_node *p = dd_thread->list ().head (); p; p = p->next ())
+  for (const xwstring_node *p = dd_thread->list ().head (); p; p = p->next ())
     {
-      const char *volname = *p;
+      const wchar_t *volname = *p;
       if (lower_char_p (*volname & 255))
         {
-          int i = dd_indexes[*volname - 'a'];
+	  int i = dd_indexes[(*volname & 255) - 'a'];
           if (i >= 0)
             {
               volname++;
-              ListView_SetItemText (hwnd, i, 1, (char *)volname);
+              ListView_SetItemText (hwnd, i, 1, (char *)tmpstr(volname).get()); //XXX FIX ME
               SIZE sz;
-              GetTextExtentPoint32 (hdc, volname, strlen (volname), &sz);
+              GetTextExtentPoint32W (hdc, volname, wcslen (volname), &sz);
               maxw = max (maxw, sz.cx);
             }
         }

@@ -162,7 +162,7 @@ buffer_info::position (wchar_t *b, wchar_t *be) const
   else if (b_wp)
     {
       wchar_t tem[64];
-      wsprintfW (tem, L"%d:%d", b_wp->w_plinenum, b_wp->w_column);
+      _swprintf (tem, L"%d:%d", b_wp->w_plinenum, b_wp->w_column);
       b = stpncpy (b, tem, be - b);
     }
   return b;

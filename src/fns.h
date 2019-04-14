@@ -136,7 +136,9 @@ lisp track_popup_menu (lisp, lisp, const POINT *);
 void center_window (HWND);
 void set_window_icon (HWND);
 void init_list_column (HWND, int, const int *, const int *, int, const char *, const char *);
+void init_list_column (HWND, int, const int *, const int *, int, const wchar_t *, const wchar_t *);
 void save_list_column_width (HWND, int, const char *, const char *);
+void save_list_column_width (HWND, int, const wchar_t *, const wchar_t *);
 int lv_find_selected_item (HWND);
 int lv_find_focused_item (HWND);
 

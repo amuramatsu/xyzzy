@@ -573,7 +573,7 @@ make_temp_file_name (wchar_t *dir, const wchar_t *prefix,
     serial = u_long (GetTickCount () * GetCurrentProcessId ()) % max_serial;
 
   wchar_t *d = dir + wcslen (dir);
-  wsprintfW (d, L"%sXXXX.%s",
+  _swprintf (d, L"%sXXXX.%s",
              prefix ? prefix : L"~xyz", suffix ? suffix : L"tmp");
   d += prefix ? wcslen (prefix) : 4;
 
@@ -688,10 +688,10 @@ pack_backupfile (wchar_t *old_name, wchar_t *oe, u_char *bitmap, int max_version
   for (i = 1, j = 1; i < max_versions; i++)
     if (bitmap[i] && i != j)
       {
-        wsprintfW (oe, L"%d~", i);
+        _swprintf (oe, L"%d~", i);
         while (j < i)
           {
-            wsprintfW (ne, L"%d~", j++);
+            _swprintf (ne, L"%d~", j++);
             if (WINFS::MoveFile (old_name, new_name)
                 || GetLastError () != ERROR_ALREADY_EXISTS)
               break;
@@ -799,7 +799,7 @@ Buffer::make_backup_file_name (wchar_t *backup, const wchar_t *xoriginal)
           for (i = 0; i < max_versions; i++)
             if (bitmap[i] == 1)
               {
-                wsprintfW (ext + 1, L"%d~", i);
+                _swprintf (ext + 1, L"%d~", i);
                 if (!same_file_p (backup, xoriginal))
                   WINFS::DeleteFile (backup);
               }
@@ -809,7 +809,7 @@ Buffer::make_backup_file_name (wchar_t *backup, const wchar_t *xoriginal)
               break;
           if (++i < max_versions)
             {
-              wsprintfW (ext + 1, L"%d~", i);
+              _swprintf (ext + 1, L"%d~", i);
               if (!same_file_p (backup, xoriginal))
                 return 0;
             }
@@ -819,7 +819,7 @@ Buffer::make_backup_file_name (wchar_t *backup, const wchar_t *xoriginal)
               i = pack_backupfile (backup, ext + 1, bitmap, max_versions);
               if (i < max_versions)
                 {
-                  wsprintfW (ext + 1, L"%d~", i);
+                  _swprintf (ext + 1, L"%d~", i);
                   if (!same_file_p (backup, xoriginal))
                     return 0;
                 }
@@ -1070,7 +1070,7 @@ make_backup_file (const wchar_t *filename, wchar_t *backup, int &result)
               l += 7;
               for (int i = 0;; i++)
                 {
-                  wsprintfW (tem + l, L"%x%s", i, period);
+                  _swprintf (tem + l, L"%x%s", i, period);
                   if (WINFS::MoveFile (filename, tem))
                     break;
                   int e = GetLastError ();
