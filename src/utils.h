@@ -5,6 +5,9 @@
 # include <stddef.h>
 # include "tutils.h"
 
+void *xmalloc (size_t);
+void *xrealloc (void *, size_t);
+void xfree (void *);
 char *xstrdup (const char *);
 wchar_t *xstrdup (const wchar_t *);
 void *xmemdup (const void *, size_t);

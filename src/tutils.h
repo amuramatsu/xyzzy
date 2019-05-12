@@ -3,10 +3,6 @@
 
 #define ARRAYLEN_OF(a)	(sizeof (a) / sizeof((a)[0]))
 
-void *xmalloc (size_t);
-void *xrealloc (void *, size_t);
-void xfree (void *);
-
 class tmpstr {
 private:
   char *ptr;
@@ -16,13 +12,13 @@ private:
       return;
     }
     if (*wstr == 0) {
-      ptr = (char *)xmalloc(1);
+      ptr = new char[1];
       *ptr = 0;
       return;
     }
     size_t n = ::WideCharToMultiByte(CP_ACP, 0, wstr, length, NULL, NULL,
                                      NULL, NULL);
-    ptr = (char *)xmalloc(n+1);
+    ptr = new char[n+1];
     ::WideCharToMultiByte(CP_ACP, 0, wstr, length, ptr, n,
                           NULL, NULL);
     ptr[n] = 0;
@@ -36,7 +32,7 @@ public:
   }
   ~tmpstr() {
     if (ptr)
-      xfree(ptr);
+      delete[] ptr;
   }
   const char* get() {
     return ptr;
@@ -55,12 +51,12 @@ private:
       return;
     }
     if (*str == 0) {
-      ptr = (wchar_t *)xmalloc(sizeof(wchar_t));
+      ptr = new wchar_t[1];
       *ptr = 0;
       return;
     }
     size_t n = ::MultiByteToWideChar(CP_ACP, 0, str, length, NULL, NULL);
-    ptr = (wchar_t *)xmalloc((n+1)*sizeof(wchar_t));
+    ptr = new wchar_t[n+1];
     ::MultiByteToWideChar(CP_ACP, 0, str, length, ptr, n);
     ptr[n] = 0;
   }
@@ -73,7 +69,7 @@ public:
   }
   ~tmpwstr() {
     if (ptr)
-      xfree(ptr);
+      delete[] ptr;
   }
   const wchar_t* get() {
     return ptr;
