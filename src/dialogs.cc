@@ -8,6 +8,7 @@
 #include "xstrlist.h"
 #include "version.h"
 #include "monitor.h"
+#include "listvieww.h"
 
 void
 set_window_icon (HWND hwnd)
@@ -71,7 +72,7 @@ init_list_column (HWND list, int ncolumns, const int *width, const int *fmts,
       lvc.pszText = buf;
       lvc.iSubItem = i;
       lvc.fmt = fmts[i];
-      ListView_InsertColumn (list, i, &lvc);
+      ListView_InsertColumnW (list, i, &lvc);
     }
 }
 
@@ -144,7 +145,7 @@ store_buffer_name (HWND list, const Buffer *bp, LVITEMW *lvi)
   wchar_t *b = (wchar_t *)alloca (l + 1*sizeof(wchar_t));
   bp->buffer_name (b, b + l);
   lvi->pszText = b;
-  return ListView_InsertItem (list, lvi);
+  return ListView_InsertItemW (list, lvi);
 }
 
 static void
@@ -153,7 +154,7 @@ store_buffer_size (HWND list, const Buffer *bp, LVITEMW *lvi)
   wchar_t b[32];
   _swprintf(b, L"%d", bp->b_nchars);
   lvi->pszText = b;
-  ListView_SetItem (list, lvi);
+  ListView_SetItemW (list, lvi);
 }
 
 static void
@@ -167,7 +168,7 @@ store_string (HWND list, lisp string, LVITEMW *lvi)
     }
   else
     lvi->pszText = L"";
-  ListView_SetItem (list, lvi);
+  ListView_SetItemW (list, lvi);
 }
 
 static void
@@ -241,7 +242,7 @@ get_selected_item (HWND list)
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM;
-      if (ListView_GetItem (list, &lvi))
+      if (ListView_GetItemW (list, &lvi))
         return (Buffer *)lvi.lParam;
     }
   return 0;
@@ -1481,13 +1482,13 @@ DriveDialog::setup_list (HWND hwnd)
   ListView_SetExStyle (hwnd, LVS_EXREPORTEX);
   set_list_chars (hwnd);
 
-  LV_COLUMN lvc;
+  LVCOLUMNW lvc;
   lvc.mask = LVCF_FMT | LVCF_SUBITEM;
   for (int i = 0; i < 2; i++)
     {
       lvc.iSubItem = i;
       lvc.fmt = LVCFMT_LEFT;
-      ListView_InsertColumn (hwnd, i, &lvc);
+      ListView_InsertColumnW (hwnd, i, &lvc);
     }
 
   HIMAGELIST hil = ImageList_LoadBitmap (active_app_frame().hinst,
@@ -1528,7 +1529,7 @@ DriveDialog::insert_drives (HWND hwnd)
 
           name[2] = 0;
           lvi.pszText = name;
-          ListView_InsertItem (hwnd, &lvi);
+          ListView_InsertItemW (hwnd, &lvi);
 
           SIZE sz;
           GetTextExtentPoint32W (hdc, name, 2, &sz);
@@ -1564,7 +1565,7 @@ DriveDialog::insert_volnames ()
           if (i >= 0)
             {
               volname++;
-              ListView_SetItemText (hwnd, i, 1, (char *)tmpstr(volname).get()); //XXX FIX ME
+              ListView_SetItemTextW (hwnd, i, 1, volname);
               SIZE sz;
               GetTextExtentPoint32W (hdc, volname, wcslen (volname), &sz);
               maxw = max (maxw, sz.cx);
@@ -1660,11 +1661,11 @@ DriveDialog::WndProc (UINT msg, WPARAM wparam, LPARAM lparam)
             int i = lv_find_selected_item (list);
             if (i == -1)
               return 1;
-            LV_ITEM lvi;
+            LVITEMW lvi;
             lvi.iItem = i;
             lvi.iSubItem = 0;
             lvi.mask = LVIF_PARAM;
-            if (ListView_GetItem (list, &lvi))
+            if (ListView_GetItemW (list, &lvi))
               result (lvi.lParam);
             return 1;
           }

@@ -4,6 +4,7 @@
 #include "com.h"
 #include "filer.h"
 #include "buffer-bar.h"
+#include "listvieww.h"
 
 HRESULT
 ole_object::QueryInterface (IUnknown *self, REFIID siid, REFIID reqiid, void **v)
@@ -240,12 +241,12 @@ make_idl (HWND hwnd, lisp ldir, void *param,
   for (i = -1; (nstored < nfiles
                 && (i = ListView_GetNextItem (hwnd, i, LVNI_SELECTED)) >= 0);)
     {
-      LV_ITEM lvi;
+      LVITEMW lvi;
       lvi.iItem = i;
       lvi.iSubItem = 0;
       lvi.mask = LVIF_PARAM | LVIF_STATE;
       lvi.stateMask = LVIS_FOCUSED;
-      if (ListView_GetItem (hwnd, &lvi))
+      if (ListView_GetItemW (hwnd, &lvi))
         {
           const filer_data *f = (const filer_data *)lvi.lParam;
           wcscpy(w, *f->name ? f->name : L"..");
@@ -491,11 +492,11 @@ filer_drop_target::target_path (wchar_t *buf, const POINTL &pt)
   if (ht.pt.x >= r.right)
     return;
 
-  LV_ITEM lv;
+  LVITEMW lv;
   lv.iItem = index;
   lv.iSubItem = 0;
   lv.mask = LVIF_PARAM;
-  if (!ListView_GetItem (fdt_view->fv_hwnd, &lv))
+  if (!ListView_GetItemW (fdt_view->fv_hwnd, &lv))
     return;
 
   const filer_data *f = (filer_data *)lv.lParam;

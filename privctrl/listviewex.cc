@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "privctlimpl.h"
 #include "mousemsg.h"
+#include "listvieww.h"
 
 static WNDPROC ListViewProc;
 
@@ -10,11 +11,15 @@ static WNDPROC ListViewProc;
 
 #undef ListView_FindItem
 #define ListView_FindItem(hwnd, iStart, plvfi) \
-  (int)CallWindowProc (ListViewProc, (hwnd), LVM_FINDITEM, (WPARAM)(int)(iStart), (LPARAM)(const LV_FINDINFO FAR*)(plvfi))
+  (int)CallWindowProcW (ListViewProc, (hwnd), LVM_FINDITEMW, (WPARAM)(int)(iStart), (LPARAM)(const LVFINDINFOW FAR*)(plvfi))
+#undef ListView_FindItemW
+#define ListView_FindItemW ListView_FindItem
 
 #undef ListView_GetColumn
 #define ListView_GetColumn(hwnd, iCol, pcol) \
-    (BOOL)CallWindowProc (ListViewProc, (hwnd), LVM_GETCOLUMN, (WPARAM)(int)(iCol), (LPARAM)(LV_COLUMN FAR*)(pcol))
+    (BOOL)CallWindowProcW (ListViewProc, (hwnd), LVM_GETCOLUMNW, (WPARAM)(int)(iCol), (LPARAM)(LVCOLUMNW FAR*)(pcol))
+#undef ListView_GetColumnW
+#define ListView_GetColumnW ListView_GetColumn
 
 #undef ListView_GetImageList
 #define ListView_GetImageList(hwnd, iImageList) \
@@ -22,7 +27,9 @@ static WNDPROC ListViewProc;
 
 #undef ListView_GetItem
 #define ListView_GetItem(hwnd, pitem) \
-  (BOOL)CallWindowProc (ListViewProc, (hwnd), LVM_GETITEM, 0, (LPARAM)(LV_ITEM FAR*)(pitem))
+  (BOOL)CallWindowProcW (ListViewProc, (hwnd), LVM_GETITEMW, 0, (LPARAM)(LV_ITEM FAR*)(pitem))
+#undef ListView_GetItemW
+#define ListView_GetItemW ListView_GetItem
 
 #undef ListView_GetItemCount
 #define ListView_GetItemCount(hwnd) \
@@ -35,17 +42,19 @@ static WNDPROC ListViewProc;
 
 #undef ListView_SetItemState
 #define ListView_SetItemState(hwndLV, i, data, mask) \
-  { LV_ITEM _ms_lvi;\
+  { LVITEMW _ms_lvi;\
     _ms_lvi.stateMask = mask;\
     _ms_lvi.state = data;\
-    CallWindowProc (ListViewProc, (hwndLV), LVM_SETITEMSTATE, (WPARAM)i, (LPARAM)(LV_ITEM FAR *)&_ms_lvi);\
+    CallWindowProcW (ListViewProc, (hwndLV), LVM_SETITEMSTATEW, (WPARAM)i, (LPARAM)(LV_ITEM FAR *)&_ms_lvi);\
   }
+#undef ListView_SetItemStateW
+#define ListView_SetItemStateW ListView_SetItemState
 
 #undef ListView_GetItemText
 
 #undef ListView_GetNextItem
 #define ListView_GetNextItem(hwnd, i, flags) \
-  (int)CallWindowProc (ListViewProc, (hwnd), LVM_GETNEXTITEM, (WPARAM)(int)(i), MAKELPARAM((flags), 0))
+  (int)CallWindowProcW (ListViewProc, (hwnd), LVM_GETNEXTITEM, (WPARAM)(int)(i), MAKELPARAM((flags), 0))
 
 #undef ListView_Scroll
 #define ListView_Scroll(hwndLV, dx, dy) \
@@ -65,7 +74,9 @@ static WNDPROC ListViewProc;
 
 #undef ListView_InsertColumn
 #define ListView_InsertColumn(hwnd, iCol, pcol) \
-  (int)CallWindowProc (ListViewProc, (hwnd), LVM_INSERTCOLUMN, (WPARAM)(int)(iCol), (LPARAM)(const LV_COLUMN FAR*)(pcol))
+  (int)CallWindowProcW (ListViewProc, (hwnd), LVM_INSERTCOLUMNW, (WPARAM)(int)(iCol), (LPARAM)(const LVCOLUMNW FAR*)(pcol))
+#undef ListView_InsertColumnW
+#define ListView_InsertColumnW ListView_InsertColumn
 
 #define STATEIMAGEMASKTOINDEX(i) (((i) >> 12) - 1)
 #define OFFSET_FIRST 2
@@ -259,12 +270,12 @@ listview_draw_item (UINT id, DRAWITEMSTRUCT *dis)
   const RECT &r = dis->rcItem;
   const listview_item_data *data = get_listview_item_data (hwnd);
 
-  LV_ITEM lvi;
+  LVITEMW lvi;
   lvi.mask = LVIF_IMAGE | LVIF_STATE | LVIF_PARAM;
   lvi.iItem = dis->itemID;
   lvi.iSubItem = 0;
   lvi.stateMask = UINT (-1);
-  if (!ListView_GetItem (hwnd, &lvi))
+  if (!ListView_GetItemW (hwnd, &lvi))
     return 1;
 
   int focus = GetFocus () == hwnd;
@@ -363,9 +374,9 @@ listview_draw_item (UINT id, DRAWITEMSTRUCT *dis)
     paint_item_text (hwnd, hdc, dis->itemID, 0, LVCFMT_LEFT, label,
                      OFFSET_FIRST, dots.cx, 0, lvi.lParam, data);
 
-  LV_COLUMN lvc;
+  LVCOLUMNW lvc;
   lvc.mask = LVCF_FMT | LVCF_WIDTH;
-  for (int i = 1; ListView_GetColumn (hwnd, i, &lvc); i++)
+  for (int i = 1; ListView_GetColumnW (hwnd, i, &lvc); i++)
     {
       label.left = label.right;
       label.right += lvc.cx;
@@ -554,9 +565,9 @@ find_header (HWND hwnd)
 
 static int
 insert_column (HWND hwnd, listview_item_data *data,
-               int col, const LV_COLUMN *lc)
+               int col, const LVCOLUMNW *lc)
 {
-  int r = ListView_InsertColumn (hwnd, col, lc);
+  int r = ListView_InsertColumnW (hwnd, col, lc);
   if (r >= 0)
     {
       HD_ITEM hi;
@@ -891,7 +902,7 @@ isearch (HWND hwnd, int cc, int wrap, listview_item_data *data)
   data->f_ikeyup = 0;
 
   int found;
-  LV_FINDINFO fi;
+  LVFINDINFOW fi;
   fi.flags = LVFI_PARTIAL;
   if (wrap)
     fi.flags |= LVFI_WRAP;
@@ -899,7 +910,7 @@ isearch (HWND hwnd, int cc, int wrap, listview_item_data *data)
   data->f_ikeyup = 1;
   while (1)
     {
-      found = ListView_FindItem (hwnd, max (cur, 0), &fi);
+      found = ListView_FindItemW (hwnd, max (cur, 0), &fi);
       if (found == -1)
         {
           data->f_ikeyup = 0;
