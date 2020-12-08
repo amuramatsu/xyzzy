@@ -119,7 +119,9 @@ GlobalIME::ImmReleaseContext (HWND hwnd, HIMC himc)
   if (gi_app)
     return gi_app->ReleaseContext (hwnd, himc) == S_OK;
 #endif /* HAVE_DIMM_H */
-  return ::ImmReleaseContext (hwnd, himc);
+  BOOL b = ImmReleaseContext (hwnd, himc);
+  ::SetActiveWindow(hwnd);
+  return b;
 }
 
 BOOL
